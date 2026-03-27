@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: Ready to execute
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-27T02:20:30.202Z"
+progress:
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 7
+  completed_plans: 1
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +19,17 @@
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Evidence-gated delivery — 증거 없이는 어떤 코드도 "완성"으로 인정하지 않는다.
-**Current focus:** Phase 1 — Foundation & Core Infrastructure
+**Current focus:** Phase 01 — foundation-core-infrastructure
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation & Core Infrastructure)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2025-07-27 — Roadmap created for Milestone v1.0
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 01 (foundation-core-infrastructure) — EXECUTING
+Plan: 2 of 7
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: —
 - Total execution time: 0 hours
@@ -30,10 +41,12 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: —
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01 P01 | 3m33s | 2 tasks | 22 files |
 
 ## Accumulated Context
 
@@ -45,6 +58,12 @@ Recent decisions affecting current work:
 - [Roadmap]: 5-phase structure following import dependency chain (models → adapters → services → nodes → CLI)
 - [Roadmap]: Phase 1 pulls INGEST-01, VALID-06, CERT-04, CERT-05 from other categories — architecturally these are foundation (workspace, policy, metadata schemas, preflight)
 - [Roadmap]: Phase 4 is highest-risk — Playwright + worktree + auto-fix + retry loops converge
+- [Phase 1]: D-01 — LangGraph context_schema + Runtime[ServiceContainer] DI 채택 (.from_config() 대신)
+- [Phase 1]: D-02 — 40+ Pydantic 모델 전부 Phase 1에서 구현
+- [Phase 1]: D-03 — Bottom-up TDD (모델→Protocol→Fake→DI→서비스→CLI)
+- [Phase 1]: D-04 — 하이브리드 Git 연동 (읽기: GitPython, 쓰기: subprocess)
+- [Phase 01]: Used StrEnum instead of (str, Enum) for Python 3.12+ — Ruff UP042 compliance
+- [Phase 01]: Used datetime.UTC alias — Ruff UP017 compliance for Python 3.11+
 
 ### Pending Todos
 
@@ -58,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2025-07-27
-Stopped at: Roadmap created, Phase 1 ready to plan
+Last session: 2026-03-27T02:20:30.199Z
+Stopped at: Completed 01-01-PLAN.md
 Resume file: None

@@ -9,8 +9,8 @@ Requirements for Milestone v1.0 (Delivery Pipeline MVP). Each maps to roadmap ph
 
 ### Foundation & Infrastructure
 
-- [ ] **INFRA-01**: 프로젝트 스캐폴딩 — pyproject.toml (uv), src 레이아웃, pytest/Ruff/Pyright 설정, CI 기본 구성
-- [ ] **INFRA-02**: Pydantic v2 데이터 모델 구현 — 40+ 모델 (CaseInput, RepoProfile, IntentGraph, GenerationPlan, GeneratedArtifactSet, NormalizationReport, RuntimeValidationReport, VisualRegressionReport, FixAttempt, Scorecard, ReleaseDecision, EvidencePack 등) — 12-data-models.md 기반
+- [x] **INFRA-01**: 프로젝트 스캐폴딩 — pyproject.toml (uv), src 레이아웃, pytest/Ruff/Pyright 설정, CI 기본 구성
+- [x] **INFRA-02**: Pydantic v2 데이터 모델 구현 — 40+ 모델 (CaseInput, RepoProfile, IntentGraph, GenerationPlan, GeneratedArtifactSet, NormalizationReport, RuntimeValidationReport, VisualRegressionReport, FixAttempt, Scorecard, ReleaseDecision, EvidencePack 등) — 12-data-models.md 기반
 - [ ] **INFRA-03**: 어댑터 Protocol 정의 — LLMAdapter, FilesystemAdapter, GitAdapter, BrowserAdapter, BuildRunnerAdapter, SubprocessAdapter 인터페이스
 - [ ] **INFRA-04**: ServiceContainer + LangGraph context_schema DI 패턴 — 모든 노드가 서비스를 주입받는 런타임 컨텍스트 구성
 - [ ] **INFRA-05**: 테스트 인프라 — FakeLLMAdapter, TempDirSandbox, FakePlaywrightAdapter, FakeSubprocessRunner 등 8개 fake + chaos fixtures (malformed JSON, rate limit, extra fields)
@@ -83,8 +83,8 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Pending |
 | INFRA-04 | Phase 1 | Pending |
 | INFRA-05 | Phase 1 | Pending |

@@ -1,7 +1,5 @@
 """Tests for sandbox execution policy — VALID-06."""
 
-import pytest
-
 from ddk.adapters.sandbox.policy import (
     ALLOWED_COMMANDS,
     ENV_WHITELIST,

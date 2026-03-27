@@ -83,12 +83,36 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01~06 | TBD | Pending |
-| INGEST-01~06 | TBD | Pending |
-| CODEGEN-01~03 | TBD | Pending |
-| VALID-01~07 | TBD | Pending |
-| CERT-01~07 | TBD | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| INFRA-05 | Phase 1 | Pending |
+| INFRA-06 | Phase 1 | Pending |
+| INGEST-01 | Phase 1 | Pending |
+| INGEST-02 | Phase 2 | Pending |
+| INGEST-03 | Phase 2 | Pending |
+| INGEST-04 | Phase 2 | Pending |
+| INGEST-05 | Phase 2 | Pending |
+| INGEST-06 | Phase 2 | Pending |
+| CODEGEN-01 | Phase 3 | Pending |
+| CODEGEN-02 | Phase 3 | Pending |
+| CODEGEN-03 | Phase 2 | Pending |
+| VALID-01 | Phase 4 | Pending |
+| VALID-02 | Phase 4 | Pending |
+| VALID-03 | Phase 4 | Pending |
+| VALID-04 | Phase 4 | Pending |
+| VALID-05 | Phase 4 | Pending |
+| VALID-06 | Phase 1 | Pending |
+| VALID-07 | Phase 4 | Pending |
+| CERT-01 | Phase 5 | Pending |
+| CERT-02 | Phase 5 | Pending |
+| CERT-03 | Phase 5 | Pending |
+| CERT-04 | Phase 1 | Pending |
+| CERT-05 | Phase 1 | Pending |
+| CERT-06 | Phase 5 | Pending |
+| CERT-07 | Phase 5 | Pending |
 
 ---
 
-*Last updated: 2026-03-27*
+*Last updated: 2025-07-27*

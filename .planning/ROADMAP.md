@@ -24,7 +24,16 @@
   3. ServiceContainer가 모든 fake 어댑터로 인스턴스화되고, LangGraph StateGraph의 `context_schema`를 통해 주입 가능 — 스모크 테스트 그래프 노드가 DI로 서비스 접근 성공
   4. `ddk doctor`가 환경 전제조건(Python 버전, uv, Playwright 브라우저, git, LLM API 키)을 점검하고 pass/fail 테이블 + 교정 힌트 출력
   5. `ddk init <case_id>`가 `.ddk/` 워크스페이스 디렉토리 구조를 생성하고 스키마 버전 파일 포함; structlog JSON 로그가 비밀정보 레닥션 적용; 샌드박스 실행 정책(ENV_WHITELIST, FORBIDDEN_READ_PATHS)이 정의되고 테스트로 검증 가능
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project scaffolding: pyproject.toml, directory tree, DDKBaseModel, config, errors
+- [ ] 01-02-PLAN.md — Data models: CaseInput, RepoProfile, IntentGraph, Design Studio (18 models)
+- [ ] 01-03-PLAN.md — Data models: Pipeline & Output (16 models incl. LLMCallRecord)
+- [ ] 01-04-PLAN.md — 7 adapter Protocols + sandbox policy definitions
+- [ ] 01-05-PLAN.md — 8 test doubles (fakes) + chaos fixtures
+- [ ] 01-06-PLAN.md — GraphState TypedDict, ServiceContainer DI, structured logging, secret redaction
+- [ ] 01-07-PLAN.md — WorkspaceManager, PreflightDoctor, ddk CLI (doctor, init)
 
 ### Phase 2: Ingestion & Analysis
 **Goal**: 디자인 시안(이미지+프롬프트)을 받아 5단계 분석(intake → repo scan → intent → design system → plan)을 거쳐 검증된 GenerationPlan을 출력한다 — 첫 LLM 호출 Phase로 비용 추적과 구조화 출력 파싱 패턴을 확립
@@ -79,7 +88,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Core Infrastructure | 0/TBD | Not started | - |
+| 1. Foundation & Core Infrastructure | 0/7 | Planned | - |
 | 2. Ingestion & Analysis | 0/TBD | Not started | - |
 | 3. Code Generation & Normalization | 0/TBD | Not started | - |
 | 4. Validation & Self-Healing | 0/TBD | Not started | - |

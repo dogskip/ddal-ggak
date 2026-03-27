@@ -2,21 +2,22 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
 
-from ddk.adapters.llm.base import LLMAdapter, Message, LLMCallConfig, LLMResponse
-from ddk.adapters.filesystem import FilesystemPort
+import pytest
+
 from ddk.adapters.build_runner import BuildRunner
+from ddk.adapters.filesystem import FilesystemPort
+from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
 from ddk.adapters.playwright_browser import PlaywrightAdapter
-from tests.fakes.fake_llm_adapter import FakeLLMAdapter
+from tests.fakes.fake_cost_tracker import FakeCostTracker
+from tests.fakes.fake_fallback_chain import FakeFallbackChain
 from tests.fakes.fake_filesystem import InMemoryFilesystem
+from tests.fakes.fake_llm_adapter import FakeLLMAdapter
+from tests.fakes.fake_playwright_adapter import FakePlaywrightAdapter
+from tests.fakes.fake_rollback import FakeRollbackController
 from tests.fakes.fake_sandbox import TempDirSandbox
 from tests.fakes.fake_subprocess import FakeSubprocessRunner
-from tests.fakes.fake_playwright_adapter import FakePlaywrightAdapter
-from tests.fakes.fake_fallback_chain import FakeFallbackChain
-from tests.fakes.fake_rollback import FakeRollbackController
-from tests.fakes.fake_cost_tracker import FakeCostTracker
 
 
 class TestFakeLLMAdapter:
@@ -214,14 +215,17 @@ class TestChaosFixtures:
 
     async def test_extra_fields_in_response(self) -> None:
         """FakeLLM returns extra fields — DDKBaseModel with extra=forbid should reject."""
+        from pydantic import ValidationError
+
         from ddk.models.input import CaseInput
 
-        fake = FakeLLMAdapter(
-            responses={
-                "extra": '{"case_id": "C-001", "image_paths": ["/img.png"], "prompt": "test", "repo_path": "/repo", "extra_field": "bad"}'
-            }
+        extra_json = (
+            '{"case_id": "C-001", "image_paths": ["/img.png"],'
+            ' "prompt": "test", "repo_path": "/repo",'
+            ' "extra_field": "bad"}'
         )
+        fake = FakeLLMAdapter(responses={"extra": extra_json})
         msgs = [Message(role="system", content="extra fields test")]
         result = await fake.complete(msgs, LLMCallConfig())
-        with pytest.raises(Exception):  # ValidationError from extra="forbid"
+        with pytest.raises(ValidationError):
             CaseInput.model_validate_json(result.content)

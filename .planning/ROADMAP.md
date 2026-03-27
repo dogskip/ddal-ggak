@@ -29,8 +29,8 @@
 Plans:
 - [x] 01-01-PLAN.md — Project scaffolding: pyproject.toml, directory tree, DDKBaseModel, config, errors
 - [ ] 01-02-PLAN.md — Data models: CaseInput, RepoProfile, IntentGraph, Design Studio (18 models)
-- [ ] 01-03-PLAN.md — Data models: Pipeline & Output (16 models incl. LLMCallRecord)
-- [ ] 01-04-PLAN.md — 7 adapter Protocols + sandbox policy definitions
+- [x] 01-03-PLAN.md — Data models: Pipeline & Output (16 models incl. LLMCallRecord)
+- [x] 01-04-PLAN.md — 7 adapter Protocols + sandbox policy definitions
 - [ ] 01-05-PLAN.md — 8 test doubles (fakes) + chaos fixtures
 - [ ] 01-06-PLAN.md — GraphState TypedDict, ServiceContainer DI, structured logging, secret redaction
 - [ ] 01-07-PLAN.md — WorkspaceManager, PreflightDoctor, ddk CLI (doctor, init)

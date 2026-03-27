@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 
 from ._base import DDKBaseModel
 from .design_compliance import StandardsComplianceResult

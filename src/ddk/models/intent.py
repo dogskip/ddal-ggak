@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import Field
@@ -88,4 +88,4 @@ class IntentGraph(DDKBaseModel):
     # 전체 추출 신뢰도 (0.0 = 완전 불확실, 1.0 = 확실)
     unresolved_items: list[str] = Field(default_factory=list)
     # 추출 실패 항목 설명 문자열
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import Field, field_validator
@@ -15,7 +15,7 @@ class CaseInput(DDKBaseModel):
     repo_path: Path  # 대상 repo 루트
     reference_notes: str | None = None  # 추가 컨텍스트
     visual_reference_paths: list[Path] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("image_paths")
     @classmethod

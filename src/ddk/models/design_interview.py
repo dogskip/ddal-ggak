@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import Field
@@ -16,4 +16,4 @@ class InterviewTurn(DDKBaseModel):
     message: str  # 발화 내용
     extracted_requirements: list[str] = Field(default_factory=list)
     # 이 턴에서 추출된 REQ IDs (e.g. ["REQ-001", "REQ-003"])
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

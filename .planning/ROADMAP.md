@@ -7,7 +7,7 @@
 ## Phases
 
 - [ ] **Phase 1: Foundation & Core Infrastructure** - 모델, Protocol, DI, 테스트 더블, 로깅, 워크스페이스, 프리플라이트 — 모든 후속 Phase의 기반
-- [ ] **Phase 2: Ingestion & Analysis** - 디자인 시안 입력부터 생성 계획 그래프까지 5단계 분석 파이프라인
+- [x] **Phase 2: Ingestion & Analysis** - 디자인 시안 입력부터 생성 계획 그래프까지 5단계 분석 파이프라인 (completed 2026-03-28)
 - [ ] **Phase 3: Code Generation & Normalization** - 생성 계획에서 코드 생성 후 레포 규칙에 맞게 정규화 — forward path 완성
 - [ ] **Phase 4: Validation & Self-Healing** - 샌드박스 검증, 비주얼 리그레션, 실패 분류, 자동수정 루프 — 최고 위험/복잡도 Phase
 - [ ] **Phase 5: Certification, CLI & E2E** - 증거팩, 스코어카드, 릴리즈 판정, LangGraph 통합, CLI 진입점, E2E 테스트
@@ -52,7 +52,7 @@ Plans:
 - [x] 02-02-PLAN.md — IntakeProcessor service + intake_node, RepoConventionScanner service + repo_scan_node
 - [x] 02-03-PLAN.md — SemanticIntentExtractor service + intent_extract_node, DesignSystemInferencer service + design_system_node
 - [x] 02-04-PLAN.md — GenerationPlanner service + plan_node, ContextPackBuilder service
-- [ ] 02-05-PLAN.md — 5-node partial graph assembly (D-08), integration test with FakeLLM
+- [x] 02-05-PLAN.md — 5-node partial graph assembly (D-08), integration test with FakeLLM
 
 ### Phase 3: Code Generation & Normalization
 **Goal**: GenerationPlan에서 빌드 가능한 React/TypeScript 코드를 생성하고, 타겟 레포 규칙에 맞게 정규화하여 forward path(intake→certify 이전까지)를 완성한다
@@ -96,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Infrastructure | 0/7 | Planned | - |
-| 2. Ingestion & Analysis | 3/5 | In Progress|  |
+| 2. Ingestion & Analysis | 5/5 | Complete   | 2026-03-28 |
 | 3. Code Generation & Normalization | 0/TBD | Not started | - |
 | 4. Validation & Self-Healing | 0/TBD | Not started | - |
 | 5. Certification, CLI & E2E | 0/TBD | Not started | - |

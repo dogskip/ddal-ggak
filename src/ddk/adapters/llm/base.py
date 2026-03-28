@@ -16,6 +16,7 @@ class Message:
 
     role: str  # "system", "user", "assistant"
     content: str
+    images: list[tuple[str, str]] | None = None  # [(base64_data, media_type), ...]
 
 
 @dataclass

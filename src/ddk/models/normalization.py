@@ -15,7 +15,7 @@ class ConventionFix(DDKBaseModel):
 
 class NormalizationReport(DDKBaseModel):
     case_id: str
-    fixes: list[ConventionFix] = Field(default_factory=list)
-    files_modified: list[str] = Field(default_factory=list)
-    skipped_rules: list[str] = Field(default_factory=list)
+    fixes: list[ConventionFix] = []
+    files_modified: list[str] = []
+    skipped_rules: list[str] = []
     duration_ms: int = Field(default=0, ge=0)

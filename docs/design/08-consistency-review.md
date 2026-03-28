@@ -78,7 +78,9 @@ Purpose, Authority, Status, Inputs, Outputs, Supersedes, Stale Trigger
 ### 7.6 신규 Tensions
 
 6. **Design Studio ↔ Delivery 상태 분리** — DesignStudioState와 DeliveryState가 독립적. 통합 orchestrator 필요 여부 미정.
+> ✅ 해소됨 (v2): `DesignHandoffPackage` + `HandoffManifest` 모델을 `12-data-models.md`에 추가, `_save_package_artifacts()` 명세를 `19-langgraph-builder.md`에 추가, `GraphState.design_handoff` 필드를 `13-project-structure.md`에 추가.
 7. **Interview budget vs quality** — max 5 turns가 충분한 요구사항을 수집하는지 미검증.
+> ✅ 해소됨 (v2): `MAX_TURNS_P0 = 5`를 `19-langgraph-builder.md`에 명시, `DesignStudioState.max_interview_turns: int = 5` 추가로 P0 인터뷰 예산 계약화.
 8. **Standards mapping 자동화 수준** — LLM이 표준 조항 매핑을 신뢰성 있게 수행하는지 실측 필요.
 
 ### 판정
@@ -159,8 +161,27 @@ Design Studio 명세 체인 완성. 거버넌스 자기 적용 완료. PASS.
 | --- | --- | --- |
 | Round 1~5 | 핵심 문서 02~26 | PASS |
 | Round 6 | 상위 전략 27~36 | PASS (5 tensions 식별) |
-| Round 7 | Design Studio 명세 체인 | PASS (3 tensions 추가) |
+| Round 7 | Design Studio 명세 체인 | PASS (3 tensions 추가, 2건 v2에서 해소) |
 | Round 8 | 문서 통합 37→30 | PASS (정보 손실 0) |
 | Round 9 | 미지정 영역 11건 보완 | PASS (충돌 0) |
 
 **설계 패키지 교차 정합성: PASS. 구현 착수 승인.**
+
+---
+
+## Tensions 현황 요약 (v2 업데이트)
+
+| # | 설명 | 상태 | 해소 근거 |
+| --- | --- | --- | --- |
+| T-1 | Identity 삼중 정의 (01/02/27) | 미결 | — |
+| T-2 | Gate 다중 정의 (07/31/36) | 미결 | — |
+| T-3 | NFR 중복 (03/07) | 미결 | — |
+| T-4 | Standards matrix 선언성 | 미결 | — |
+| T-5 | Governance 과잉 | 미결 | — |
+| T-6 | Design Studio ↔ Delivery 연결 계약 부재 | ✅ 해소 | `DesignHandoffPackage` + `_save_package_artifacts()` 명세 → `12-data-models.md`, `19-langgraph-builder.md`, `13-project-structure.md` |
+| T-7 | 인터뷰 예산 충돌 (PRD vs MAX_TURNS) | ✅ 해소 | `MAX_TURNS_P0 = 5`, `DesignStudioState.max_interview_turns: int = 5` → `19-langgraph-builder.md` |
+| T-8 | Standards mapping 자동화 수준 | 미결 | — |
+| T-9 | ADR 거버넌스 공백 (26건 Proposed 상태) | ✅ 해소 | 전체 26 ADR → `status: Accepted` (`05-adr-set.md`) |
+| T-10 | synthesis_attempts 상한 미집행 | ✅ 해소 | `MAX_SYNTHESIS_ATTEMPTS = 1` 집행 → `should_pass_quality()` (`19-langgraph-builder.md`) |
+
+**총 tensions: 10건 식별 / 4건 해소 / 6건 미결**

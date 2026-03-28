@@ -129,6 +129,11 @@ P0가 green이 되기 전까지 broader expansion은 시작하지 않는다.
 
 ## 9. 기능 요구사항(Functional Requirements)
 
+> **P0 구현 대상:** DDK-REQ-001~021 (Delivery Engine + CLI + Sandbox + LLM + Reproducibility + Preflight)  
+> **P4 구현 대상:** DDK-REQ-022~024 (Design Studio)  
+> **P5 구현 대상:** DDK-REQ-025~029 (Multi-tool Adapters + MCP)  
+> AI 구현 시 반드시 P0 요구사항만 먼저 구현하고, P4/P5는 Phase 4/5에서 착수하라.
+
 | ID | 기능 요구 | 설명 | 수용 기준(Acceptance) |
 | --- | --- | --- | --- |
 | `DDK-REQ-001` | Workspace Bootstrap | case workspace와 schema version을 초기화 | 재실행이 idempotent해야 한다 |
@@ -152,14 +157,14 @@ P0가 green이 되기 전까지 broader expansion은 시작하지 않는다.
 | `DDK-REQ-019` | Auto-fix Rollback & Checkpoint | auto-fix 시도 전 git checkpoint를 생성하고, 시도 실패/exhaustion 시 named checkpoint로 revert 가능하게 한다 | 각 fix attempt마다 checkpoint ref가 artifact에 남아야 하고, `ddk rollback` 으로 복원 가능해야 한다 |
 | `DDK-REQ-020` | Reproducibility & LLM Call Metadata | 각 LLM 호출의 model, provider, temperature, seed, schema version을 artifact에 저장한다 | 동일 run을 재실행할 때 context pack은 동일하게 재구성 가능해야 하고, model/provider 변경은 추적돼야 한다 |
 | `DDK-REQ-021` | Preflight Doctor & Guided Setup | 케이스 실행 전 환경 전제 조건(build tool, LLM key, Playwright, sandbox)을 검사하고, 실패 항목마다 remediation hint를 출력한다 | 모든 필수 의존성이 없을 때 명확한 오류와 fix 방법이 출력되어야 하고, preflight green 없이는 실행이 시작되지 않아야 한다 |
-| `DDK-REQ-022` | Design Document Generator — Requirements Elicitation | 자연어 아이디어 입력 + 인터뷰를 통해 구조화된 요구사항을 수집한다 | validated input artifact에서 REQ-XXX 형식의 요구사항 목록이 생성돼야 하고, 각 항목에 우선순위·수용 기준·추적 ID가 포함되어야 한다 |
-| `DDK-REQ-023` | Design Document Generator — Standard-Compliant Doc Synthesis | 수집된 요구사항으로부터 10개 설계 문서를 자동 생성한다 | SRS(IEEE 830/29148), PRD(PR-FAQ), Architecture(ISO 42010/C4), API(OpenAPI 3.x), DB Schema(ERD), Security(ISMS-P/OWASP), ADR, Test Strategy, Implementation Plan, AI Handoff 각각이 표준 형식을 충족해야 한다 |
-| `DDK-REQ-024` | Design Document Generator — Quality Gate & Consistency Check | 생성된 설계 패키지의 완전성·일관성·AI 구현 가능성을 자동 검증한다 | 모든 REQ-XXX가 테스트·아키텍처·Phase 계획과 추적 가능해야 하고, 품질 점수(0~100)와 보완 권고 목록이 출력돼야 한다 |
-| `DDK-REQ-025` | Multi-tool Adapter — Claude Code | `ddk install --adapter claude` 실행 시 `.claude/commands/ddk/` 아래 모든 커맨드 파일과 `.mcp.json`을 자동 생성한다 | 설치 후 Claude Code에서 `/project:ddk/design` 호출 시 딸깍 엔진이 실행되어야 한다 |
-| `DDK-REQ-026` | Multi-tool Adapter — GitHub Copilot | `ddk install --adapter copilot` 실행 시 `.github/skills/ddalggak-*/skill.md`와 `.github/agents/ddalggak-*.md`를 자동 생성한다 | Copilot에서 `/ddk:커맨드` 호출 시 딸깍 엔진이 실행되어야 한다 |
-| `DDK-REQ-027` | Multi-tool Adapter — Gemini CLI | `ddk install --adapter gemini` 실행 시 `.gemini/extensions/ddalggak/extension.json`을 자동 생성한다 | Gemini CLI에서 `@ddalggak ddk_design` 호출 시 딸깍 엔진이 실행되어야 한다 |
-| `DDK-REQ-028` | Multi-tool Adapter — OpenCode & Codex | `ddk install --adapter opencode|codex` 실행 시 각 도구 설정 파일을 자동 생성한다 | OpenCode에서 MCP tool call, Codex에서 직접 ddk 실행이 동작해야 한다 |
-| `DDK-REQ-029` | MCP Server | `ddk mcp` 실행 시 stdio/HTTP transport로 MCP server가 기동되고, 딸깍 핵심 도구 15개 이상을 MCP tool로 노출한다 | MCP inspector로 tool 목록 확인 가능, Claude Code의 `.mcp.json` 연결 후 tool-use 성공해야 한다 |
+| `DDK-REQ-022` | [Phase 4] Design Document Generator — Requirements Elicitation | 자연어 아이디어 입력 + 인터뷰를 통해 구조화된 요구사항을 수집한다 | validated input artifact에서 REQ-XXX 형식의 요구사항 목록이 생성돼야 하고, 각 항목에 우선순위·수용 기준·추적 ID가 포함되어야 한다 |
+| `DDK-REQ-023` | [Phase 4] Design Document Generator — Standard-Compliant Doc Synthesis | 수집된 요구사항으로부터 10개 설계 문서를 자동 생성한다 | SRS(IEEE 830/29148), PRD(PR-FAQ), Architecture(ISO 42010/C4), API(OpenAPI 3.x), DB Schema(ERD), Security(ISMS-P/OWASP), ADR, Test Strategy, Implementation Plan, AI Handoff 각각이 표준 형식을 충족해야 한다 |
+| `DDK-REQ-024` | [Phase 4] Design Document Generator — Quality Gate & Consistency Check | 생성된 설계 패키지의 완전성·일관성·AI 구현 가능성을 자동 검증한다 | 모든 REQ-XXX가 테스트·아키텍처·Phase 계획과 추적 가능해야 하고, 품질 점수(0~100)와 보완 권고 목록이 출력돼야 한다 |
+| `DDK-REQ-025` | [Phase 5] Multi-tool Adapter — Claude Code | `ddk install --adapter claude` 실행 시 `.claude/commands/ddk/` 아래 모든 커맨드 파일과 `.mcp.json`을 자동 생성한다 | 설치 후 Claude Code에서 `/project:ddk/design` 호출 시 딸깍 엔진이 실행되어야 한다 |
+| `DDK-REQ-026` | [Phase 5] Multi-tool Adapter — GitHub Copilot | `ddk install --adapter copilot` 실행 시 `.github/skills/ddalggak-*/skill.md`와 `.github/agents/ddalggak-*.md`를 자동 생성한다 | Copilot에서 `/ddk:커맨드` 호출 시 딸깍 엔진이 실행되어야 한다 |
+| `DDK-REQ-027` | [Phase 5] Multi-tool Adapter — Gemini CLI | `ddk install --adapter gemini` 실행 시 `.gemini/extensions/ddalggak/extension.json`을 자동 생성한다 | Gemini CLI에서 `@ddalggak ddk_design` 호출 시 딸깍 엔진이 실행되어야 한다 |
+| `DDK-REQ-028` | [Phase 5] Multi-tool Adapter — OpenCode & Codex | `ddk install --adapter opencode|codex` 실행 시 각 도구 설정 파일을 자동 생성한다 | OpenCode에서 MCP tool call, Codex에서 직접 ddk 실행이 동작해야 한다 |
+| `DDK-REQ-029` | [Phase 5] MCP Server | `ddk mcp` 실행 시 stdio/HTTP transport로 MCP server가 기동되고, 딸깍 핵심 도구 15개 이상을 MCP tool로 노출한다 | MCP inspector로 tool 목록 확인 가능, Claude Code의 `.mcp.json` 연결 후 tool-use 성공해야 한다 |
 
 ## 10. 현재 보수 점수와 목표
 

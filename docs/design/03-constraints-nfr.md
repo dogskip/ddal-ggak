@@ -40,6 +40,23 @@
 | `NFR-15` | Guided Setup | 필수 의존성 누락 시 명확한 오류와 fix 방법 안내 | preflight doctor tests |
 | `NFR-16` | Cost Predictability | 케이스당 예상 비용이 사전에 추정 가능하고, 예산 초과 시 조기 중단 | cost estimator unit tests |
 
+## NFR 정량 목표 보완표
+
+아래는 기존 NFR 정의에 측정 가능한 목표값을 추가한 보완 정보다.
+
+| NFR ID | NFR 명 | 목표값 | 측정 방법 |
+|--------|--------|--------|-----------|
+| NFR-01 | P0 단일 케이스 실행 시간 | 단순 케이스: ≤ 120초, 자동 수정 포함: ≤ 300초 | E2E 테스트 duration 측정 |
+| NFR-02 | LLM 호출 비용 (케이스당) | P0 케이스당 ≤ $0.10 (Claude Sonnet 기준) | cost_tracker 집계 |
+| NFR-03 | auto_fix 성공률 | P0 fixture 기준 ≥ 70% (1회 이내 수정 성공) | BM-001~005 벤치마크 |
+| NFR-04 | 재현성 (동일 seed, 동일 context_pack_hash) | ≥ 95% 동일 결과 (best_effort mode) | 재현성 테스트 suite |
+| NFR-05 | visual SSIM 임계값 | PASS: ≥ 0.95, FLAG: 0.85~0.95, FAIL: < 0.85 | 20-playwright-adapter.md 참조 |
+| NFR-06 | preflight 실행 시간 | ≤ 30초 | `ddk preflight` 실행 시간 측정 |
+| NFR-07 | context pack 빌드 시간 | ≤ 5초 (300 lines, 6 files 기준) | unit test 측정 |
+| NFR-08 | rollback 성공률 | ≥ 99% (git ref 존재 시) | rollback 통합 테스트 |
+| NFR-09 | CLI 응답 시간 (subcommand 시작) | ≤ 2초 (import overhead 포함) | startup time 벤치마크 |
+| NFR-10 | 메모리 사용량 (P0 케이스) | ≤ 512MB (peak) | memory profiler 측정 |
+
 ## 3. 우선순위
 
 1. `NFR-03 Automation`

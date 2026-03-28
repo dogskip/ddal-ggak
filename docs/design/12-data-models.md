@@ -1221,3 +1221,131 @@ async def test_extract_returns_intent_graph(fake_llm_with_intent, sample_image_p
     assert result.confidence >= 0.9
     fake_llm_with_intent.assert_called_with_schema("IntentGraph")
 ```
+
+---
+
+## Design Studio ↔ Delivery 핸드오프 모델
+
+> Design Studio 완료 후 Delivery 파이프라인 실행 시 필요한 데이터 계약.
+> `package_handoff_node`가 이 구조로 저장하고, `ingest_node`가 이 구조를 읽는다.
+
+### DesignHandoffPackage 모델
+
+```python
+from pathlib import Path
+from pydantic import BaseModel, Field
+from datetime import datetime
+
+
+class DesignHandoffPackage(BaseModel):
+    """
+    Design Studio 완료 시 생성되는 핸드오프 패키지.
+    
+    저장 위치: {workspace_dir}/design-handoff/package.json
+    이 파일이 존재하면 ddk run이 자동으로 읽어 CaseInput을 보강한다.
+    """
+    model_config = {"extra": "forbid"}
+
+    # 패키지 메타데이터
+    handoff_id: str = Field(description="핸드오프 패키지 고유 ID (dds-{uuid4})")
+    created_at: datetime
+    design_studio_version: str = Field(description="딸깍 버전 (pyproject.toml과 동일)")
+
+    # 요구사항 (Design Studio에서 추출)
+    requirements: list[dict] = Field(
+        description="REQ-XXX 형식 요구사항 목록. [{id, title, priority, acceptance_criteria}]"
+    )
+    target_components: list[str] = Field(
+        default_factory=list,
+        description="구현 대상 컴포넌트 이름 목록 (GenerationPlan 생성에 활용)"
+    )
+    
+    # 설계 문서 (Design Studio에서 생성)
+    design_document_path: str | None = Field(
+        default=None,
+        description="생성된 설계 문서 파일 경로 (상대경로, workspace_dir 기준)"
+    )
+    quality_score: float | None = Field(
+        default=None,
+        description="Design Studio 품질 게이트 점수 (0~30)"
+    )
+    quality_verdict: str | None = Field(
+        default=None,
+        description="'pass' | 'flag' | 'block'"
+    )
+    
+    # Delivery 입력 보강 정보
+    prompt_override: str | None = Field(
+        default=None,
+        description="Design Studio에서 도출된 정밀 프롬프트 (ddk run --prompt의 기본값으로 사용)"
+    )
+    reference_notes: str | None = Field(
+        default=None,
+        description="구현자를 위한 참조 메모 (컨텍스트 팩에 포함됨)"
+    )
+
+    # 추적
+    interview_summary: str | None = Field(
+        default=None,
+        description="인터뷰 핵심 내용 요약 (컨텍스트 팩 P5 항목으로 포함)"
+    )
+
+
+class HandoffManifest(BaseModel):
+    """
+    workspace_dir/design-handoff/MANIFEST.json 파일 구조.
+    여러 핸드오프 패키지가 있을 때 목록 관리용.
+    """
+    model_config = {"extra": "forbid"}
+
+    workspace_dir: str
+    packages: list[str] = Field(description="package.json 파일 경로 목록")
+    latest: str | None = Field(description="가장 최근 핸드오프 패키지 경로")
+    created_at: datetime
+    updated_at: datetime
+```
+
+### 핸드오프 파일 구조
+
+```
+{workspace_dir}/
+  design-handoff/
+    MANIFEST.json                    # HandoffManifest
+    dds-{uuid4}/
+      package.json                   # DesignHandoffPackage
+      design-document.md             # 생성된 설계 문서 (선택)
+      requirements.json              # requirements 상세 목록
+```
+
+### `ddk run`에서 핸드오프 읽기
+
+```python
+# ingest_node에서 handoff 패키지 자동 로드
+
+async def ingest_node(state: GraphState) -> dict:
+    case_input = state["case_input"]
+    repo_path = Path(case_input.repo_path)
+    
+    # Design Studio 핸드오프 패키지 자동 로드 (있으면)
+    handoff_path = repo_path / "design-handoff" / "MANIFEST.json"
+    if handoff_path.exists():
+        manifest = HandoffManifest.model_validate_json(handoff_path.read_text())
+        if manifest.latest:
+            pkg_path = repo_path / manifest.latest
+            handoff = DesignHandoffPackage.model_validate_json(pkg_path.read_text())
+            
+            # prompt_override 적용 (명시적 --prompt가 없을 때만)
+            if not case_input.prompt and handoff.prompt_override:
+                case_input = case_input.model_copy(update={"prompt": handoff.prompt_override})
+            
+            # reference_notes를 context pack에 포함
+            return {
+                "case_input": case_input,
+                "design_handoff": handoff,  # GraphState에 추가 필요
+            }
+    
+    return {"case_input": case_input, "design_handoff": None}
+```
+
+> **참고:** `GraphState`에 `design_handoff: DesignHandoffPackage | None` 필드를 추가해야 한다.
+> `04-system-design.md`의 GraphState 정의도 함께 업데이트하라.

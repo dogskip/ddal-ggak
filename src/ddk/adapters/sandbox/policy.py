@@ -22,16 +22,16 @@ ENV_WHITELIST: frozenset[str] = frozenset({
     "DDK_LOG_LEVEL",
 })
 
-FORBIDDEN_READ_PATHS: list[str] = [
+FORBIDDEN_READ_PATHS: frozenset[str] = frozenset({
     "~/.ssh/",
     "~/.aws/",
     "~/.config/gcloud/",
     "~/.gnupg/",
     "/etc/shadow",
     "/etc/passwd",
-]
+})
 
-ALLOWED_COMMANDS: list[str] = [
+ALLOWED_COMMANDS: frozenset[str] = frozenset({
     "npm",
     "npx",
     "pnpm",
@@ -41,7 +41,7 @@ ALLOWED_COMMANDS: list[str] = [
     "tsc",
     "vite",
     "git",
-]
+})
 
 
 def is_command_allowed(command: str) -> bool:
@@ -52,9 +52,10 @@ def is_command_allowed(command: str) -> bool:
 
 def is_path_forbidden(path: str | Path) -> bool:
     """Check if a path matches any forbidden read path."""
-    path_str = str(Path(path).expanduser())
+    resolved = Path(path).expanduser().resolve()
+    path_str = str(resolved)
     for forbidden in FORBIDDEN_READ_PATHS:
-        forbidden_expanded = str(Path(forbidden).expanduser())
+        forbidden_expanded = str(Path(forbidden).expanduser().resolve())
         if path_str.startswith(forbidden_expanded):
             return True
     return False

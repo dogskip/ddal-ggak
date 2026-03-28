@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-from datetime import UTC, datetime
-
+from ddk.models.fix import FixAttempt
 from ddk.models.generation import (
     GeneratedArtifactSet,
     GeneratedFile,
@@ -18,7 +16,6 @@ from ddk.models.validation import (
     RuntimeValidationReport,
 )
 from ddk.models.visual import MismatchRegion, VisualRegressionReport
-from ddk.models.fix import FixAttempt
 
 
 class TestGenerationNode:

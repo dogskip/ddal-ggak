@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
-from datetime import datetime, timezone
+from pydantic import ValidationError
 
 from ddk.models._base import DDKBaseModel
+from ddk.models.config import DdalggakConfig, LLMProvider
 from ddk.models.errors import (
     DDKError,
     ErrorCategory,
     ErrorChain,
     ErrorSeverity,
 )
-from ddk.models.config import DdalggakConfig, LLMProvider
 
 
 class TestDDKBaseModel:
@@ -20,7 +22,7 @@ class TestDDKBaseModel:
         class TestModel(DDKBaseModel):
             name: str
 
-        with pytest.raises(Exception):  # ValidationError
+        with pytest.raises(ValidationError):
             TestModel(name="test", unknown_field="bad")
 
     def test_validates_assignment(self):
@@ -28,7 +30,7 @@ class TestDDKBaseModel:
             count: int
 
         m = TestModel(count=5)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             m.count = "not_a_number"  # type: ignore
 
 
@@ -66,7 +68,7 @@ class TestDDKError:
             message="Build failed",
             node="generate",
             detail={"file": "App.tsx"},
-            timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            timestamp=datetime(2025, 1, 1, tzinfo=UTC),
         )
         json_str = original.model_dump_json()
         restored = DDKError.model_validate_json(json_str)
@@ -94,7 +96,7 @@ class TestErrorChain:
                     category=ErrorCategory.BUILD,
                     severity=ErrorSeverity.CRITICAL,
                     message="Fatal",
-                    timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
+                    timestamp=datetime(2025, 1, 1, tzinfo=UTC),
                 ),
             ],
             terminal_state="manual-review-required",

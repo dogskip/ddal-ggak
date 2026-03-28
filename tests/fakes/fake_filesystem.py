@@ -33,9 +33,7 @@ class InMemoryFilesystem:
                 top_level = relative.split("/")[0]
                 if top_level not in seen:
                     seen.add(top_level)
-                    result.append(
-                        Path(key).parent if "/" in relative else Path(key)
-                    )
+                    result.append(path / top_level)
         return sorted(result)
 
     def exists(self, path: Path) -> bool:

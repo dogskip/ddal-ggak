@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import pytest
 from datetime import UTC, datetime
 
-from ddk.models.scorecard import Scorecard
-from ddk.models.release import BlockerItem, ReleaseDecision
-from ddk.models.llm import LLMCallRecord
+import pytest
+
 from ddk.models.evidence import EvidencePack
+from ddk.models.llm import LLMCallRecord
+from ddk.models.release import BlockerItem, ReleaseDecision
+from ddk.models.scorecard import Scorecard
 
 
 class TestScorecard:
@@ -30,7 +31,9 @@ class TestScorecard:
         assert restored.overall == 0.89
 
     def test_scorecard_rejects_out_of_range(self) -> None:
-        with pytest.raises(Exception):  # ValidationError
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
             Scorecard(
                 case_id="case-001",
                 precision=1.5,  # out of range

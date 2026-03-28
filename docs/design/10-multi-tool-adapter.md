@@ -499,8 +499,63 @@ MCP(Model Context Protocol)를 지원하는 모든 AI 도구 (Claude Code, Copil
 
 ```bash
 ddk mcp                      # stdio transport (기본값)
-# HTTP transport는 vNext 범위
+ddk mcp --transport http --port 8765   # HTTP transport (로컬 루프백)
+ddk mcp --transport http --host 0.0.0.0 --port 8765 --auth-mode token  # 외부 노출 시 token 필수
 ```
+
+### MCP 전송 보안 정책
+
+#### stdio transport (기본값, 로컬)
+
+`ddk mcp` (기본값) 또는 `ddk mcp --transport stdio`는 stdio를 통해 통신한다.
+- 로컬 프로세스 간 통신이므로 추가 인증 불필요 (ADR-006 참조)
+- 프로세스 격리가 보안 경계
+
+#### HTTP transport (원격 접근 시)
+
+`ddk mcp --transport http --port <port>` 사용 시 반드시 아래 인증 중 하나를 적용해야 한다.
+
+```python
+# src/ddk/mcp/server.py
+
+MCP_AUTH_MODES = {
+    "none": "로컬 루프백(127.0.0.1)에서만 허용. 외부 IP 바인딩 금지.",
+    "token": "Bearer token 인증. DDK_MCP_TOKEN 환경변수로 설정.",
+    "ssh_tunnel": "SSH 터널을 통한 접근만 허용 (권고 방식).",
+}
+
+async def create_mcp_http_server(
+    host: str = "127.0.0.1",    # 기본값: 루프백만 허용
+    port: int = 8765,
+    auth_mode: str = "none",    # "none" | "token"
+    token: str | None = None,
+) -> None:
+    """
+    MCP HTTP 서버 기동.
+    
+    보안 규칙:
+    1. host가 "0.0.0.0"이면 auth_mode="token"이 필수 (token 없으면 기동 거부)
+    2. host가 "127.0.0.1"이면 auth_mode="none" 허용 (로컬 전용)
+    3. DDK_MCP_TOKEN 환경변수가 설정되어 있으면 모든 요청에서 Bearer 검증
+    """
+    if host != "127.0.0.1" and auth_mode == "none":
+        raise ValueError(
+            "MCP HTTP server: non-loopback host requires auth_mode='token'. "
+            "Set DDK_MCP_TOKEN env var and use --auth-mode token."
+        )
+    if auth_mode == "token" and not token:
+        token = os.environ.get("DDK_MCP_TOKEN")
+        if not token:
+            raise ValueError("auth_mode='token' requires DDK_MCP_TOKEN env var.")
+    ...
+```
+
+| 실행 방법 | 허용 여부 | 이유 |
+|-----------|:--------:|------|
+| `ddk mcp` (stdio, 기본값) | ✅ | 로컬 전용, 인증 불필요 |
+| `ddk mcp --transport http` (loopback) | ✅ | 127.0.0.1 기본값, 로컬 전용 |
+| `ddk mcp --transport http --host 0.0.0.0` | ⚠️ token 필수 | 외부 노출 시 인증 필수 |
+| `ddk mcp --transport http --host 0.0.0.0` (token 없음) | ❌ | 기동 거부 |
 
 ### MCP Server 구조 (`ddk/mcp_server.py`)
 
@@ -610,6 +665,120 @@ async def ddk_status(case_id: str) -> str:
 | `ddk_run` | `{"scorecard": object, "release_decision": object}` | `Scorecard` (12 §12), `ReleaseDecision` |
 | `ddk_rollback` | `{"restored_ref": str, "files_restored": int}` | — |
 | `ddk_status` | `{"current_node": str, "terminal_state": str\|null, "cost_usd": float}` | `GraphState` (12 §GraphState) |
+
+#### MCP Tool Return Type 명세
+
+모든 MCP tool은 아래 JSON 구조를 반환한다.
+
+##### `ddk_run` 반환 타입
+
+```json
+{
+  "case_id": "string",
+  "terminal_state": "certified-ready | certified-blocked | manual-review-required | runtime-failed | visual-mismatch-blocked | fix-budget-exhausted | blocked",
+  "certify_score": 0.0,
+  "evidence_pack_path": "string | null",
+  "fix_attempts_count": 0,
+  "total_cost_usd": 0.0,
+  "total_duration_ms": 0,
+  "error_message": "string | null"
+}
+```
+
+##### `ddk_design` 반환 타입
+
+```json
+{
+  "handoff_id": "string",
+  "status": "completed | quality-flagged | quality-blocked",
+  "quality_score": 0.0,
+  "quality_verdict": "pass | flag | block",
+  "requirements_count": 0,
+  "design_document_path": "string | null",
+  "handoff_package_path": "string"
+}
+```
+
+##### `ddk_certify` 반환 타입
+
+```json
+{
+  "case_id": "string",
+  "release_decision": "ready | blocked | manual-review-required",
+  "scorecard": {
+    "axes": {
+      "build_pass": true,
+      "type_pass": true,
+      "lint_pass": true,
+      "runtime_pass": true,
+      "visual_pass": true
+    },
+    "composite_score": 0.0
+  },
+  "evidence_pack_path": "string",
+  "baseline_comparison": "string | null"
+}
+```
+
+##### `ddk_status` 반환 타입
+
+```json
+{
+  "case_id": "string | null",
+  "current_state": "string",
+  "node": "string | null",
+  "terminal_state": "string | null",
+  "fix_attempts_remaining": 0,
+  "total_cost_usd": 0.0,
+  "elapsed_ms": 0
+}
+```
+
+##### `ddk_rollback` 반환 타입
+
+```json
+{
+  "case_id": "string",
+  "rollback_status": "success | failed | no_checkpoint",
+  "from_ref": "string | null",
+  "to_ref": "string | null",
+  "report": {
+    "files_restored": 0,
+    "failure_code": "string | null"
+  }
+}
+```
+
+##### `ddk_preflight` 반환 타입
+
+```json
+{
+  "status": "green | yellow | red",
+  "checks": [
+    {
+      "name": "string",
+      "status": "pass | fail | warn",
+      "message": "string",
+      "remediation": "string | null"
+    }
+  ],
+  "blocker_count": 0,
+  "warning_count": 0
+}
+```
+
+##### `ddk_visual_check` 반환 타입
+
+```json
+{
+  "case_id": "string",
+  "ssim_score": 0.0,
+  "verdict": "pass | flag | fail",
+  "threshold_used": 0.95,
+  "diff_image_path": "string | null",
+  "grid_scores": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+}
+```
 
 #### 에러 코드 분류
 

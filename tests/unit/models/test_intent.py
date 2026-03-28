@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -10,12 +10,11 @@ from pydantic import ValidationError
 from ddk.models.intent import (
     BoundingBox,
     ComponentSpec,
-    InteractionSpec,
     IntentGraph,
+    InteractionSpec,
     LayoutRegion,
     PropValue,
 )
-
 
 # ── BoundingBox ────────────────────────────────────────────────────
 
@@ -191,7 +190,7 @@ def _make_intent_graph(**overrides) -> IntentGraph:
         ],
         "confidence": 0.85,
         "unresolved_items": ["unclear icon"],
-        "created_at": datetime(2025, 1, 1, tzinfo=timezone.utc),
+        "created_at": datetime(2025, 1, 1, tzinfo=UTC),
     }
     defaults.update(overrides)
     return IntentGraph(**defaults)

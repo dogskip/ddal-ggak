@@ -117,13 +117,16 @@ class PlaywrightBrowserAdapter:
                 error=f"RUNTIME-004: Port {port} not open after {timeout}s",
             )
 
-        # 2단계: HTTP 200 확인
+        # 2단계: HTTP 2xx 확인
+        # 반드시 2xx 응답만 성공으로 처리한다.
+        # status < 500은 404/403도 통과시켜 false positive를 만든다.
+        # dev server가 정상 기동되면 /index.html 또는 / 에서 2xx를 반환한다.
         http_ok = False
         async with aiohttp.ClientSession() as session:
             for _ in range(10):
                 try:
                     async with session.get(url, timeout=aiohttp.ClientTimeout(total=3)) as resp:
-                        if resp.status < 500:
+                        if 200 <= resp.status < 300:
                             http_ok = True
                             break
                 except Exception:

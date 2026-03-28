@@ -14,7 +14,7 @@ class CaseInput(DDKBaseModel):
     prompt: str  # 생성 지시 (1~2000자)
     repo_path: Path  # 대상 repo 루트
     reference_notes: str | None = None  # 추가 컨텍스트
-    visual_reference_paths: list[Path] = Field(default_factory=list)
+    visual_reference_paths: list[Path] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("image_paths")

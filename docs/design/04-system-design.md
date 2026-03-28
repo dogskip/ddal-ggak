@@ -165,6 +165,76 @@ ingest
 - `runtime-failed`
 - `visual-mismatch-blocked`
 - `fix-budget-exhausted`
+- `blocked` — LLM 폴백 소진
+
+## 비LLM 노드 예외 처리 규칙
+
+모든 LangGraph 노드는 LLM 호출 이외의 예외(OS, IO, Permission, Validation 등)가 발생할 경우 아래 규칙을 따른다.
+
+### 노드별 예외 전이 테이블
+
+| 노드 | 예외 유형 | 전이 상태 | 근거 |
+|------|-----------|-----------|------|
+| `ingest` | FileNotFoundError, PermissionError | `manual-review-required` | 입력 파일 접근 불가 — 사람이 확인 필요 |
+| `ingest` | ValidationError (Pydantic) | `manual-review-required` | 잘못된 입력 구조 — 재입력 필요 |
+| `repo_scan` | PermissionError, OSError | `manual-review-required` | 저장소 접근 불가 — 사람이 확인 필요 |
+| `repo_scan` | TimeoutError | `runtime-failed` | scan 시간 초과 — 재시도 가능 |
+| `intent_extract` | LLM 오류 | → `11-llm-interface.md` safe_llm_call 규칙 적용 | LLM 오류는 별도 처리 |
+| `intent_extract` | ValidationError (IntentGraph 파싱) | `manual-review-required` | LLM 응답이 스키마 불일치 3회 이상 |
+| `plan` | ValidationError | `manual-review-required` | 계획 생성 실패 |
+| `generate` | OSError, PermissionError (파일 쓰기) | `manual-review-required` | sandbox 파일 시스템 오류 |
+| `generate` | 부분 생성 후 실패 (partial artifacts) | `manual-review-required` | `generated_artifacts`에 부분 결과 포함. 다음 노드가 None 필드 방어 처리 |
+| `normalize` | OSError | `manual-review-required` | 정규화 파일 접근 오류 |
+| `runtime_validate` | subprocess timeout | `runtime-failed` | sandbox build timeout |
+| `runtime_validate` | WorktreeSandbox 생성 실패 | `manual-review-required` | worktree 생성 실패 — 환경 문제 |
+| `visual_regress` | Playwright 기동 실패 | `manual-review-required` | Playwright 환경 오류 — preflight 재실행 권고 |
+| `visual_regress` | vite dev server 기동 실패 | `runtime-failed` | dev server 오류 — auto_fix 가능 |
+| `auto_fix` | OSError (파일 패치 실패) | `manual-review-required` | 수정 파일 접근 불가 |
+| `certify` | OSError (evidence pack 저장 실패) | `manual-review-required` | 인증 artifact 저장 불가 |
+
+### 공통 규칙
+
+```python
+# 모든 노드의 공통 예외 처리 패턴
+async def _node_wrapper(node_fn, state: GraphState) -> dict:
+    try:
+        return await node_fn(state)
+    except LLMError:
+        # LLM 오류는 safe_llm_call이 처리 — 여기서 재처리 금지
+        raise
+    except (OSError, PermissionError, FileNotFoundError) as e:
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": f"[{node_fn.__name__}] IO/OS error: {type(e).__name__}: {e}",
+            "current_node": node_fn.__name__,
+        }
+    except ValidationError as e:
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": f"[{node_fn.__name__}] Schema validation error: {e.error_count()} errors",
+            "current_node": node_fn.__name__,
+        }
+    except asyncio.TimeoutError:
+        return {
+            "terminal_state": "runtime-failed",
+            "error_message": f"[{node_fn.__name__}] Timeout exceeded",
+            "current_node": node_fn.__name__,
+        }
+    except Exception as e:
+        # 예상치 못한 예외 — 항상 manual-review
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": f"[{node_fn.__name__}] Unexpected error: {type(e).__name__}: {e}",
+            "current_node": node_fn.__name__,
+        }
+```
+
+### 부분 생성(Partial Artifacts) 처리
+
+`generate_node`가 일부 파일만 생성하고 실패한 경우, `GraphState.generated_artifacts`에 부분 결과가 남는다.
+- `normalize_node`와 이후 모든 노드는 `generated_artifacts`의 각 필드를 **None 방어 처리**해야 한다.
+- `generated_artifacts.component_file is None`이면 해당 파일이 없는 것으로 처리한다.
+- partial artifact 상태에서 auto_fix가 실행되면 누락 파일도 repair rule 대상에 포함한다.
 
 ## 6. Closed Loop 정의
 
@@ -545,3 +615,64 @@ GSD의 강점은 범용 orchestration과 process discipline이다. `딸깍`이 �
 6. **reproducibility artifact로 LLM call 추적**
 7. **preflight doctor로 setup 실패를 조기 차단**
 8. 특정 교차 영역에서만 measured superiority를 주장
+
+---
+
+## 구조화 로그 명세
+
+> 운영 환경에서는 JSON 로그를 활성화한다 (`DDK_LOG_FORMAT=json`).
+> 개발 환경에서는 human-readable 포맷을 사용한다 (기본값).
+> 모든 로그는 `33-security-privacy-governance.md §Redaction 구현 명세`의 `RedactingFormatter`를 통과한다.
+
+### 로그 레벨 정책
+
+| 레벨 | 사용 상황 | 예시 |
+|------|-----------|------|
+| `DEBUG` | 개발 시 상세 내부 상태 | context pack 파일 목록, LLM 토큰 수 |
+| `INFO` | 노드 전환, 주요 이벤트 | `"node_start"`, `"node_complete"`, `"checkpoint_created"` |
+| `WARNING` | 예상 범위 이탈, 비치명적 이상 | auto_fix budget 80% 소진, SSIM 임계값 경계 |
+| `ERROR` | 복구 가능한 오류 | LLM provider fallback, 단일 노드 실패 |
+| `CRITICAL` | 시스템 수준 오류 | sandbox 생성 실패, evidence pack 저장 불가 |
+
+### 필수 로그 이벤트
+
+| 이벤트 | 레벨 | 필수 필드 |
+|--------|------|-----------|
+| `node_start` | INFO | `case_id`, `node`, `timestamp` |
+| `node_complete` | INFO | `case_id`, `node`, `duration_ms`, `timestamp` |
+| `node_error` | ERROR | `case_id`, `node`, `error_type`, `error_message`, `terminal_state` |
+| `llm_call` | DEBUG | `case_id`, `provider`, `model`, `input_tokens`, `cost_usd` |
+| `llm_fallback` | WARNING | `case_id`, `from_provider`, `to_provider`, `reason` |
+| `fix_attempt` | INFO | `case_id`, `attempt_n`, `rule_id`, `files_patched` |
+| `checkpoint_created` | INFO | `case_id`, `ref_name` |
+| `rollback_executed` | WARNING | `case_id`, `from_ref`, `to_ref`, `reason` |
+| `visual_ssim_result` | INFO | `case_id`, `ssim_score`, `verdict`, `threshold` |
+| `cost_cap_reached` | WARNING | `case_id`, `total_cost_usd`, `cap_usd` |
+| `manual_review_required` | WARNING | `case_id`, `node`, `reason` |
+| `certify_complete` | INFO | `case_id`, `terminal_state`, `total_duration_ms`, `total_cost_usd` |
+
+### JSON 로그 예시
+
+```json
+{"timestamp": "2025-07-22T10:00:01.123Z", "level": "INFO", "event": "node_start",
+ "case_id": "case-abc123", "node": "intent_extract"}
+
+{"timestamp": "2025-07-22T10:00:05.456Z", "level": "INFO", "event": "node_complete",
+ "case_id": "case-abc123", "node": "intent_extract", "duration_ms": 4333}
+
+{"timestamp": "2025-07-22T10:00:05.460Z", "level": "DEBUG", "event": "llm_call",
+ "case_id": "case-abc123", "provider": "anthropic", "model": "claude-3-5-sonnet-20241022",
+ "input_tokens": 1842, "output_tokens": 612, "cost_usd": 0.0089}
+
+{"timestamp": "2025-07-22T10:00:12.001Z", "level": "WARNING", "event": "fix_attempt",
+ "case_id": "case-abc123", "attempt_n": 1, "rule_id": "FX-TYPE-IMPORT-001",
+ "files_patched": ["src/components/UserCard.tsx"]}
+```
+
+### 환경 변수
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `DDK_LOG_LEVEL` | `INFO` | 로그 레벨 |
+| `DDK_LOG_FORMAT` | `text` | `text` 또는 `json` |
+| `DDK_LOG_REDACT` | `true` | redaction 활성화 여부 (비활성화 금지 권고) |

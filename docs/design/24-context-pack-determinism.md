@@ -57,6 +57,39 @@ sort_key = (
 
 ---
 
+## 파일 타입별 Priority 매핑 테이블
+
+context pack 빌더는 아래 우선순위 규칙에 따라 파일을 선택한다.
+budget(300 lines) 초과 시 낮은 priority 파일부터 제외한다.
+동일 priority 내에서는 파일 경로의 lexicographic 순서로 정렬한다.
+
+| Priority | 파일 패턴 | 이유 |
+|----------|-----------|------|
+| P1 (최고) | `src/App.tsx`, `src/App.jsx`, `src/main.tsx`, `src/main.jsx` | 진입점 — 컴포넌트 트리 루트 |
+| P1 | `src/index.tsx`, `src/index.jsx` | 또 다른 진입점 패턴 |
+| P1 | `package.json` | 의존성/스크립트 — 빌드 도구 파악 필수 |
+| P2 (높음) | `tsconfig.json`, `tsconfig.*.json` | TypeScript 설정 — import 경로 해석 |
+| P2 | `vite.config.ts`, `vite.config.js` | 빌드 설정 — alias/plugin 파악 |
+| P2 | 실패한 파일 (runtime/type/lint 오류가 발생한 파일) | auto_fix 대상 — 반드시 포함 |
+| P3 (중간) | `src/**/*.tsx`, `src/**/*.jsx` (import된 컴포넌트) | 직접 import된 컴포넌트 |
+| P3 | `src/**/*.ts`, `src/**/*.js` (import된 유틸) | 직접 import된 유틸 |
+| P3 | `src/types/*.ts`, `src/types.ts` | 타입 정의 |
+| P4 (낮음) | `src/**/*.css`, `src/**/*.module.css` | 스타일 — 타입 오류와 무관 |
+| P4 | `src/**/*.scss`, `src/**/*.sass` | 스타일 전처리기 |
+| P4 | `*.config.js`, `*.config.ts` (기타) | 기타 설정 파일 |
+| P5 (최저) | `README.md`, `*.md` | 문서 — 코드 생성에 참조용 |
+| P5 | `public/**` | 정적 자산 — 코드 생성에 거의 불필요 |
+
+### 특수 규칙
+
+1. **실패 파일 강제 포함**: P2 우선순위에 있는 "실패한 파일"은 budget 부족 시에도 P1 파일 다음으로 반드시 포함한다.
+2. **동적 우선순위 승격**: auto_fix 재시도 시 이전 시도에서 수정된 파일은 P1으로 임시 승격한다.
+3. **최대 파일 수**: P 우선순위와 무관하게 최대 6개 파일만 포함 (budget 내라도 초과 불가).
+4. **`node_modules` 제외**: 어떤 priority도 `node_modules/**` 파일을 포함하지 않는다.
+5. **binary 파일 제외**: `.png`, `.jpg`, `.gif`, `.woff`, `.ttf` 등 바이너리 파일은 제외한다.
+
+---
+
 ## 4. Chunking Rules
 
 ### 4.1 기본 chunk 순서

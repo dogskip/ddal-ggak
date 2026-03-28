@@ -19,7 +19,7 @@ class ReleaseDecision(DDKBaseModel):
     case_id: str
     decision: Literal["ready", "blocked", "manual-review"]
     scorecard_ref: str | None = None
-    blockers: list[BlockerItem] = Field(default_factory=list)
+    blockers: list[BlockerItem] = []
     summary: str = ""
     approved_at: datetime | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

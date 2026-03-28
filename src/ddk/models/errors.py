@@ -42,7 +42,7 @@ class DDKError(DDKBaseModel):
 
 class ErrorChain(DDKBaseModel):
     case_id: str
-    errors: list[DDKError] = Field(default_factory=list)
+    errors: list[DDKError] = []
     terminal_state: str | None = None
 
     @property

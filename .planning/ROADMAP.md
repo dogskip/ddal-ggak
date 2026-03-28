@@ -31,9 +31,9 @@ Plans:
 - [x] 01-02-PLAN.md — Data models: CaseInput, RepoProfile, IntentGraph, Design Studio (18 models)
 - [x] 01-03-PLAN.md — Data models: Pipeline & Output (16 models incl. LLMCallRecord)
 - [x] 01-04-PLAN.md — 7 adapter Protocols + sandbox policy definitions
-- [ ] 01-05-PLAN.md — 8 test doubles (fakes) + chaos fixtures
-- [ ] 01-06-PLAN.md — GraphState TypedDict, ServiceContainer DI, structured logging, secret redaction
-- [ ] 01-07-PLAN.md — WorkspaceManager, PreflightDoctor, ddk CLI (doctor, init)
+- [x] 01-05-PLAN.md — 8 test doubles (fakes) + chaos fixtures
+- [x] 01-06-PLAN.md — GraphState TypedDict, ServiceContainer DI, structured logging, secret redaction
+- [x] 01-07-PLAN.md — WorkspaceManager, PreflightDoctor, ddk CLI (doctor, init)
 
 ### Phase 2: Ingestion & Analysis
 **Goal**: 디자인 시안(이미지+프롬프트)을 받아 5단계 분석(intake → repo scan → intent → design system → plan)을 거쳐 검증된 GenerationPlan을 출력한다 — 첫 LLM 호출 Phase로 비용 추적과 구조화 출력 파싱 패턴을 확립

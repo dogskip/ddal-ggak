@@ -31,7 +31,7 @@ class DesignTokens(DDKBaseModel):
     # {"primary": "#3B82F6", "secondary": "#6B7280", ...}
     spacing: dict[str, str] = Field(default_factory=dict)
     # {"xs": "0.25rem", "sm": "0.5rem", "md": "1rem", ...}
-    typography: dict[str, dict] = Field(default_factory=dict)
+    typography: dict[str, dict[str, str]] = Field(default_factory=dict)
     # {"heading1": {"size": "2rem", "weight": "700"}, ...}
     breakpoints: dict[str, str] = Field(default_factory=dict)
     # {"sm": "640px", "md": "768px", "lg": "1024px", ...}

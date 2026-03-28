@@ -134,6 +134,269 @@
 8. sandbox runner -> command allowlist enforcement
 9. scorecard service -> release decision
 
+## 통합 테스트 모킹 전략
+
+> 이 섹션이 없으면 통합 테스트 작성자마다 서로 다른 방식으로 mock을 만들어 테스트가 신뢰되지 않는다.
+> 아래 계약을 반드시 준수하라.
+
+### 원칙
+
+1. **단위 테스트**: 모든 외부 의존성을 mock한다.
+2. **통합 테스트**: 한 단계 위 경계만 실제 구현 사용, 나머지는 fake 사용.
+3. **E2E 테스트**: fixture 저장소 + fake LLM + real sandbox + real Playwright.
+
+### Seam별 Mock 계약
+
+#### Seam 1 — LLMAdapter
+
+```python
+# tests/fakes/fake_llm_adapter.py
+
+from ddk.adapters.llm.base import LLMAdapter
+from ddk.models.llm import LLMResponse
+
+class FakeLLMAdapter(LLMAdapter):
+    """
+    결정론적 응답을 반환하는 LLM 어댑터 fake.
+    
+    사용법:
+        adapter = FakeLLMAdapter(responses={"intent_extract": INTENT_GRAPH_FIXTURE})
+        # key는 system prompt의 첫 단어 또는 fixture 파일명 기반
+    """
+
+    def __init__(self, responses: dict[str, dict] | None = None):
+        self.responses = responses or {}
+        self.call_log: list[dict] = []
+
+    async def complete_structured(
+        self, messages: list[dict], output_schema: type, **kwargs
+    ) -> dict:
+        key = self._extract_key(messages)
+        self.call_log.append({"key": key, "messages": messages})
+        if key not in self.responses:
+            raise ValueError(f"FakeLLMAdapter: no fixture for key '{key}'. Add to responses dict.")
+        return self.responses[key]
+
+    def _extract_key(self, messages: list[dict]) -> str:
+        """system prompt 첫 단어를 key로 사용."""
+        for msg in messages:
+            if msg.get("role") == "system":
+                return msg["content"].split()[0].lower()
+        return "default"
+```
+
+#### Seam 2 — WorktreeSandbox
+
+```python
+# tests/fakes/fake_sandbox.py
+
+import tempfile
+from pathlib import Path
+from ddk.sandbox.worktree import WorktreeSandbox
+
+class TempDirSandbox(WorktreeSandbox):
+    """
+    실제 git worktree 대신 임시 디렉토리를 사용하는 sandbox fake.
+    
+    - 실제 파일 I/O는 수행 (tempfile.mkdtemp)
+    - git 연산은 수행하지 않음
+    - CommandAllowlist + ENV_WHITELIST는 실제와 동일하게 적용
+    """
+
+    def __enter__(self) -> Path:
+        self._tmpdir = tempfile.mkdtemp(prefix="ddk-test-sandbox-")
+        return Path(self._tmpdir)
+
+    def __exit__(self, *args):
+        import shutil
+        shutil.rmtree(self._tmpdir, ignore_errors=True)
+
+    def create_checkpoint(self, ref_name: str) -> str:
+        """git checkpoint 대신 timestamp 기반 ID 반환."""
+        import time
+        return f"fake-checkpoint-{int(time.time())}"
+```
+
+#### Seam 3 — PlaywrightBrowserAdapter
+
+```python
+# tests/fakes/fake_playwright_adapter.py
+
+from pathlib import Path
+from ddk.adapters.playwright import PlaywrightBrowserAdapter
+from ddk.models.visual import VisualRegressionReport
+
+class FakePlaywrightAdapter(PlaywrightBrowserAdapter):
+    """
+    Playwright 없이 고정된 screenshot + SSIM 결과를 반환하는 fake.
+    
+    사용법:
+        adapter = FakePlaywrightAdapter(ssim_score=0.97)  # pass
+        adapter = FakePlaywrightAdapter(ssim_score=0.82)  # fail
+    """
+
+    def __init__(self, ssim_score: float = 0.97, screenshot_path: Path | None = None):
+        self.ssim_score = ssim_score
+        self.screenshot_path = screenshot_path or Path("tests/fixtures/fake_screenshot.png")
+
+    async def capture_screenshot(self, url: str, **kwargs) -> Path:
+        return self.screenshot_path
+
+    async def compute_ssim(self, actual: Path, reference: Path) -> float:
+        return self.ssim_score
+```
+
+#### Seam 4 — FileSystem (repo 파일 읽기)
+
+```python
+# tests/helpers/fs_helpers.py
+
+from pathlib import Path
+import tempfile, shutil
+
+def make_test_repo(files: dict[str, str]) -> Path:
+    """
+    테스트용 임시 저장소 생성.
+    
+    사용법:
+        repo = make_test_repo({
+            "src/App.tsx": "export default function App() { return <div>Hello</div>; }",
+            "package.json": '{"name": "test", "scripts": {"build": "vite build"}}',
+        })
+    """
+    tmpdir = Path(tempfile.mkdtemp(prefix="ddk-test-repo-"))
+    for rel_path, content in files.items():
+        full_path = tmpdir / rel_path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(content, encoding="utf-8")
+    return tmpdir
+```
+
+#### Seam 5 — subprocess (build/typecheck/lint)
+
+```python
+# tests/fakes/fake_subprocess.py
+
+class FakeSubprocessRunner:
+    """
+    실제 subprocess 실행 없이 고정 결과 반환.
+    
+    사용법:
+        runner = FakeSubprocessRunner(results={
+            "npm run build": (0, "", ""),         # (returncode, stdout, stderr)
+            "npx tsc --noEmit": (1, "", "error TS2322: ..."),
+        })
+    """
+
+    def __init__(self, results: dict[str, tuple[int, str, str]]):
+        self.results = results
+        self.calls: list[str] = []
+
+    def run(self, cmd: list[str], **kwargs) -> tuple[int, str, str]:
+        key = " ".join(cmd)
+        self.calls.append(key)
+        return self.results.get(key, (0, "", ""))
+```
+
+#### Seam 6 — LLMFallbackChain
+
+```python
+# tests/fakes/fake_fallback_chain.py
+
+from ddk.adapters.llm.fallback import LLMFallbackChain
+
+class FakeFallbackChain(LLMFallbackChain):
+    """
+    폴백 체인 동작 테스트용 fake.
+    
+    사용법:
+        # 모든 provider 실패 시뮬레이션
+        chain = FakeFallbackChain(fail_all=True)
+        # 2번째 provider까지 실패, 3번째 성공
+        chain = FakeFallbackChain(fail_count=2, success_response=FIXTURE)
+    """
+
+    def __init__(self, fail_all: bool = False, fail_count: int = 0, success_response: dict | None = None):
+        self.fail_all = fail_all
+        self.fail_count = fail_count
+        self.success_response = success_response
+        self._attempt = 0
+
+    async def complete_structured(self, messages, output_schema, **kwargs):
+        self._attempt += 1
+        if self.fail_all or self._attempt <= self.fail_count:
+            from ddk.adapters.llm.errors import LLMProviderError
+            raise LLMProviderError(f"Simulated provider failure #{self._attempt}")
+        return self.success_response
+```
+
+#### Seam 7 — RollbackController
+
+```python
+# tests/fakes/fake_rollback.py
+
+from ddk.sandbox.rollback import RollbackController
+
+class FakeRollbackController(RollbackController):
+    """
+    실제 git ref 없이 rollback 이력을 in-memory로 관리.
+    
+    사용법:
+        controller = FakeRollbackController()
+        ref = controller.create_checkpoint("test-checkpoint")
+        controller.rollback_to(ref)  # noop — in-memory만 갱신
+    """
+
+    def __init__(self):
+        self.checkpoints: list[str] = []
+        self.rollback_log: list[str] = []
+
+    def create_checkpoint(self, name: str) -> str:
+        ref = f"refs/ddk/fake/{name}"
+        self.checkpoints.append(ref)
+        return ref
+
+    def rollback_to(self, ref: str) -> None:
+        self.rollback_log.append(ref)
+```
+
+#### Seam 8 — CostTracker
+
+```python
+# tests/fakes/fake_cost_tracker.py
+
+class FakeCostTracker:
+    """비용 집계를 skip하는 fake. 항상 0.0 반환."""
+
+    def record(self, model: str, input_tokens: int, output_tokens: int) -> float:
+        return 0.0
+
+    def total_cost_usd(self) -> float:
+        return 0.0
+```
+
+### 통합 테스트 레이어별 fake 조합 권고
+
+| 테스트 레이어 | LLMAdapter | WorktreeSandbox | PlaywrightAdapter | subprocess | 비고 |
+|--------------|:----------:|:---------------:|:-----------------:|:----------:|------|
+| 단위 테스트 (node) | FakeLLMAdapter | TempDirSandbox | FakePlaywrightAdapter | FakeSubprocessRunner | 모든 의존성 fake |
+| 통합 테스트 (graph) | FakeLLMAdapter | **TempDirSandbox (실제 I/O)** | FakePlaywrightAdapter | **실제 subprocess** | sandbox는 실제, LLM은 fake |
+| 계약 테스트 | FakeLLMAdapter (schema 검증용) | TempDirSandbox | FakePlaywrightAdapter | FakeSubprocessRunner | 입출력 계약 검증 |
+| E2E 테스트 | FakeLLMAdapter (fixture 기반) | **실제 WorktreeSandbox** | **실제 Playwright** | **실제 subprocess** | fixture repo 사용 |
+
+### Fixture 위치 규칙
+
+```
+tests/
+  fakes/              # 위 fake 구현체들
+  helpers/            # fs_helpers.py 등 유틸
+  fixtures/
+    intent_graphs/    # IntentGraph JSON fixtures (LLM 응답 대체)
+    repo_snapshots/   # make_test_repo 입력용 파일 집합
+    screenshots/      # FakePlaywrightAdapter 반환용 PNG
+    case_inputs/      # CaseInput JSON fixtures
+```
+
 ## 9. 구현 순서 권장안
 
 1. workspace + schema + artifacts

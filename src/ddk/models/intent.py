@@ -35,7 +35,7 @@ class LayoutRegion(DDKBaseModel):
         "other",
     ]
     bounds: BoundingBox
-    children: list[str] = Field(default_factory=list)  # child region IDs
+    children: list[str] = []  # child region IDs
     semantic_label: str | None = None  # "사용자 프로필", "검색 결과" 등
 
 
@@ -50,7 +50,7 @@ class ComponentSpec(DDKBaseModel):
     id: str  # "comp-001", "comp-login-btn" 등
     component_type: str  # "Button", "Input", "Card", "Table" 등
     props: dict[str, PropValue] = Field(default_factory=dict)
-    children: list[ComponentSpec] = Field(default_factory=list)
+    children: list[ComponentSpec] = []
     region_id: str | None = None  # 속한 LayoutRegion ID
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     notes: str | None = None  # 추가 추론 메모
@@ -86,6 +86,6 @@ class IntentGraph(DDKBaseModel):
     interactions: list[InteractionSpec]
     confidence: float = Field(ge=0.0, le=1.0)
     # 전체 추출 신뢰도 (0.0 = 완전 불확실, 1.0 = 확실)
-    unresolved_items: list[str] = Field(default_factory=list)
+    unresolved_items: list[str] = []
     # 추출 실패 항목 설명 문자열
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

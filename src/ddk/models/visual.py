@@ -23,6 +23,6 @@ class VisualRegressionReport(DDKBaseModel):
     ssim_score: float = Field(ge=0.0, le=1.0)
     threshold: float = Field(default=0.92, ge=0.0, le=1.0)
     pass_result: bool
-    mismatch_regions: list[MismatchRegion] = Field(default_factory=list)
+    mismatch_regions: list[MismatchRegion] = []
     diff_image_path: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

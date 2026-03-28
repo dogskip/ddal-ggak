@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -16,7 +16,6 @@ from ddk.models.repo import (
     RepoProfile,
 )
 
-
 # ── CaseInput ──────────────────────────────────────────────────────
 
 
@@ -28,7 +27,7 @@ def _make_case_input(**overrides) -> CaseInput:
         "repo_path": Path("/tmp/my-app"),
         "reference_notes": "다크 모드 지원",
         "visual_reference_paths": [Path("ref1.png"), Path("ref2.png")],
-        "created_at": datetime(2025, 1, 1, tzinfo=timezone.utc),
+        "created_at": datetime(2025, 1, 1, tzinfo=UTC),
     }
     defaults.update(overrides)
     return CaseInput(**defaults)

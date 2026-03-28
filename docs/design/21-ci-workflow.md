@@ -231,6 +231,71 @@ jobs:
 
 ---
 
+## 스테이징 환경 정의
+
+> `ddk`는 웹 서버가 없는 로컬 CLI 도구이므로 별도의 배포 환경이 필요 없다.
+> "스테이징"은 CI에서 실제 fixture 저장소 대상으로 전체 통합 테스트를 실행하는 것을 의미한다.
+
+### CI staging gate 정의
+
+```yaml
+# .github/workflows/ci.yml 내 staging job
+
+staging:
+  name: Staging Integration
+  runs-on: ubuntu-latest
+  needs: [integration]          # integration job 통과 후 실행
+  environment: staging          # GitHub Environment: staging (branch protection 연동)
+  if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+    - name: Install dependencies
+      run: uv sync --all-extras
+    - name: Setup fixture repository
+      run: |
+        git clone https://github.com/ddalggak/fixture-react-vite tests/e2e/fixture-repo
+        # 또는 로컬 fixture 생성: python scripts/create_fixture_repo.py
+    - name: Run E2E tests (staging)
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_STAGING }}
+        DDK_LOG_FORMAT: json
+        DDK_TEST_MODE: "true"       # FakeLLMAdapter 사용 (실제 API 호출 없음)
+      run: |
+        uv run pytest tests/e2e/ -m "staging" -v --timeout=300
+    - name: Upload E2E artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-evidence-${{ github.run_id }}
+        path: tests/e2e/output/
+```
+
+### 환경 변수 (GitHub Secrets)
+
+| Secret | 용도 | 필수 |
+|--------|------|:----:|
+| `ANTHROPIC_API_KEY` | 실제 LLM 호출 (E2E only) | E2E에만 필요 |
+| `ANTHROPIC_API_KEY_STAGING` | staging LLM 호출 | staging에만 필요 |
+| `OPENAI_API_KEY` | fallback provider | 선택 |
+
+> **보안 주의:** API 키는 절대 `.env` 파일로 저장소에 커밋하지 않는다.
+> CI에서는 GitHub Secrets만 사용한다.
+
+### 로컬 개발 환경에서의 staging 재현
+
+```bash
+# 로컬에서 staging 환경 재현
+DDK_TEST_MODE=true uv run pytest tests/e2e/ -m "staging" -v
+```
+
+---
+
 ## 2. Release Workflow (`.github/workflows/release.yml`)
 
 ```yaml

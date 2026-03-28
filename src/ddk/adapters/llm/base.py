@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
 
+def _empty_metadata() -> dict[str, Any]:
+    return {}
+
+
 @dataclass
 class Message:
     """A single message in an LLM conversation."""
@@ -23,7 +27,7 @@ class LLMCallConfig:
     max_tokens: int = 4096
     seed: int | None = None
     response_format: type | None = None  # Pydantic model for structured output
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=_empty_metadata)
 
 
 @dataclass

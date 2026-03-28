@@ -2,21 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
 
-from ddk.models.design_interview import InterviewTurn
-from ddk.models.design_requirement import DesignRequirement
-from ddk.models.design_document import DesignDocument
 from ddk.models.design_compliance import (
     ComplianceCheckItem,
     StandardsComplianceResult,
 )
-from ddk.models.design_quality import QualityAxisScore, QualityGateScore
+from ddk.models.design_document import DesignDocument
+from ddk.models.design_interview import InterviewTurn
 from ddk.models.design_package import DesignPackageManifest
-
+from ddk.models.design_quality import QualityAxisScore, QualityGateScore
+from ddk.models.design_requirement import DesignRequirement
 
 # ── InterviewTurn ──────────────────────────────────────────────────
 
@@ -27,7 +26,7 @@ def test_interview_turn_roundtrip():
         speaker="user",
         message="로그인 화면에 소셜 로그인 버튼이 필요합니다",
         extracted_requirements=["REQ-001", "REQ-003"],
-        timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        timestamp=datetime(2025, 1, 1, tzinfo=UTC),
     )
     json_str = turn.model_dump_json()
     restored = InterviewTurn.model_validate_json(json_str)
@@ -291,7 +290,7 @@ def _make_design_package_manifest() -> DesignPackageManifest:
         turn_id="IT-001",
         speaker="user",
         message="로그인 화면 필요",
-        timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        timestamp=datetime(2025, 1, 1, tzinfo=UTC),
     )
     req = DesignRequirement(
         req_id="REQ-001",
@@ -334,7 +333,7 @@ def _make_design_package_manifest() -> DesignPackageManifest:
         compliance_results=[compliance],
         quality_gate=quality,
         interview_log=[turn],
-        created_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        created_at=datetime(2025, 1, 1, tzinfo=UTC),
     )
 
 
@@ -367,7 +366,7 @@ def test_design_package_rejects_empty_requirements():
                 verdict="pass",
             ),
             interview_log=[],
-            created_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2025, 1, 1, tzinfo=UTC),
         )
 
 
@@ -393,5 +392,5 @@ def test_design_package_rejects_empty_documents():
                 verdict="pass",
             ),
             interview_log=[],
-            created_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2025, 1, 1, tzinfo=UTC),
         )

@@ -273,7 +273,8 @@ from typing import TypedDict, Optional
 from ddk.models import (
     CaseInput, RepoProfile, IntentGraph, GenerationPlan,
     GeneratedArtifactSet, NormalizationReport, RuntimeValidationReport,
-    VisualRegressionReport, FixAttempt, Scorecard, ReleaseDecision, EvidencePack
+    VisualRegressionReport, FixAttempt, Scorecard, ReleaseDecision, EvidencePack,
+    DesignHandoffPackage,
 )
 
 class GraphState(TypedDict):
@@ -291,6 +292,12 @@ class GraphState(TypedDict):
     scorecard: Optional[Scorecard]
     release_decision: Optional[ReleaseDecision]
     evidence_pack: Optional[EvidencePack]
+
+    # Design Studio → Delivery 핸드오프
+    # Design Studio graph의 package_handoff_node가 생성한 DesignHandoffPackage를
+    # Delivery graph의 ingest_node가 읽어 CaseInput으로 변환한다.
+    # ddk run <design_output_dir> 호출 시 CLI가 이 필드를 초기화한다.
+    design_handoff: Optional[DesignHandoffPackage]
 
     # Control flow
     retry_budget_remaining: int

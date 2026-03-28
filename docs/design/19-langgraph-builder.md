@@ -387,6 +387,42 @@ async def certify_node(state: GraphState) -> dict:
     }
 ```
 
+### 2.x 노드 공통 예외 처리 wrapper
+
+모든 노드는 `04-system-design.md §비LLM 노드 예외 처리 규칙`의 `_node_wrapper`를 통해 등록된다.
+
+```python
+# src/ddk/graph/builder.py — 노드 등록 시
+
+def build_ddk_graph() -> "CompiledGraph":
+    workflow = StateGraph(GraphState)
+    
+    # 모든 노드를 _node_wrapper로 감싸서 등록
+    workflow.add_node("ingest", partial(_node_wrapper, ingest_node))
+    workflow.add_node("repo_scan", partial(_node_wrapper, repo_scan_node))
+    workflow.add_node("intent_extract", partial(_node_wrapper, intent_extract_node))
+    workflow.add_node("plan", partial(_node_wrapper, plan_node))
+    workflow.add_node("generate", partial(_node_wrapper, generate_node))
+    workflow.add_node("normalize", partial(_node_wrapper, normalize_node))
+    workflow.add_node("runtime_validate", partial(_node_wrapper, runtime_validate_node))
+    workflow.add_node("visual_regress", partial(_node_wrapper, visual_regress_node))
+    workflow.add_node("auto_fix", partial(_node_wrapper, auto_fix_node))
+    workflow.add_node("certify", partial(_node_wrapper, certify_node))
+    ...
+```
+
+각 conditional edge 함수는 `state.terminal_state is not None`을 먼저 확인하고 즉시 `END`로 라우팅한다.
+
+```python
+# src/ddk/graph/edges.py — 모든 conditional edge에 추가
+
+def route_after_validate(state: GraphState) -> str:
+    # 예외로 인한 terminal state 우선 처리
+    if state.get("terminal_state") is not None:
+        return END
+    ...
+```
+
 ---
 
 ## 3. Edge 조건 함수
@@ -588,7 +624,9 @@ class DesignStudioState(TypedDict):
     project_context: str | None                    # 프로젝트 배경 정보
     # ── 인터뷰 ──
     interview_turns: list[InterviewTurn]           # 인터뷰 대화 이력
+    interview_turn_count: int                      # 현재까지 진행된 인터뷰 턴 수
     interview_complete: bool                       # 인터뷰 완료 여부
+    max_interview_turns: int                       # 인터뷰 최대 턴 수 (P0=5, P1~=20)
     # ── 요구사항 ──
     requirements: list[DesignRequirement]          # 추출된 요구사항
     # ── 표준 매핑 ──
@@ -997,10 +1035,15 @@ class InterviewBudgetController:
 
     포화(saturation)란 최근 N턴 동안 새로운 요구사항이
     전혀 추출되지 않는 상태를 의미한다.
+
+    Phase별 기본값:
+    - P0 prototype: max_turns = 5 (단순 단일 기능 검증용)
+    - P1~P5: max_turns = 20 (복합 기능, 표준 준수 요구)
     """
 
-    MAX_TURNS: int = 20
-    SATURATION_WINDOW: int = 3  # 최근 N턴 동안 새 REQ 없으면 포화
+    MAX_TURNS: int = 20          # 전체 범위 상한
+    MAX_TURNS_P0: int = 5        # P0 prototype 기본값
+    SATURATION_WINDOW: int = 3
 
     def __init__(self, max_turns: int | None = None):
         self.max_turns = max_turns or self.MAX_TURNS
@@ -1044,7 +1087,11 @@ def initial_design_state(idea: str, project_context: str | None = None) -> Desig
         idea=idea,
         project_context=project_context,
         interview_turns=[],
+        interview_turn_count=0,
         interview_complete=False,
+        # P0 prototype 기본값 = InterviewBudgetController.MAX_TURNS_P0 (5)
+        # P1~P5 실행 시 호출자가 max_interview_turns=20 을 명시적으로 전달
+        max_interview_turns=5,
         requirements=[],
         target_doc_types=[],
         standard_mappings={},
@@ -1319,6 +1366,89 @@ async def node_package_handoff(state: DesignStudioState) -> DesignStudioState:
     return state
 ```
 
+### `_save_package_artifacts()` 헬퍼 명세
+
+`package_handoff_node`가 내부적으로 호출하는 비동기 헬퍼. 워크스페이스 디렉토리에 아티팩트를 저장하고 `DesignHandoffPackage`를 반환한다.
+
+```python
+# src/ddk/nodes/design_studio/package_handoff.py (continued)
+
+from pathlib import Path
+from ddk.models import (
+    DesignHandoffPackage, HandoffManifest,
+    DesignDocument, RequirementSet, StandardsResult, QualityScore,
+)
+import json
+
+async def _save_package_artifacts(
+    workspace: Path,
+    document: DesignDocument,
+    manifest: HandoffManifest,
+    requirements: RequirementSet,
+    standards: list[StandardsResult],
+    quality: QualityScore,
+) -> DesignHandoffPackage:
+    """
+    Design Studio 결과물을 workspace/design-output/ 하위에 저장한다.
+
+    디렉토리 레이아웃:
+        {workspace}/design-output/
+            manifest.json          # HandoffManifest (JSON)
+            design-document.md     # DesignDocument 마크다운 본문
+            requirements.json      # RequirementSet (JSON)
+            standards.json         # list[StandardsResult] (JSON)
+            quality.json           # QualityScore (JSON)
+
+    반환값: DesignHandoffPackage
+        - design_output_dir: Path  — 저장된 디렉토리 경로
+        - manifest: HandoffManifest
+        - design_document_path: Path  — design-document.md 절대 경로
+        - requirements_path: Path     — requirements.json 절대 경로
+        - quality_verdict: str        — "pass" | "flag" | "block"
+
+    예외 처리:
+        - IOError / PermissionError → 호출자(package_handoff_node)에서
+          _node_wrapper가 TERMINAL_STATE = "package_save_error"로 전이
+        - workspace가 존재하지 않으면 mkdir(parents=True, exist_ok=True) 수행
+    """
+    output_dir = workspace / "design-output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. manifest 저장
+    (output_dir / "manifest.json").write_text(
+        manifest.model_dump_json(indent=2), encoding="utf-8"
+    )
+
+    # 2. design document 저장
+    doc_path = output_dir / "design-document.md"
+    doc_path.write_text(document.to_markdown(), encoding="utf-8")
+
+    # 3. requirements 저장
+    req_path = output_dir / "requirements.json"
+    req_path.write_text(requirements.model_dump_json(indent=2), encoding="utf-8")
+
+    # 4. standards 저장
+    (output_dir / "standards.json").write_text(
+        json.dumps([s.model_dump() for s in standards], indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    # 5. quality 저장
+    (output_dir / "quality.json").write_text(
+        quality.model_dump_json(indent=2), encoding="utf-8"
+    )
+
+    return DesignHandoffPackage(
+        design_output_dir=output_dir,
+        manifest=manifest,
+        design_document_path=doc_path,
+        requirements_path=req_path,
+        quality_verdict=quality.verdict,
+    )
+```
+
+> **Delivery 연동:** `ddk run <design_output_dir>` 호출 시 CLI가 `DesignHandoffPackage.from_dir(design_output_dir)`로 패키지를 로드해 `GraphState.design_handoff`에 주입한다. `ingest_node`는 이 필드가 있으면 `design_output_dir/requirements.json`을 `CaseInput.requirements`로 변환해 사용한다 (상세: `12-data-models.md` § Design Studio ↔ Delivery 핸드오프 모델).
+
 ### Edge Conditions 상세
 
 ```python
@@ -1332,11 +1462,16 @@ def should_continue_interview(state: DesignStudioState) -> str:
         return "requirements_extract"  # 질문 소진
     return "interview"  # 계속
 
+MAX_SYNTHESIS_ATTEMPTS: int = 1  # doc_synthesize 재시도 최대 1회
+
 def should_pass_quality(state: DesignStudioState) -> str:
-    """품질 게이트 통과 여부 결정."""
-    if state.quality_score is None:
+    """품질 게이트 통과 여부 결정. 재합성은 최대 MAX_SYNTHESIS_ATTEMPTS회로 제한."""
+    if state.get("quality_score") is None:
         return "quality_gate"  # 아직 평가 안 됨
-    if state.quality_score.verdict == "block":
-        return "doc_synthesize"  # 재생성 (최대 1회)
+    if state["quality_score"].verdict == "block":
+        # 재합성 횟수 초과 시 package_handoff로 강제 진행 (flagged 상태)
+        if state.get("synthesis_attempts", 0) >= MAX_SYNTHESIS_ATTEMPTS:
+            return "package_handoff"  # 최대 재시도 초과 → flagged 상태로 진행
+        return "doc_synthesize"  # 재생성
     return "package_handoff"  # pass 또는 flag
 ```

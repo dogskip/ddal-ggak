@@ -362,6 +362,25 @@ ddk run
     --apply
 ```
 
+**재실행(Idempotency) 정책:**
+
+동일한 `case_id`로 `ddk run`을 재실행하면:
+- **기본 동작**: `CaseConflictError` 오류 발생 및 exit code 1 반환.
+  - 오류 메시지: `"Case '{case_id}' already exists. Use --force to overwrite or --resume to continue."`
+- **`--force` 플래그**: 기존 케이스를 삭제하고 처음부터 재실행.
+- **`--resume` 플래그**: 가장 마지막 체크포인트에서 재개. (Phase 1에서 구현 예정)
+
+```
+ddk run --prompt "..." --screenshot img.png --repo . --force     # 덮어쓰기
+ddk run --prompt "..." --screenshot img.png --repo . --resume    # 재개 (Phase 1)
+```
+
+| 플래그 | 동작 | 기존 데이터 |
+|--------|------|------------|
+| 없음 | error 반환 | 유지 |
+| `--force` | 처음부터 재실행 | **삭제** |
+| `--resume` | 체크포인트에서 재개 | 유지 |
+
 ---
 
 ## 12. `ddk design`
@@ -598,3 +617,65 @@ def ingest(
 
 # ... 나머지 서브커맨드
 ```
+
+---
+
+## 17. `ddk review`
+
+**목적:** `manual-review-required` 또는 `policy-review-required` 상태의 케이스에 대해 운영자가 검토 결과를 시스템에 주입한다.
+
+**사용법:**
+```
+ddk review accept <case_id> [--reason <text>]
+ddk review reject <case_id> [--reason <text>] [--suggest <text>]
+ddk review status <case_id>
+```
+
+**서브커맨드:**
+
+| 서브커맨드 | 동작 |
+|-----------|------|
+| `accept` | manual-review 상태를 통과시켜 다음 노드(certify)로 전환 |
+| `reject` | 케이스를 `certified-blocked`로 종료. reason이 evidence pack에 기록됨 |
+| `status` | 현재 케이스 상태 및 manual-review artifact 출력 |
+
+**인수:**
+
+| 인수 | 필수 | 기본값 | 설명 |
+|------|:----:|--------|------|
+| `case_id` | ✓ | — | 검토 대상 케이스 ID |
+| `--reason` | ✗ | `""` | 검토 이유 (evidence pack에 기록) |
+| `--suggest` | ✗ | `""` | reject 시 권고 수정 사항 |
+
+**출력 (accept):**
+```json
+{
+  "case_id": "case-001",
+  "action": "accept",
+  "reviewer": "operator",
+  "timestamp": "2025-07-22T10:00:00Z",
+  "reason": "visually correct, minor type issue acceptable",
+  "next_state": "certify"
+}
+```
+
+**출력 (reject):**
+```json
+{
+  "case_id": "case-001",
+  "action": "reject",
+  "reviewer": "operator",
+  "timestamp": "2025-07-22T10:00:00Z",
+  "reason": "component structure fundamentally wrong",
+  "terminal_state": "certified-blocked"
+}
+```
+
+**Exit codes:**
+
+| 코드 | 의미 |
+|------|------|
+| `0` | review 성공적으로 처리됨 |
+| `1` | 케이스를 찾을 수 없음 |
+| `2` | 케이스가 manual-review-required 상태가 아님 |
+| `3` | review artifact 저장 실패 |

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -50,3 +51,12 @@ def fake_subprocess_runner() -> FakeSubprocessRunner:
 def fake_playwright() -> FakePlaywrightAdapter:
     """FakePlaywrightAdapter with default screenshot path."""
     return FakePlaywrightAdapter()
+
+
+@pytest.fixture(scope="session")
+def anthropic_api_key() -> str:
+    """Return API key or skip test if not set."""
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not key:
+        pytest.skip("ANTHROPIC_API_KEY not set — skipping integration test")
+    return key

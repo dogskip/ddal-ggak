@@ -43,6 +43,9 @@ packages = ["src/ddk"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "integration: real API calls — requires ANTHROPIC_API_KEY",
+]
 filterwarnings = [
     "ignore:Core Pydantic V1:UserWarning",
 ]

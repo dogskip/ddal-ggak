@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from ddk.adapters.build_runner import BuildRunner
 from ddk.adapters.filesystem import FilesystemPort
@@ -12,10 +13,18 @@ from ddk.adapters.playwright_browser import PlaywrightAdapter
 from ddk.adapters.sandbox.base import SandboxAdapter
 from ddk.adapters.screenshot_diff import ScreenshotDiffAdapter
 
+if TYPE_CHECKING:
+    from ddk.services.context_pack_builder import ContextPackBuilder
+    from ddk.services.design_system_inferencer import DesignSystemInferencer
+    from ddk.services.generation_planner import GenerationPlanner
+    from ddk.services.intake_processor import IntakeProcessor
+    from ddk.services.repo_convention_scanner import RepoConventionScanner
+    from ddk.services.semantic_intent_extractor import SemanticIntentExtractor
+
 
 @dataclass
 class ServiceContainer:
-    """Run-scoped DI container holding all 7 adapter Protocol instances.
+    """Run-scoped DI container holding all 7 adapter Protocol instances + 6 domain services.
 
     Injected into every LangGraph node via::
 
@@ -30,6 +39,7 @@ class ServiceContainer:
             ...
     """
 
+    # Phase 1 adapters (required)
     llm: LLMAdapter
     filesystem: FilesystemPort
     git: GitAdapter
@@ -37,3 +47,11 @@ class ServiceContainer:
     build_runner: BuildRunner
     browser: PlaywrightAdapter
     screenshot_diff: ScreenshotDiffAdapter
+
+    # Phase 2 services (optional — populated when pipeline runs)
+    intake_processor: IntakeProcessor | None = None
+    repo_convention_scanner: RepoConventionScanner | None = None
+    semantic_intent_extractor: SemanticIntentExtractor | None = None
+    design_system_inferencer: DesignSystemInferencer | None = None
+    generation_planner: GenerationPlanner | None = None
+    context_pack_builder: ContextPackBuilder | None = None

@@ -21,15 +21,15 @@ Requirements for Milestone v1.0 (Delivery Pipeline MVP). Each maps to roadmap ph
 - [ ] **INGEST-01**: Workspace Bootstrap (DDK-REQ-001) — 케이스 워크스페이스 초기화, .ddk/ 디렉토리 구조, 스키마 버전 관리
 - [ ] **INGEST-02**: Multimodal Intake (DDK-REQ-002) — 이미지/프롬프트/레퍼런스 텍스트를 CaseInput으로 검증·구조화
 - [ ] **INGEST-03**: Repo Convention Scan (DDK-REQ-003) — RepoConventionScanner 서비스, 프레임워크/네이밍/스타일/디자인 시스템/파일 레이아웃 추출 → RepoProfile
-- [ ] **INGEST-04**: Semantic Intent Model (DDK-REQ-004) — SemanticIntentExtractor, 레이아웃/인터랙션/콘텐츠 인텐트를 confidence graph로 추출 → IntentGraph
-- [ ] **INGEST-05**: Design System Inference (DDK-REQ-005) — DesignSystemInferencer, 토큰/스페이싱/타이포그래피/재사용 프리미티브 추론
-- [ ] **INGEST-06**: Generation Plan Graph (DDK-REQ-006) — GenerationPlanner, 작업을 ordered graph로 분해, output/validate/repair 훅 포함 → GenerationPlan
+- [x] **INGEST-04**: Semantic Intent Model (DDK-REQ-004) — SemanticIntentExtractor, 레이아웃/인터랙션/콘텐츠 인텐트를 confidence graph로 추출 → IntentGraph
+- [x] **INGEST-05**: Design System Inference (DDK-REQ-005) — DesignSystemInferencer, 토큰/스페이싱/타이포그래피/재사용 프리미티브 추론
+- [x] **INGEST-06**: Generation Plan Graph (DDK-REQ-006) — GenerationPlanner, 작업을 ordered graph로 분해, output/validate/repair 훅 포함 → GenerationPlan
 
 ### Code Generation & Normalization
 
 - [ ] **CODEGEN-01**: Code Generation Engine (DDK-REQ-007) — CodeGenerator 서비스, 컴포넌트/페이지 코드 생성, 파일 맵 및 트레이스 → GeneratedArtifactSet
 - [ ] **CODEGEN-02**: Post-generation Normalizer (DDK-REQ-008) — OutputNormalizer, 네이밍/임포트/토큰/파일배치 드리프트를 RepoProfile 기반으로 정규화 → NormalizationReport
-- [ ] **CODEGEN-03**: Context Pack Builder (DDK-REQ-015 일부) — ContextPackBuilder, 최대 6파일/300줄, P1~P5 우선순위, 사전순 tie-break, 결정론적 출력
+- [x] **CODEGEN-03**: Context Pack Builder (DDK-REQ-015 일부) — ContextPackBuilder, 최대 6파일/300줄, P1~P5 우선순위, 사전순 tie-break, 결정론적 출력
 
 ### Validation & Self-Healing
 
@@ -92,12 +92,12 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 | INGEST-01 | Phase 1 | Pending |
 | INGEST-02 | Phase 2 | Pending |
 | INGEST-03 | Phase 2 | Pending |
-| INGEST-04 | Phase 2 | Pending |
-| INGEST-05 | Phase 2 | Pending |
-| INGEST-06 | Phase 2 | Pending |
+| INGEST-04 | Phase 2 | Complete |
+| INGEST-05 | Phase 2 | Complete |
+| INGEST-06 | Phase 2 | Complete |
 | CODEGEN-01 | Phase 3 | Pending |
 | CODEGEN-02 | Phase 3 | Pending |
-| CODEGEN-03 | Phase 2 | Pending |
+| CODEGEN-03 | Phase 2 | Complete |
 | VALID-01 | Phase 4 | Pending |
 | VALID-02 | Phase 4 | Pending |
 | VALID-03 | Phase 4 | Pending |

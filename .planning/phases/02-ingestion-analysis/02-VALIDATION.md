@@ -1,8 +1,8 @@
 ---
 phase: 02
 slug: ingestion-analysis
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2025-07-28
 ---

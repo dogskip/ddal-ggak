@@ -51,7 +51,7 @@ Plans:
 - [x] 02-01-PLAN.md — Wave 0 Infrastructure: DesignSystem/ContextPack models, Message image extension, ClaudeAdapter images, GenerationNode schema update, test infra, ServiceContainer extension, service stubs
 - [x] 02-02-PLAN.md — IntakeProcessor service + intake_node, RepoConventionScanner service + repo_scan_node
 - [x] 02-03-PLAN.md — SemanticIntentExtractor service + intent_extract_node, DesignSystemInferencer service + design_system_node
-- [ ] 02-04-PLAN.md — GenerationPlanner service + plan_node, ContextPackBuilder service
+- [x] 02-04-PLAN.md — GenerationPlanner service + plan_node, ContextPackBuilder service
 - [ ] 02-05-PLAN.md — 5-node partial graph assembly (D-08), integration test with FakeLLM
 
 ### Phase 3: Code Generation & Normalization

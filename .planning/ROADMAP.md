@@ -49,7 +49,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Wave 0 Infrastructure: DesignSystem/ContextPack models, Message image extension, ClaudeAdapter images, GenerationNode schema update, test infra, ServiceContainer extension, service stubs
-- [ ] 02-02-PLAN.md — IntakeProcessor service + intake_node, RepoConventionScanner service + repo_scan_node
+- [x] 02-02-PLAN.md — IntakeProcessor service + intake_node, RepoConventionScanner service + repo_scan_node
 - [ ] 02-03-PLAN.md — SemanticIntentExtractor service + intent_extract_node, DesignSystemInferencer service + design_system_node
 - [ ] 02-04-PLAN.md — GenerationPlanner service + plan_node, ContextPackBuilder service
 - [ ] 02-05-PLAN.md — 5-node partial graph assembly (D-08), integration test with FakeLLM
@@ -96,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Infrastructure | 0/7 | Planned | - |
-| 2. Ingestion & Analysis | 1/5 | In Progress|  |
+| 2. Ingestion & Analysis | 2/5 | In Progress|  |
 | 3. Code Generation & Normalization | 0/TBD | Not started | - |
 | 4. Validation & Self-Healing | 0/TBD | Not started | - |
 | 5. Certification, CLI & E2E | 0/TBD | Not started | - |

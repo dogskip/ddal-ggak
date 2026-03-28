@@ -45,7 +45,14 @@ Plans:
   3. Semantic intent extractor가 IntentGraph(레이아웃/인터랙션/콘텐츠 인텐트 + confidence)를 생성하고, design system inferencer가 토큰/스페이싱/타이포그래피를 추론
   4. Generation planner가 ordered GenerationPlan 그래프(task 노드 + validation/repair 훅)를 출력 — 동일 입력에 대해 결정론적 결과
   5. Context pack builder가 결정론적 출력(최대 6파일/300줄, P1-P5 우선순위, 사전순 tie-break)을 생성하고 LLM 컨텍스트 예산 내 유지
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Wave 0 Infrastructure: DesignSystem/ContextPack models, Message image extension, ClaudeAdapter images, GenerationNode schema update, test infra, ServiceContainer extension, service stubs
+- [ ] 02-02-PLAN.md — IntakeProcessor service + intake_node, RepoConventionScanner service + repo_scan_node
+- [ ] 02-03-PLAN.md — SemanticIntentExtractor service + intent_extract_node, DesignSystemInferencer service + design_system_node
+- [ ] 02-04-PLAN.md — GenerationPlanner service + plan_node, ContextPackBuilder service
+- [ ] 02-05-PLAN.md — 5-node partial graph assembly (D-08), integration test with FakeLLM
 
 ### Phase 3: Code Generation & Normalization
 **Goal**: GenerationPlan에서 빌드 가능한 React/TypeScript 코드를 생성하고, 타겟 레포 규칙에 맞게 정규화하여 forward path(intake→certify 이전까지)를 완성한다
@@ -89,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Infrastructure | 0/7 | Planned | - |
-| 2. Ingestion & Analysis | 0/TBD | Not started | - |
+| 2. Ingestion & Analysis | 0/5 | Planned | - |
 | 3. Code Generation & Normalization | 0/TBD | Not started | - |
 | 4. Validation & Self-Healing | 0/TBD | Not started | - |
 | 5. Certification, CLI & E2E | 0/TBD | Not started | - |

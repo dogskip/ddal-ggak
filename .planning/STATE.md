@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-28T17:48:43.072Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-28T18:09:16.542Z"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 12
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 02 (ingestion-analysis) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: 2 of 5
 | Phase 01 P03 | 3m03s | 2 tasks | 11 files |
 | Phase 01 P02 | 5m18s | 3 tasks | 12 files |
 | Phase 02 P01 | 8m | 3 tasks | 21 files |
+| Phase 02 P02 | 13m | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 19 Pydantic models follow 12-data-models.md exactly — field names match design doc, not plan paraphrase
 - [Phase 02]: TYPE_CHECKING imports in context.py to avoid circular imports for service type hints
 - [Phase 02]: GenerationNode replaced task_description/output_files with node_type/target_path/validation_hooks/repair_hooks per 12-data-models.md
+- [Phase 02]: D-05 enforced: thin adapter nodes for intake and repo_scan
+- [Phase 02]: D-07 enforced: LLM haiku only when framework=other (static-first repo scan)
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:48:43.068Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-28T18:09:16.538Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

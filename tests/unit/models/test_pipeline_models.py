@@ -22,53 +22,60 @@ class TestGenerationNode:
     def test_generation_node_roundtrip(self) -> None:
         node = GenerationNode(
             id="node-1",
-            task_description="Create header component",
+            node_type="component",
+            target_path="src/components/Header.tsx",
             dependencies=["node-0"],
-            output_files=["src/Header.tsx"],
-            validation_hook="validate_header",
-            repair_hook="repair_header",
-            priority=2,
+            validation_hooks=["validate_header"],
+            repair_hooks=["repair_header"],
         )
         data = node.model_dump()
         restored = GenerationNode.model_validate(data)
         assert restored == node
         assert restored.id == "node-1"
-        assert restored.priority == 2
+        assert restored.node_type == "component"
+        assert restored.target_path == "src/components/Header.tsx"
         assert restored.dependencies == ["node-0"]
 
     def test_generation_node_defaults(self) -> None:
-        node = GenerationNode(id="n1", task_description="task")
+        node = GenerationNode(id="n1", node_type="component", target_path="src/A.tsx")
         assert node.dependencies == []
-        assert node.output_files == []
-        assert node.validation_hook is None
-        assert node.repair_hook is None
-        assert node.priority == 1
+        assert node.validation_hooks == []
+        assert node.repair_hooks == []
+        assert node.generation_prompt_hint is None
 
 
 class TestGenerationPlan:
     def test_generation_plan_roundtrip(self) -> None:
         nodes = [
-            GenerationNode(id="n1", task_description="task1"),
-            GenerationNode(id="n2", task_description="task2", dependencies=["n1"]),
+            GenerationNode(id="n1", node_type="component", target_path="src/A.tsx"),
+            GenerationNode(
+                id="n2",
+                node_type="style",
+                target_path="src/A.module.css",
+                dependencies=["n1"],
+            ),
         ]
         plan = GenerationPlan(
-            plan_id="plan-1",
             case_id="case-001",
             nodes=nodes,
-            total_estimated_tokens=5000,
-            schema_version="1.0",
+            execution_order=["n1", "n2"],
+            target_files=["src/A.tsx", "src/A.module.css"],
+            estimated_node_count=2,
         )
         data = plan.model_dump()
         restored = GenerationPlan.model_validate(data)
-        assert restored.plan_id == plan.plan_id
         assert len(restored.nodes) == 2
-        assert restored.total_estimated_tokens == 5000
+        assert restored.execution_order == ["n1", "n2"]
+        assert restored.target_files == ["src/A.tsx", "src/A.module.css"]
+        assert restored.estimated_node_count == 2
 
     def test_generation_plan_json_roundtrip(self) -> None:
         plan = GenerationPlan(
-            plan_id="p1",
             case_id="c1",
-            nodes=[GenerationNode(id="n1", task_description="t1")],
+            nodes=[GenerationNode(id="n1", node_type="component", target_path="src/X.tsx")],
+            execution_order=["n1"],
+            target_files=["src/X.tsx"],
+            estimated_node_count=1,
         )
         json_str = plan.model_dump_json()
         restored = GenerationPlan.model_validate_json(json_str)

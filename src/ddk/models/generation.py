@@ -10,20 +10,21 @@ from ._base import DDKBaseModel
 
 class GenerationNode(DDKBaseModel):
     id: str
-    task_description: str
+    node_type: Literal["file", "component", "hook", "style", "test", "route", "type"]
+    target_path: str
     dependencies: list[str] = Field(default_factory=list)
-    output_files: list[str] = Field(default_factory=list)
-    validation_hook: str | None = None
-    repair_hook: str | None = None
-    priority: int = Field(default=1, ge=1, le=5)
+    validation_hooks: list[str] = Field(default_factory=list)
+    repair_hooks: list[str] = Field(default_factory=list)
+    generation_prompt_hint: str | None = None
 
 
 class GenerationPlan(DDKBaseModel):
-    plan_id: str
     case_id: str
     nodes: list[GenerationNode]
-    total_estimated_tokens: int = Field(default=0, ge=0)
-    schema_version: str = "1.0"
+    execution_order: list[str] = Field(default_factory=list)
+    target_files: list[str] = Field(default_factory=list)
+    validation_hooks: list[str] = Field(default_factory=list)
+    estimated_node_count: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

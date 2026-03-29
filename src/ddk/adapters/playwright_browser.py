@@ -17,6 +17,15 @@ class ConsoleEntry:
     line_number: int | None = None
 
 
+@dataclass
+class FailedRequestEntry:
+    """A single failed network request captured by Playwright."""
+
+    url: str
+    failure_text: str  # playwright request.failure property (str | None → str)
+    correlation_id: str | None = None
+
+
 @runtime_checkable
 class PlaywrightAdapter(Protocol):
     """Protocol for browser automation via Playwright."""
@@ -31,5 +40,12 @@ class PlaywrightAdapter(Protocol):
     async def get_console_errors(
         self, url: str, wait_ms: int = 5000
     ) -> list[ConsoleEntry]: ...
+
+    async def get_failed_requests(
+        self,
+        url: str,
+        wait_ms: int = 5000,
+        correlation_id: str | None = None,
+    ) -> list[FailedRequestEntry]: ...
 
     async def close(self) -> None: ...

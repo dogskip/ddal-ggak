@@ -65,7 +65,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-00-PLAN.md — Wave 0: Model alignment — align GeneratedArtifactSet, GeneratedFile, NormalizationReport, ConventionFix with design spec (additive only)
+- [x] 03-00-PLAN.md — Wave 0: Model alignment — align GeneratedArtifactSet, GeneratedFile, NormalizationReport, ConventionFix with design spec (additive only)
 - [ ] 03-01-PLAN.md — Wave 1: CodeGenerator service + generate_node (CODEGEN-01)
 - [ ] 03-02-PLAN.md — Wave 2: OutputNormalizer service + normalize_node (CODEGEN-02)
 - [ ] 03-03-PLAN.md — Wave 3: 7-node graph assembly + E2E integration tests
@@ -103,6 +103,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Infrastructure | 7/7 | Complete | 2026-03-27 |
 | 2. Ingestion & Analysis | 5/5 | Complete ✅ verified | 2026-03-28 |
-| 3. Code Generation & Normalization | 0/TBD | Not started | - |
+| 3. Code Generation & Normalization | 1/4 | In Progress|  |
 | 4. Validation & Self-Healing | 0/TBD | Not started | - |
 | 5. Certification, CLI & E2E | 0/TBD | Not started | - |

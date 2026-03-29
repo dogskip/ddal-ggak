@@ -8,7 +8,7 @@
 
 - [x] **Phase 1: Foundation & Core Infrastructure** - 모델, Protocol, DI, 테스트 더블, 로깅, 워크스페이스, 프리플라이트 — 모든 후속 Phase의 기반
 - [x] **Phase 2: Ingestion & Analysis** - 디자인 시안 입력부터 생성 계획 그래프까지 5단계 분석 파이프라인 (completed 2026-03-28)
-- [ ] **Phase 3: Code Generation & Normalization** - 생성 계획에서 코드 생성 후 레포 규칙에 맞게 정규화 — forward path 완성
+- [x] **Phase 3: Code Generation & Normalization** - 생성 계획에서 코드 생성 후 레포 규칙에 맞게 정규화 — forward path 완성 (completed 2026-03-29)
 - [ ] **Phase 4: Validation & Self-Healing** - 샌드박스 검증, 비주얼 리그레션, 실패 분류, 자동수정 루프 — 최고 위험/복잡도 Phase
 - [ ] **Phase 5: Certification, CLI & E2E** - 증거팩, 스코어카드, 릴리즈 판정, LangGraph 통합, CLI 진입점, E2E 테스트
 
@@ -68,7 +68,7 @@ Plans:
 - [x] 03-00-PLAN.md — Wave 0: Model alignment — align GeneratedArtifactSet, GeneratedFile, NormalizationReport, ConventionFix with design spec (additive only)
 - [x] 03-01-PLAN.md — Wave 1: CodeGenerator service + generate_node (CODEGEN-01)
 - [x] 03-02-PLAN.md — Wave 2: OutputNormalizer service + normalize_node (CODEGEN-02)
-- [ ] 03-03-PLAN.md — Wave 3: 7-node graph assembly + E2E integration tests
+- [x] 03-03-PLAN.md — Wave 3: 7-node graph assembly + E2E integration tests
 
 ### Phase 4: Validation & Self-Healing
 **Goal**: 생성된 코드를 격리 샌드박스에서 자동 검증하고, 실패를 분류하여 결정론적 규칙 기반 패치를 적용한 뒤 예산 내에서 재검증한다 — 실패 시 체크포인트 롤백
@@ -103,6 +103,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation & Core Infrastructure | 7/7 | Complete | 2026-03-27 |
 | 2. Ingestion & Analysis | 5/5 | Complete ✅ verified | 2026-03-28 |
-| 3. Code Generation & Normalization | 3/4 | In Progress|  |
+| 3. Code Generation & Normalization | 4/4 | Complete   | 2026-03-29 |
 | 4. Validation & Self-Healing | 0/TBD | Not started | - |
 | 5. Certification, CLI & E2E | 0/TBD | Not started | - |

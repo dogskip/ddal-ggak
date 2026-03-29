@@ -154,7 +154,11 @@ async def _run_design_new(
     from .adapters.llm.claude import ClaudeAdapter  # noqa: PLC0415
     from .design import DesignGenerator, DesignInterviewer, DesignWriter  # noqa: PLC0415
 
-    llm = ClaudeAdapter(api_key=cfg.anthropic_api_key, default_model=cfg.llm_model)
+    llm = ClaudeAdapter(
+        api_key=cfg.anthropic_api_key,
+        default_model=cfg.llm_model,
+        cost_cap_usd=cfg.cost_cap_usd,
+    )
 
     console.print(
         Panel(f"[bold cyan]Design Studio[/bold cyan]\n[white]{idea}[/white]", expand=False)
@@ -238,7 +242,11 @@ def _build_runtime_services(cfg: DdalggakConfig) -> RuntimeServices:
     from .adapters.llm.claude import ClaudeAdapter  # noqa: PLC0415
 
     return RuntimeServices(
-        llm=ClaudeAdapter(api_key=cfg.anthropic_api_key, default_model=cfg.llm_model),
+        llm=ClaudeAdapter(
+            api_key=cfg.anthropic_api_key,
+            default_model=cfg.llm_model,
+            cost_cap_usd=cfg.cost_cap_usd,
+        ),
         filesystem=FilesystemAdapter(),
         git=LocalGitAdapter(),
         sandbox=TempDirSandbox(),

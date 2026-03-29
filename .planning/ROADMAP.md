@@ -62,7 +62,13 @@ Plans:
   1. Code generator가 GenerationPlan에서 GeneratedArtifactSet(컴포넌트/페이지 파일 + 파일 맵 + 생성 트레이스)을 생성 — 출력이 유효한 TypeScript/React로 컴파일 가능
   2. Post-generation normalizer가 생성 코드를 RepoProfile 규칙(네이밍, 임포트, 디자인 토큰, 파일 배치)에 맞게 정규화하고, 적용된 모든 변환을 기록한 NormalizationReport 출력
   3. 6-노드 서브그래프(ingest → repo_scan → intent → plan → generate → normalize)를 FakeLLM으로 end-to-end 실행 시 각 노드에서 올바른 아티팩트 생성
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 03-00-PLAN.md — Wave 0: Model alignment — align GeneratedArtifactSet, GeneratedFile, NormalizationReport, ConventionFix with design spec (additive only)
+- [ ] 03-01-PLAN.md — Wave 1: CodeGenerator service + generate_node (CODEGEN-01)
+- [ ] 03-02-PLAN.md — Wave 2: OutputNormalizer service + normalize_node (CODEGEN-02)
+- [ ] 03-03-PLAN.md — Wave 3: 7-node graph assembly + E2E integration tests
 
 ### Phase 4: Validation & Self-Healing
 **Goal**: 생성된 코드를 격리 샌드박스에서 자동 검증하고, 실패를 분류하여 결정론적 규칙 기반 패치를 적용한 뒤 예산 내에서 재검증한다 — 실패 시 체크포인트 롤백

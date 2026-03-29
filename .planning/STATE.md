@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Phase 2 verified — ready for Phase 3
-stopped_at: Completed 03-00-PLAN.md
-last_updated: "2026-03-29T05:06:15.213Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-29T05:13:18.610Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 16
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -55,6 +55,7 @@ Phase: 02 (ingestion-analysis) — VERIFIED ✅ | Phase 03 (code-generation-norm
 | Phase 02 P04 | 22min | 2 tasks | 5 files |
 | Phase 02 P05 | 15 | 2 tasks | 3 files |
 | Phase 03 P00 | 3m | 2 tasks | 4 files |
+| Phase 03 P01 | 10 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,7 @@ Recent decisions affecting current work:
 - [Phase 02]: node_wrapper bridges LangGraph config injection to node kwargs via CONFIG_KEY_RUNTIME context extraction
 - [Phase 03]: Additive-only model extension: all new fields have defaults, zero breaking changes
 - [Phase 03]: float() cast in compute_drift_score: sum([]) returns int 0 — explicit cast ensures float return type contract
+- [Phase 03]: System prompt 'Generate' → FakeLLM key=generate; node-by-node LLM calls; model=claude-3-5-sonnet-20241022 temperature=0.0
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T05:06:15.208Z
-Stopped at: Completed 03-00-PLAN.md
+Last session: 2026-03-29T05:13:18.606Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

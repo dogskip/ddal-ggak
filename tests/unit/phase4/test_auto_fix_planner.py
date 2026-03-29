@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ddk.models.validation import FailureRecord
 from ddk.services.auto_fix_planner import (
     AutoFixPlanner,
@@ -17,7 +15,6 @@ from ddk.services.auto_fix_planner import (
     r08_add_await,
 )
 from tests.fakes.fake_llm_adapter import FakeLLMAdapter
-
 
 # ──────────────────────────────────────────────
 # Deterministic rule functions

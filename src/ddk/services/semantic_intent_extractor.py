@@ -12,7 +12,9 @@ from ddk.models.input import CaseInput
 from ddk.models.intent import IntentGraph
 
 # System prompt from docs/design/16-prompt-design.md §1
-_SYSTEM_PROMPT = """You are an expert UI analyst. Your job is to analyze UI screenshots or mockups and extract a precise structural representation of the interface.
+_SYSTEM_PROMPT = """You are an expert UI analyst. Your job is to analyze UI
+screenshots or mockups and extract a precise structural representation of the
+interface.
 
 You must output a valid JSON object conforming to the IntentGraph schema.
 Do not include any explanation outside the JSON.
@@ -20,21 +22,25 @@ Do not include any explanation outside the JSON.
 ## IntentGraph Rules
 
 ### LayoutRegion extraction
-- Identify every distinct visual region: header, nav, sidebar, main content, footer, cards, modals, forms, tables, hero sections, CTAs, list views.
+- Identify every distinct visual region: header, nav, sidebar, main content,
+  footer, cards, modals, forms, tables, hero sections, CTAs, list views.
 - Assign bounding boxes as relative coordinates (0.0 to 1.0).
 - A region that contains others must list their IDs in `children`.
 - `semantic_label` is a 1~5 word Korean or English label describing the region's purpose.
 
 ### ComponentSpec extraction
-- Extract every interactive or semantic component: Button, Input, Card, Table, Badge, Icon, etc.
+- Extract every interactive or semantic component: Button, Input, Card, Table,
+  Badge, Icon, etc.
 - `component_type` must be a PascalCase React-compatible component name.
 - `props` should capture visible text content, variant hints, and disabled states.
-- Assign `confidence` based on how clearly identifiable the component is (1.0 = clearly a known pattern).
+- Assign `confidence` based on how clearly identifiable the component is
+  (1.0 = clearly a known pattern).
 
 ### InteractionSpec extraction
 - Only include interactions that are visually implied (buttons, links, form submits).
 - `trigger` must be one of: click, hover, focus, submit, change, keydown, scroll.
-- `action` must be one of: navigate, open-modal, close-modal, submit-form, toggle, filter, sort, load-more, other.
+- `action` must be one of: navigate, open-modal, close-modal, submit-form,
+  toggle, filter, sort, load-more, other.
 
 ### Confidence scoring
 - 1.0 = unambiguous standard component

@@ -13,7 +13,33 @@ from collections.abc import Callable
 from typing import Any, Optional
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.config import CONFIG_KEY_RUNTIME
+from langgraph.config import CONFIG_KEY_RUNTIME  # pyright: ignore[reportPrivateImportUsage]
+
+_RUNTIME_CONFIG_KEYS = (
+    CONFIG_KEY_RUNTIME,
+    "__pregel_runtime",
+)
+
+
+def _extract_context(config: Optional[RunnableConfig]) -> Any | None:  # noqa: UP045
+    """Extract run-scoped context from LangGraph runtime config across versions."""
+    if config is None:
+        return None
+
+    configurable = config.get("configurable", {})
+
+    for key in _RUNTIME_CONFIG_KEYS:
+        runtime = configurable.get(key)
+        context = getattr(runtime, "context", None)
+        if context is not None:
+            return context
+
+    return None
+
+
+def _extract_runtime_context(runtime: Any) -> Any | None:
+    """Extract run-scoped context from a direct runtime object."""
+    return getattr(runtime, "context", None)
 
 
 def node_wrapper(
@@ -37,15 +63,18 @@ def node_wrapper(
 
     async def _wrapped(
         state: dict[str, Any],
-        config: Optional[RunnableConfig] = None,
+        config: Optional[RunnableConfig] = None,  # noqa: UP045
+        runtime: Any = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         # Extract ServiceContainer from LangGraph runtime config (context_schema injection).
         # Falls back to any ``context`` already in **kwargs (direct unit-test calls).
-        if "context" not in kwargs and config is not None:
-            runtime = config.get("configurable", {}).get(CONFIG_KEY_RUNTIME)
-            if runtime is not None:
-                kwargs["context"] = runtime.context
+        if kwargs.get("context") is None:
+            context = _extract_runtime_context(runtime)
+            if context is None and config is not None:
+                context = _extract_context(config)
+            if context is not None:
+                kwargs["context"] = context
 
         try:
             return await node_fn(state, **kwargs)  # type: ignore[no-any-return]

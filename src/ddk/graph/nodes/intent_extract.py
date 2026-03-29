@@ -17,7 +17,7 @@ async def intent_extract_node(
     No business logic here (D-05).
     """
     container: ServiceContainer | None = kwargs.get("context")
-    if container is None or container.llm is None:
+    if container is None:
         return {
             "terminal_state": "manual-review-required",
             "error_message": "No LLM adapter in ServiceContainer",

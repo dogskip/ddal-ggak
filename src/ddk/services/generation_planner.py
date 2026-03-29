@@ -10,15 +10,21 @@ from ddk.models.generation import GenerationPlan
 from ddk.models.intent import IntentGraph
 from ddk.models.repo import RepoProfile
 
-_SYSTEM_PROMPT = """Senior React architect here. Given a UI intent graph and repository profile, create a precise GenerationPlan that describes exactly which files to create or modify.
+_SYSTEM_PROMPT = """Senior React architect here. Given a UI intent graph
+and repository profile, create a precise GenerationPlan that describes
+exactly which files to create or modify.
 
 ## Planning Rules
 
 1. **Target files must be specific**: Use exact paths relative to repo root.
-2. **Respect repo conventions**: Follow the NamingRules and FileLayoutRules from RepoProfile exactly.
-3. **Topological ordering**: List nodes in dependency order (types first, then components, then pages, then tests).
-4. **Minimal changes**: Only include files that are necessary. Do not generate test files unless explicitly requested.
-5. **Reuse existing**: If an existing component matches, reference it instead of generating a duplicate.
+2. **Respect repo conventions**: Follow the NamingRules and FileLayoutRules
+   from RepoProfile exactly.
+3. **Topological ordering**: List nodes in dependency order (types first,
+   then components, then pages, then tests).
+4. **Minimal changes**: Only include files that are necessary. Do not generate
+   test files unless explicitly requested.
+5. **Reuse existing**: If an existing component matches, reference it instead
+   of generating a duplicate.
 
 ## Node Types
 - `type`: TypeScript interface/type definition file

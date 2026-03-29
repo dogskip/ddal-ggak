@@ -1,4 +1,4 @@
-"""Contract tests for GraphState schema — validates all 21 fields exist and have
+"""Contract tests for GraphState schema — validates all 22 fields exist and have
 correct types / defaults via initial_state factory."""
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ def state(sample_case_input: CaseInput) -> GraphState:
 
 
 class TestGraphStateFields:
-    """All 21 TypedDict fields must be present."""
+    """All 22 TypedDict fields must be present."""
 
     EXPECTED_FIELDS = {
         "case_id",
@@ -50,17 +50,18 @@ class TestGraphStateFields:
         "terminal_state",
         "error_message",
         "pre_run_checkpoint_ref",
+        "failure_hash_history",
         "llm_call_records",
         "total_cost_usd",
         "reproducibility_seed",
     }
 
-    def test_all_21_fields_present(self) -> None:
+    def test_all_22_fields_present(self) -> None:
         hints = GraphState.__annotations__
         assert set(hints.keys()) == self.EXPECTED_FIELDS
 
-    def test_field_count_is_21(self) -> None:
-        assert len(GraphState.__annotations__) == 21
+    def test_field_count_is_22(self) -> None:
+        assert len(GraphState.__annotations__) == 22
 
 
 class TestInitialState:
@@ -83,6 +84,7 @@ class TestInitialState:
 
     def test_list_fields_are_empty(self, state: GraphState) -> None:
         assert state["fix_attempts"] == []
+        assert state["failure_hash_history"] == []
         assert state["llm_call_records"] == []
 
     def test_retry_budget_default(self, state: GraphState) -> None:

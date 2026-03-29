@@ -14,21 +14,61 @@ from ddk.models.validation import FailureRecord
 # Ordered: more specific patterns first, broader patterns last.
 _RULES: list[tuple[str, str, str]] = [
     # Build failures
-    (r"Cannot find module|Module not found|Failed to resolve", "FT-BUILD-001", "critical"),
-    (r"SyntaxError|Unexpected token|Unexpected end of|Unexpected identifier", "FT-BUILD-002", "critical"),
-    (r"is not a module|has no exported member|does not provide an export", "FT-BUILD-003", "major"),
+    (
+        r"Cannot find module|Module not found|Failed to resolve",
+        "FT-BUILD-001",
+        "critical",
+    ),
+    (
+        r"SyntaxError|Unexpected token|Unexpected end of|Unexpected identifier",
+        "FT-BUILD-002",
+        "critical",
+    ),
+    (
+        r"is not a module|has no exported member|does not provide an export",
+        "FT-BUILD-003",
+        "major",
+    ),
     # Type errors
-    (r"is not assignable to type|Cannot find name|Type .* is not", "FT-TYPE-001", "major"),
-    (r"implicitly has an .any. type|lacks return.type annotation|Parameter .* implicitly", "FT-TYPE-002", "minor"),
+    (
+        r"is not assignable to type|Cannot find name|Type .* is not",
+        "FT-TYPE-001",
+        "major",
+    ),
+    (
+        r"implicitly has an .any. type|lacks return.type annotation|Parameter .* implicitly",
+        "FT-TYPE-002",
+        "minor",
+    ),
     (r"Incompatible type|type mismatch", "FT-TYPE-003", "major"),
     # Lint
-    (r"Unused variable|Unused import|is defined but never used|no-unused", "FT-LINT-001", "minor"),
-    (r"Expected.*semicolon|Parsing error|Expected .*token|Missing semicolon", "FT-LINT-002", "minor"),
+    (
+        r"Unused variable|Unused import|is defined but never used|no-unused",
+        "FT-LINT-001",
+        "minor",
+    ),
+    (
+        r"Expected.*semicolon|Parsing error|Expected .*token|Missing semicolon",
+        "FT-LINT-002",
+        "minor",
+    ),
     (r"naming.convention|camelCase|PascalCase|SCREAMING_SNAKE", "FT-LINT-003", "minor"),
     # Runtime — null ref before unhandled rejection (more specific first)
-    (r"Uncaught TypeError|Cannot read propert|Cannot read properties of null|null is not", "FT-RUNTIME-002", "critical"),
-    (r"Unhandled.*rejection|UnhandledPromise|UnhandledRejection|unhandledRejection", "FT-RUNTIME-001", "critical"),
-    (r"404|503|Failed to fetch|net::ERR_|ECONNREFUSED|request.*failed", "FT-RUNTIME-003", "major"),
+    (
+        r"Uncaught TypeError|Cannot read propert|Cannot read properties of null|null is not",
+        "FT-RUNTIME-002",
+        "critical",
+    ),
+    (
+        r"Unhandled.*rejection|UnhandledPromise|UnhandledRejection|unhandledRejection",
+        "FT-RUNTIME-001",
+        "critical",
+    ),
+    (
+        r"404|503|Failed to fetch|net::ERR_|ECONNREFUSED|request.*failed",
+        "FT-RUNTIME-003",
+        "major",
+    ),
     # Visual
     (r"Layout shift|Cumulative Layout|CLS score", "FT-VISUAL-001", "major"),
     (r"color.*mismatch|mismatch.*color|expected.*color", "FT-VISUAL-002", "minor"),
@@ -38,7 +78,11 @@ _RULES: list[tuple[str, str, str]] = [
     (r"missing.*prop|required.*prop|prop.*required", "FT-DATA-002", "minor"),
     # Async
     (r"race condition|concurrent|TOCTOU", "FT-ASYNC-001", "major"),
-    (r"await.*not.*async|async.*missing.*await|Promise.*not.*await|unresolved.*promise", "FT-ASYNC-002", "major"),
+    (
+        r"await.*not.*async|async.*missing.*await|Promise.*not.*await|unresolved.*promise",
+        "FT-ASYNC-002",
+        "major",
+    ),
 ]
 
 

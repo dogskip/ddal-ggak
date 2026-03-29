@@ -6,11 +6,13 @@ asyncio_mode = "auto" in pyproject.toml — no @pytest.mark.asyncio needed.
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
 from ddk.adapters.playwright_browser import ConsoleEntry, FailedRequestEntry
+from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.validation import FAILURE_TAXONOMY
 from ddk.services.runtime_validator import RuntimeValidator
 from tests.fakes import (
@@ -19,7 +21,6 @@ from tests.fakes import (
     FakeSSIMAdapter,
     TempDirSandbox,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -34,13 +35,18 @@ def make_validator(
     build_runner: FakeBuildRunner | None = None,
     playwright: FakePlaywrightAdapter | None = None,
     screenshot_diff: FakeSSIMAdapter | None = None,
-) -> RuntimeValidator:
+    ) -> RuntimeValidator:
     return RuntimeValidator(
         sandbox=TempDirSandbox(),
         build_runner=build_runner or FakeBuildRunner(),
         playwright=playwright or FakePlaywrightAdapter(),
         screenshot_diff=screenshot_diff or FakeSSIMAdapter(),
     )
+
+
+class NoCleanupSandbox(TempDirSandbox):
+    async def cleanup(self) -> None:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -55,6 +61,39 @@ class TestSuccessPath:
         assert report.type_check_success is True
         assert report.lint_success is True
         assert report.failures == []
+
+    async def test_validate_materializes_generated_files_in_sandbox(self, tmp_path: Path) -> None:
+        validator = RuntimeValidator(
+            sandbox=NoCleanupSandbox(),
+            build_runner=FakeBuildRunner(returncode=0),
+            playwright=FakePlaywrightAdapter(),
+            screenshot_diff=FakeSSIMAdapter(),
+        )
+        state = {
+            "case_id": "test-case",
+            "case_input": SimpleNamespace(repo_path=tmp_path),
+            "generated_artifacts": GeneratedArtifactSet(
+                case_id="test-case",
+                files=[
+                    GeneratedFile(
+                        path="src/components/Button.tsx",
+                        content="export const Button = () => null;",
+                        language="typescript",
+                        source_node_id="node-btn",
+                        is_new=True,
+                    )
+                ],
+                file_map={"src/components/Button.tsx": "export const Button = () => null;"},
+                generation_trace=["node-btn:src/components/Button.tsx"],
+                changed_paths=["src/components/Button.tsx"],
+            ),
+        }
+
+        await validator.run(state)
+
+        assert len(validator._build.run_log) == 3  # type: ignore[attr-defined]
+        materialized = Path(validator._build.run_log[0]["cwd"]) / "src/components/Button.tsx"  # type: ignore[attr-defined]
+        assert materialized.exists()
 
 
 class TestBuildFailure:

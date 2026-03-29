@@ -225,7 +225,7 @@ class TestNormalizeNode:
     async def test_normalize_node_guards_none_artifacts(
         self, fake_llm: FakeLLMAdapter
     ) -> None:
-        """normalize_node with None generated_artifacts returns terminal_state=manual-review-required."""
+        """normalize_node with None artifacts must enter manual-review-required."""
         from ddk.graph.context import ServiceContainer
         from ddk.graph.nodes.normalize import normalize_node
 

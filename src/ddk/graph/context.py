@@ -14,11 +14,15 @@ from ddk.adapters.sandbox.base import SandboxAdapter
 from ddk.adapters.screenshot_diff import ScreenshotDiffAdapter
 
 if TYPE_CHECKING:
+    from ddk.services.auto_fix_planner import AutoFixPlanner
     from ddk.services.context_pack_builder import ContextPackBuilder
     from ddk.services.design_system_inferencer import DesignSystemInferencer
+    from ddk.services.failure_classifier import FailureClassifier
     from ddk.services.generation_planner import GenerationPlanner
     from ddk.services.intake_processor import IntakeProcessor
     from ddk.services.repo_convention_scanner import RepoConventionScanner
+    from ddk.services.rollback_controller import RollbackController
+    from ddk.services.runtime_validator import RuntimeValidator
     from ddk.services.semantic_intent_extractor import SemanticIntentExtractor
 
 
@@ -55,3 +59,9 @@ class ServiceContainer:
     design_system_inferencer: DesignSystemInferencer | None = None
     generation_planner: GenerationPlanner | None = None
     context_pack_builder: ContextPackBuilder | None = None
+
+    # Phase 4 services (optional — populated for validation/self-healing pipeline)
+    runtime_validator: RuntimeValidator | None = None
+    auto_fix_planner: AutoFixPlanner | None = None
+    failure_classifier: FailureClassifier | None = None
+    rollback_controller: RollbackController | None = None

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -35,6 +35,9 @@ class GeneratedFile(DDKBaseModel):
         "typescript"
     )
     source_node_id: str
+    # Design-spec fields (12-data-models.md §4) — additive, defaults provided
+    is_new: bool = False
+    original_content: str | None = None
 
 
 class GeneratedArtifactSet(DDKBaseModel):
@@ -44,3 +47,7 @@ class GeneratedArtifactSet(DDKBaseModel):
     generation_trace: list[str] = Field(default_factory=list)
     total_tokens_used: int = Field(default=0, ge=0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    # Design-spec fields (12-data-models.md §4) — additive, defaults provided
+    schema_version: str = "1.0"
+    changed_paths: list[str] = Field(default_factory=list)
+    trace: dict[str, Any] = Field(default_factory=dict)

@@ -1,54 +1,74 @@
-"""OutputNormalizer — GeneratedArtifactSet → NormalizationReport + patched artifacts (CODEGEN-02)."""
+"""OutputNormalizer service — Phase 3 (GEN-02).
+
+Responsible for applying convention fixes to generated artifacts via a single LLM call.
+Produces a NormalizationReport and a (potentially patched) GeneratedArtifactSet.
+
+Key contract:
+- Empty artifacts (files=[]) → short-circuit, 0 LLM calls, returns the SAME object (identity)
+- One LLM call for non-empty artifacts
+- drift_score_before from all convention_fixes; drift_score_after from unresolved_drift only
+- System prompt starts with "Normalize" so FakeLLMAdapter routes to key "normalize"
+"""
 
 from __future__ import annotations
 
 import json
 from typing import Any
 
-from pydantic import Field
+from pydantic import BaseModel
 
-from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, LLMResponse, Message
-from ddk.models._base import DDKBaseModel
-from ddk.models.generation import GeneratedArtifactSet
+from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
+from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.normalization import ConventionFix, NormalizationReport
 from ddk.models.repo import RepoProfile
 
-# KEY: starts with "Normalize" → FakeLLM key="normalize".
-# Must not start with "you", "generate", "analyze", or "senior" (all taken).
-_SYSTEM_PROMPT = """Normalize convention violations for repository code.
+# ---------------------------------------------------------------------------
+# System prompt — MUST start with "Normalize" so FakeLLMAdapter routes to
+# the "normalize" key via:  msg.content.split()[0].lower() == "normalize"
+# ---------------------------------------------------------------------------
+_SYSTEM_PROMPT = """\
+Normalize the following generated React/TypeScript source files to match
+the repository's coding conventions.
 
-Review generated code and output a list of convention fixes.
+You will receive a JSON object with generated files and repo conventions.
+Respond with a JSON object matching this exact schema:
+{
+  "convention_fixes": [
+    {
+      "fix_type": "naming",
+      "file_path": "<path>",
+      "rule_id": "<rule id, e.g. NAMING-001>",
+      "description": "<human-readable description>",
+      "before_snippet": "<code before fix>",
+      "after_snippet": "<code after fix>",
+      "severity": "must-fix | should-fix | nice-to-have",
+      "before": "<original text>",
+      "after": "<normalized text>"
+    }
+  ],
+  "unresolved_drift": ["<rule_id that could not be auto-fixed>", ...],
+  "patched_files": {
+    "<file_path>": "<full patched content>"
+  }
+}
 
-Focus on:
-1. Component naming: PascalCase vs kebab-case per NamingRules
-2. File placement: components in correct directory per FileLayoutRules
-3. Import ordering: external libraries before internal
-4. Design token usage: replace hardcoded colors/spacing with token references
-5. Primitive reuse: use existing components if functionally equivalent
-
-Do NOT change business logic or component structure.
-Do NOT fix TypeScript errors.
-
-## Response Format
-Output structured JSON with a convention_fixes array, unresolved_drift array, and patched_files dict."""
+Rules:
+- Apply all auto-fixable violations and list them in convention_fixes
+- Leave issues that need human judgement in unresolved_drift
+- Respond with valid JSON only — no markdown fences, no commentary
+"""
 
 
-class _NormalizationLLMOutput(DDKBaseModel):
-    """LLM output schema for OutputNormalizer. Internal use only."""
+class _NormalizationLLMOutput(BaseModel):
+    """Internal model for the LLM's normalization response."""
 
-    convention_fixes: list[ConventionFix] = Field(default_factory=list)
-    unresolved_drift: list[str] = Field(default_factory=list)
-    patched_files: dict[str, str] = Field(default_factory=dict)
-    # patched_files: path → patched content (LLM applies fixes inline)
+    convention_fixes: list[dict[str, Any]] = []
+    unresolved_drift: list[str] = []
+    patched_files: dict[str, str] = {}
 
 
 class OutputNormalizer:
-    """Normalizes generated code to match RepoProfile conventions (CODEGEN-02).
-
-    LLM-based normalization (haiku) per 16-prompt-design.md §6.
-    NOT rule-based AST — the LLM understands context (e.g., same color for bg vs text).
-    Model: claude-3-haiku-20240307, temperature=0.0.
-    """
+    """Applies LLM-driven convention normalization to a GeneratedArtifactSet."""
 
     def __init__(self, llm: LLMAdapter) -> None:
         self._llm = llm
@@ -58,6 +78,10 @@ class OutputNormalizer:
             max_tokens=2048,
         )
 
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     async def normalize(
         self,
         artifacts: GeneratedArtifactSet,
@@ -65,82 +89,124 @@ class OutputNormalizer:
     ) -> tuple[NormalizationReport, GeneratedArtifactSet]:
         """Normalize generated artifacts against repo conventions.
 
-        Returns:
-            Tuple of (NormalizationReport with drift scores, patched GeneratedArtifactSet).
+        Short-circuits when artifacts.files is empty (no LLM call).
 
-        Empty artifacts (files=[]) returns an empty NormalizationReport and unchanged
-        artifacts without making any LLM call.
+        Args:
+            artifacts: The generated files to normalize.
+            repo_profile: Repository conventions to check against.
+
+        Returns:
+            A 2-tuple of (NormalizationReport, patched GeneratedArtifactSet).
+            When empty, returns (report, artifacts) where patched *is* the input object.
         """
         if not artifacts.files:
-            report = NormalizationReport(
-                case_id=artifacts.case_id,
-                convention_fixes=[],
-                drift_score_before=0.0,
-                drift_score_after=0.0,
-                unresolved_drift=[],
+            # Short-circuit: return identity of the same artifacts object
+            return (
+                NormalizationReport(
+                    case_id=artifacts.case_id,
+                    convention_fixes=[],
+                    drift_score_before=0.0,
+                    drift_score_after=0.0,
+                    unresolved_drift=[],
+                ),
+                artifacts,  # identity: same object reference
             )
-            return report, artifacts
 
-        # Build file listing for LLM context (cap at 10 files for token budget)
-        files_summary = "\n\n".join(
-            f"### {f.path}\n```typescript\n{f.content[:800]}\n```"
-            for f in artifacts.files[:10]
-        )
+        llm_output = await self._call_llm(artifacts, repo_profile)
 
-        user_content = (
-            f"Normalize these generated files against the repository conventions.\n\n"
-            f"## Repository Profile\n"
-            f"Framework: {repo_profile.framework}\n"
-            f"{repo_profile.model_dump_json(indent=2)[:1500]}\n\n"
-            f"## Generated Files\n{files_summary}\n\n"
-            f"Output a JSON object with convention_fixes, unresolved_drift, and patched_files."
-        )
+        # Parse convention fixes into ConventionFix model instances
+        convention_fixes: list[ConventionFix] = []
+        for fix_dict in llm_output.convention_fixes:
+            try:
+                convention_fixes.append(ConventionFix(**fix_dict))
+            except Exception:
+                pass  # skip malformed fixes silently
 
-        messages = [
-            Message(role="system", content=_SYSTEM_PROMPT),
-            Message(role="user", content=user_content),
-        ]
+        drift_score_before = NormalizationReport.compute_drift_score(convention_fixes)
 
-        response: LLMResponse = await self._llm.complete_structured(
-            messages, self._config, output_schema=_NormalizationLLMOutput
-        )
-
-        data: dict[str, Any] = json.loads(response.content)
-        llm_output = _NormalizationLLMOutput.model_validate(data)
-
-        # Compute drift scores using design-spec formula (12-data-models.md)
-        drift_score_before = NormalizationReport.compute_drift_score(llm_output.convention_fixes)
-
-        # drift_score_after reflects only fixes the LLM could not resolve
-        unresolved_score_fixes: list[ConventionFix] = [
-            f for f in llm_output.convention_fixes
-            if f.description in llm_output.unresolved_drift
-        ]
-        drift_score_after = NormalizationReport.compute_drift_score(unresolved_score_fixes)
+        # Unresolved drift score uses only unresolved fixes (those that couldn't be patched)
+        unresolved_fixes = [f for f in convention_fixes if f.rule_id in llm_output.unresolved_drift]
+        drift_score_after = NormalizationReport.compute_drift_score(unresolved_fixes)
 
         report = NormalizationReport(
             case_id=artifacts.case_id,
-            convention_fixes=llm_output.convention_fixes,
+            convention_fixes=convention_fixes,
             drift_score_before=drift_score_before,
             drift_score_after=drift_score_after,
             unresolved_drift=llm_output.unresolved_drift,
         )
 
-        # Apply patched content from LLM if provided
-        if llm_output.patched_files:
-            patched_file_list = []
-            for f in artifacts.files:
-                if f.path in llm_output.patched_files:
-                    patched_file_list.append(
-                        f.model_copy(update={"content": llm_output.patched_files[f.path]})
-                    )
-                else:
-                    patched_file_list.append(f)
-            patched_file_map = {pf.path: pf.content for pf in patched_file_list}
-            patched_artifacts = artifacts.model_copy(
-                update={"files": patched_file_list, "file_map": patched_file_map}
-            )
-        else:
-            patched_artifacts = artifacts
+        # Apply patched file content (if LLM returned any patches)
+        patched = self._apply_patches(artifacts, llm_output.patched_files)
 
-        return report, patched_artifacts
+        return report, patched
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    async def _call_llm(
+        self,
+        artifacts: GeneratedArtifactSet,
+        repo_profile: RepoProfile,
+    ) -> _NormalizationLLMOutput:
+        """Issue the LLM normalization call."""
+        files_payload = [
+            {"path": f.path, "content": f.content, "language": f.language}
+            for f in artifacts.files
+        ]
+        user_content = json.dumps(
+            {
+                "files": files_payload,
+                "repo_framework": repo_profile.framework,
+                "conventions": getattr(repo_profile, "conventions", {}),
+            },
+            ensure_ascii=False,
+        )
+        messages = [
+            Message(role="system", content=_SYSTEM_PROMPT),
+            Message(role="user", content=user_content),
+        ]
+        response = await self._llm.complete(messages, self._config)
+        try:
+            data = json.loads(response.content)
+            return _NormalizationLLMOutput(**data)
+        except Exception:
+            return _NormalizationLLMOutput()
+
+    def _apply_patches(
+        self,
+        artifacts: GeneratedArtifactSet,
+        patched_files: dict[str, str],
+    ) -> GeneratedArtifactSet:
+        """Return a new GeneratedArtifactSet with patched file contents applied."""
+        if not patched_files:
+            return artifacts
+
+        updated_files: list[GeneratedFile] = []
+        updated_file_map: dict[str, str] = dict(artifacts.file_map)
+
+        for gf in artifacts.files:
+            if gf.path in patched_files:
+                new_content = patched_files[gf.path]
+                updated_files.append(
+                    GeneratedFile(
+                        path=gf.path,
+                        content=new_content,
+                        language=gf.language,
+                        source_node_id=gf.source_node_id,
+                        is_new=gf.is_new,
+                        original_content=gf.content,
+                    )
+                )
+                updated_file_map[gf.path] = new_content
+            else:
+                updated_files.append(gf)
+
+        return GeneratedArtifactSet(
+            case_id=artifacts.case_id,
+            files=updated_files,
+            file_map=updated_file_map,
+            generation_trace=artifacts.generation_trace,
+            changed_paths=artifacts.changed_paths,
+        )

@@ -1,11 +1,9 @@
-"""Integration test — full 7-node pipeline E2E with FakeLLMAdapter (03-03).
+"""Integration test — full 7-node pipeline E2E with FakeLLMAdapter (02-03 / GEN-01/02).
 
 Pipeline under test:
     START → intake → repo_scan → intent_extract → design_system → plan → generate → normalize → END
 
 All LLM calls are intercepted by FakeLLMAdapter.  No real API keys required.
-Note: generate/normalize LLM calls are NOT triggered here because _GENERATION_PLAN_RESPONSE
-      has an empty execution_order — both services short-circuit before calling LLM.
 """
 
 from __future__ import annotations
@@ -68,13 +66,23 @@ _GENERATION_PLAN_RESPONSE = json.dumps(
     }
 )
 
-# Phase 3 nodes — not called when execution_order is empty, but included for completeness
+# Phase 3 nodes — placeholders removed for Red phase; restored when Green phase complete
+
 _GENERATED_NODE_RESPONSE = json.dumps(
-    {"files": [], "entry_point": None, "component_exports": []}
+    {
+        "files": [],
+        "file_map": {},
+        "generation_trace": [],
+        "changed_paths": [],
+    }
 )
 
 _NORMALIZATION_RESPONSE = json.dumps(
-    {"convention_fixes": [], "unresolved_drift": [], "patched_files": {}}
+    {
+        "convention_fixes": [],
+        "unresolved_drift": [],
+        "patched_files": {},
+    }
 )
 
 
@@ -117,8 +125,8 @@ def pipeline_fake_llm() -> FakeLLMAdapter:
             "you": _INTENT_GRAPH_RESPONSE,          # SemanticIntentExtractor
             "analyze": _DESIGN_SYSTEM_RESPONSE,      # DesignSystemInferencer
             "senior": _GENERATION_PLAN_RESPONSE,     # GenerationPlanner
-            "generate": _GENERATED_NODE_RESPONSE,    # CodeGenerator (not called — empty plan)
-            "normalize": _NORMALIZATION_RESPONSE,    # OutputNormalizer (not called — empty artifacts)
+            "generate": _GENERATED_NODE_RESPONSE,    # CodeGenerator
+            "normalize": _NORMALIZATION_RESPONSE,    # OutputNormalizer
         }
     )
 
@@ -180,7 +188,7 @@ class TestIngestionPipeline:
         - Pipeline runs to completion without errors
         - repo_profile, intent_graph, generation_plan are all non-None
         - terminal_state is None (no error branches triggered)
-        - current_node is "normalize" (final node executed successfully)
+        - current_node is "normalize" (final node executed successfully in 7-node pipeline)
         """
         graph = build_ddk_graph()
         compiled = graph.compile()
@@ -209,7 +217,7 @@ class TestIngestionPipeline:
         )
 
         # --- Pipeline reached the final node ---
-        assert result["current_node"] == "normalize"  # Phase 3 extends pipeline to normalize
+        assert result["current_node"] == "normalize"  # 7-node pipeline ends at normalize
 
     @pytest.mark.asyncio
     async def test_pipeline_preserves_case_id(

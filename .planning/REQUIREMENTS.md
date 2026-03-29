@@ -27,8 +27,8 @@ Requirements for Milestone v1.0 (Delivery Pipeline MVP). Each maps to roadmap ph
 
 ### Code Generation & Normalization
 
-- [ ] **CODEGEN-01**: Code Generation Engine (DDK-REQ-007) — CodeGenerator 서비스, 컴포넌트/페이지 코드 생성, 파일 맵 및 트레이스 → GeneratedArtifactSet
-- [ ] **CODEGEN-02**: Post-generation Normalizer (DDK-REQ-008) — OutputNormalizer, 네이밍/임포트/토큰/파일배치 드리프트를 RepoProfile 기반으로 정규화 → NormalizationReport
+- [x] **CODEGEN-01**: Code Generation Engine (DDK-REQ-007) — CodeGenerator 서비스, 컴포넌트/페이지 코드 생성, 파일 맵 및 트레이스 → GeneratedArtifactSet
+- [x] **CODEGEN-02**: Post-generation Normalizer (DDK-REQ-008) — OutputNormalizer, 네이밍/임포트/토큰/파일배치 드리프트를 RepoProfile 기반으로 정규화 → NormalizationReport
 - [x] **CODEGEN-03**: Context Pack Builder (DDK-REQ-015 일부) — ContextPackBuilder, 최대 6파일/300줄, P1~P5 우선순위, 사전순 tie-break, 결정론적 출력
 
 ### Validation & Self-Healing
@@ -95,8 +95,8 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 | INGEST-04 | Phase 2 | Complete |
 | INGEST-05 | Phase 2 | Complete |
 | INGEST-06 | Phase 2 | Complete |
-| CODEGEN-01 | Phase 3 | Pending |
-| CODEGEN-02 | Phase 3 | Pending |
+| CODEGEN-01 | Phase 3 | Complete |
+| CODEGEN-02 | Phase 3 | Complete |
 | CODEGEN-03 | Phase 2 | Complete |
 | VALID-01 | Phase 4 | Pending |
 | VALID-02 | Phase 4 | Pending |

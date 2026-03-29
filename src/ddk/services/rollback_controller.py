@@ -51,15 +51,19 @@ class RollbackController:
         ref = self._ref_name(case_id, attempt_number)
         return await self.git.create_checkpoint(self.repo_path, ref)
 
-    async def rollback_to_latest(self, case_id: str, attempt_number: int) -> None:
+    async def rollback_to_latest(
+        self, case_id: str, attempt_number: int, *, force: bool = False
+    ) -> None:
         """Roll back the repo to the checkpoint for this attempt number.
 
         Args:
             case_id: Unique case identifier.
             attempt_number: Attempt number whose checkpoint to restore.
+            force: Pass ``True`` to discard uncommitted changes silently.
 
         Raises:
             ValueError: If the checkpoint ref does not exist (propagated from GitAdapter).
+            DirtyWorkingTreeError: If the tree is dirty and ``force`` is ``False``.
         """
         ref = self._ref_name(case_id, attempt_number)
-        await self.git.rollback_to(self.repo_path, ref)
+        await self.git.rollback_to(self.repo_path, ref, force=force)

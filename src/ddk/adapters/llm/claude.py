@@ -8,6 +8,8 @@ from typing import Any
 import anthropic
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+from ddk.exceptions import CostCapExceededError
+
 from .base import LLMAdapter, LLMCallConfig, LLMResponse, Message
 
 # Cost per 1M tokens (USD) — Claude 3.5 Sonnet / Haiku pricing
@@ -29,7 +31,12 @@ def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 class ClaudeAdapter:
     """Anthropic Claude adapter implementing the LLMAdapter protocol."""
 
-    def __init__(self, api_key: str, default_model: str = "claude-3-5-sonnet-20241022") -> None:
+    def __init__(
+        self,
+        api_key: str,
+        default_model: str = "claude-3-5-sonnet-20241022",
+        cost_cap_usd: float = float("inf"),
+    ) -> None:
         if not api_key:
             raise ValueError(
                 "ClaudeAdapter requires a non-empty api_key. "
@@ -37,6 +44,20 @@ class ClaudeAdapter:
             )
         self._client = anthropic.AsyncAnthropic(api_key=api_key)
         self._default_model = default_model
+        self._cost_cap_usd = cost_cap_usd
+        self._accumulated_cost: float = 0.0
+
+    def reset_cost_tracking(self) -> None:
+        """Reset the accumulated cost counter (e.g. between pipeline runs)."""
+        self._accumulated_cost = 0.0
+
+    def _check_cost_cap(self) -> None:
+        """Raise CostCapExceededError if the cap has already been reached."""
+        if self._accumulated_cost >= self._cost_cap_usd:
+            raise CostCapExceededError(
+                accumulated_usd=self._accumulated_cost,
+                cap_usd=self._cost_cap_usd,
+            )
 
     @retry(
         retry=retry_if_exception_type((anthropic.RateLimitError, anthropic.InternalServerError)),
@@ -50,6 +71,7 @@ class ClaudeAdapter:
 
     async def complete(self, messages: list[Message], config: LLMCallConfig) -> LLMResponse:
         """Send messages to Claude and return a text response."""
+        self._check_cost_cap()
         model = config.model or self._default_model
         system_prompt, anthropic_messages = _split_messages(messages)
 
@@ -67,12 +89,14 @@ class ClaudeAdapter:
         usage = response.usage  # type: ignore[reportUnknownMemberType]
         input_tok = int(usage.input_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
         output_tok = int(usage.output_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
+        cost = _estimate_cost(model, input_tok, output_tok)
+        self._accumulated_cost += cost
         return LLMResponse(
             content=content,
             model=model,
             input_tokens=input_tok,
             output_tokens=output_tok,
-            cost_usd=_estimate_cost(model, input_tok, output_tok),
+            cost_usd=cost,
             raw_response=response.model_dump(),  # type: ignore[arg-type]
         )
 
@@ -83,6 +107,7 @@ class ClaudeAdapter:
         output_schema: type[Any],
     ) -> LLMResponse:
         """Call Claude with tool_use to force structured JSON output matching output_schema."""
+        self._check_cost_cap()
         model = config.model or self._default_model
         system_prompt, anthropic_messages = _split_messages(messages)
 
@@ -115,12 +140,14 @@ class ClaudeAdapter:
         usage = response.usage  # type: ignore[reportUnknownMemberType]
         input_tok = int(usage.input_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
         output_tok = int(usage.output_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
+        cost = _estimate_cost(model, input_tok, output_tok)
+        self._accumulated_cost += cost
         return LLMResponse(
             content=content,
             model=model,
             input_tokens=input_tok,
             output_tokens=output_tok,
-            cost_usd=_estimate_cost(model, input_tok, output_tok),
+            cost_usd=cost,
             raw_response=response.model_dump(),  # type: ignore[arg-type]
         )
 

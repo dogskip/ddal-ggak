@@ -37,5 +37,5 @@ class GitAdapter(Protocol):
     ) -> str: ...
 
     async def rollback_to(
-        self, repo_path: Path, ref_name: str
+        self, repo_path: Path, ref_name: str, *, force: bool = False
     ) -> None: ...

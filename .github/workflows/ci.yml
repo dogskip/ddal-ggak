@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-and-type-check:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --extra dev
+      - name: Ruff lint
+        run: uv run ruff check src/ tests/
+      - name: Ruff format check
+        run: uv run ruff format --check src/ tests/
+      - name: Pyright type check
+        run: uv run pyright src/
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --extra dev
+      - name: Run tests (excluding playwright)
+        run: uv run pytest tests/ -q -m "not playwright" --tb=short --cov=src/ddk --cov-report=term-missing

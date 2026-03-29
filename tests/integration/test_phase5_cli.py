@@ -199,7 +199,7 @@ def test_cli_rollback_delegates_to_checkpoint_ref(tmp_path: Path) -> None:
         def __init__(self) -> None:
             self.calls: list[tuple[Path, str]] = []
 
-        async def rollback_to(self, repo_path: Path, ref_name: str) -> None:
+        async def rollback_to(self, repo_path: Path, ref_name: str, *, force: bool = False) -> None:
             self.calls.append((repo_path, ref_name))
 
     fake_git = FakeGitAdapter()
@@ -245,6 +245,7 @@ def test_cli_rollback_restores_real_git_checkpoint(tmp_path: Path) -> None:
             "C-456",
             "--attempt",
             "1",
+            "--force",
         ],
     )
 

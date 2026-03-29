@@ -1,4 +1,4 @@
-"""LangGraph StateGraph builder for ddalggak pipeline — Phase 3 completion (D-08).
+"""LangGraph StateGraph builder for ddalggak pipeline — Phase 3 (GEN-01/GEN-02).
 
 7-node pipeline: START → intake → repo_scan → intent_extract → design_system → plan → generate → normalize → END
 """
@@ -22,10 +22,8 @@ from ddk.graph.state import GraphState
 def build_ddk_graph() -> StateGraph:  # type: ignore[type-arg, return-value]
     """Build the ddalggak LangGraph StateGraph.
 
-    Phase 3 completion (D-08): 7-node pipeline.
+    Phase 3 (GEN-01/GEN-02): 7-node pipeline.
     Flow: START → intake → repo_scan → intent_extract → design_system → plan → generate → normalize → END
-
-    Full 10-node pipeline is assembled in Phase 5 (CERT-06).
 
     Returns:
         LangGraph StateGraph ready for compilation and invocation.

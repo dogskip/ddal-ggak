@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ddk.adapters.playwright_browser import ConsoleEntry
+from ddk.adapters.playwright_browser import ConsoleEntry, FailedRequestEntry
 
 
 class FakePlaywrightAdapter:
@@ -14,9 +14,11 @@ class FakePlaywrightAdapter:
         self,
         screenshot_path: Path | None = None,
         console_errors: list[ConsoleEntry] | None = None,
+        failed_requests: list[FailedRequestEntry] | None = None,
     ):
         self.screenshot_path = screenshot_path or Path("/tmp/fake-screenshot.png")
         self.console_errors = console_errors or []
+        self.failed_requests: list[FailedRequestEntry] = failed_requests or []
         self.capture_log: list[dict[str, object]] = []
         self._closed = False
 
@@ -35,6 +37,14 @@ class FakePlaywrightAdapter:
         self, url: str, wait_ms: int = 5000
     ) -> list[ConsoleEntry]:
         return self.console_errors
+
+    async def get_failed_requests(
+        self,
+        url: str,
+        wait_ms: int = 5000,
+        correlation_id: str | None = None,
+    ) -> list[FailedRequestEntry]:
+        return self.failed_requests
 
     async def close(self) -> None:
         self._closed = True

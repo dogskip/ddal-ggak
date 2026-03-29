@@ -43,6 +43,7 @@ class GraphState(TypedDict):
     terminal_state: str | None
     error_message: str | None
     pre_run_checkpoint_ref: str | None
+    failure_hash_history: list[int]  # oscillation detection — appended by autofix_node
     # Cost tracking
     llm_call_records: list[str]
     total_cost_usd: float
@@ -77,6 +78,7 @@ def initial_state(case_input: CaseInput) -> GraphState:
         terminal_state=None,
         error_message=None,
         pre_run_checkpoint_ref=None,
+        failure_hash_history=[],
         llm_call_records=[],
         total_cost_usd=0.0,
         reproducibility_seed=None,

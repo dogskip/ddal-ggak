@@ -85,6 +85,19 @@ class WorkspaceManager:
         """
         return self.root / "cases" / case_id
 
+    def latest_case_id(self) -> str | None:
+        """Return the highest existing sequential case ID, if any."""
+        cases_dir = self.root / "cases"
+        if not cases_dir.exists():
+            return None
+
+        existing = sorted(
+            p.name
+            for p in cases_dir.iterdir()
+            if p.is_dir() and p.name.startswith("C-") and p.name[2:].isdigit()
+        )
+        return existing[-1] if existing else None
+
     def init_case(self, case_id: str) -> Path:
         """Create all subdirectories for a new case.
 

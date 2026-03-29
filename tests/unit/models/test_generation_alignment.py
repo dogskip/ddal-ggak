@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 
 
@@ -56,7 +54,7 @@ class TestGeneratedFileDesignSpecFields:
 
 
 class TestGeneratedArtifactSetDesignSpecFields:
-    """GeneratedArtifactSet must have schema_version, changed_paths, trace per 12-data-models.md §4."""
+    """GeneratedArtifactSet must have schema_version, changed_paths, trace."""
 
     def test_schema_version_default(self) -> None:
         art = GeneratedArtifactSet(case_id="c", files=[])

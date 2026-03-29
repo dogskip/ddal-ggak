@@ -10,13 +10,12 @@ from typing import Any
 import pytest
 
 from ddk.adapters.llm.base import LLMCallConfig
-from ddk.models.generation import GenerationNode, GenerationPlan
+from ddk.models.generation import GenerationPlan
 from ddk.models.input import CaseInput
 from ddk.models.intent import (
     BoundingBox,
     ComponentSpec,
     IntentGraph,
-    InteractionSpec,
     LayoutRegion,
 )
 from ddk.models.repo import RepoProfile
@@ -207,10 +206,10 @@ class TestPlanNode:
         self, fake_llm: FakeLLMAdapter, tmp_path: Path
     ) -> None:
         """plan_node reads intent_graph + repo_profile, calls planner, writes generation_plan."""
-        from unittest.mock import AsyncMock, MagicMock
+        from unittest.mock import MagicMock
 
-        from ddk.graph.nodes.plan import plan_node
         from ddk.graph.context import ServiceContainer
+        from ddk.graph.nodes.plan import plan_node
 
         # Build minimal state
         img = tmp_path / "design.png"
@@ -243,8 +242,8 @@ class TestPlanNode:
         """plan_node with no LLM returns error state."""
         from unittest.mock import MagicMock
 
-        from ddk.graph.nodes.plan import plan_node
         from ddk.graph.context import ServiceContainer
+        from ddk.graph.nodes.plan import plan_node
 
         img = tmp_path / "design.png"
         img.write_bytes(b"\x89PNG" + b"\x00" * 20)

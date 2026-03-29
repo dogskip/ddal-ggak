@@ -15,7 +15,7 @@ async def intake_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     """
     processor = IntakeProcessor()
     case_input = state["case_input"]
-    validated_input, image_hashes = await processor.process(case_input)
+    validated_input, _ = await processor.process(case_input)
     return {
         "case_input": validated_input,
         "current_node": "intake",

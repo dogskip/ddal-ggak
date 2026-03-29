@@ -4,10 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddalggak"
-version = "0.1.0"
+version = "1.0.0"
 description = "AI 코딩 워크플로우 — generate → validate → auto-fix closed loop"
 readme = "README.md"
 requires-python = ">=3.12"
+keywords = ["ai", "coding", "langgraph", "llm", "automation", "mcp", "cli"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = [
     "typer>=0.15.0,<1.0.0",
     "pydantic>=2.7.0,<3.0.0",
@@ -36,6 +48,12 @@ dev = [
 
 [project.scripts]
 ddk = "ddk.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/bjchoi/ddalggak"
+Documentation = "https://github.com/bjchoi/ddalggak/blob/main/docs/USER-GUIDE.md"
+Changelog = "https://github.com/bjchoi/ddalggak/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/bjchoi/ddalggak/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ddk"]

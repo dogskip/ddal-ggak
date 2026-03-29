@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
@@ -119,8 +119,8 @@ class OutputNormalizer:
         for fix_dict in llm_output.convention_fixes:
             try:
                 convention_fixes.append(ConventionFix(**fix_dict))
-            except Exception:
-                pass  # skip malformed fixes silently
+            except ValidationError:
+                continue
 
         drift_score_before = NormalizationReport.compute_drift_score(convention_fixes)
 

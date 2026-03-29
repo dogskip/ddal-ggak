@@ -11,7 +11,7 @@ import pytest
 
 from ddk.models.input import CaseInput
 from ddk.models.intent import IntentGraph
-from ddk.services.semantic_intent_extractor import SemanticIntentExtractor, _SYSTEM_PROMPT
+from ddk.services.semantic_intent_extractor import _SYSTEM_PROMPT, SemanticIntentExtractor
 from tests.fakes.fake_llm_adapter import FakeLLMAdapter
 
 

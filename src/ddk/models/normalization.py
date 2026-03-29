@@ -7,6 +7,11 @@ from pydantic import Field
 from ._base import DDKBaseModel
 
 
+def _empty_convention_fixes() -> list[ConventionFix]:
+    """Return a typed empty list for Pydantic default_factory."""
+    return []
+
+
 class ConventionFix(DDKBaseModel):
     file_path: str
     rule_id: str
@@ -25,19 +30,22 @@ class ConventionFix(DDKBaseModel):
 
 class NormalizationReport(DDKBaseModel):
     case_id: str
-    fixes: list[ConventionFix] = []
-    files_modified: list[str] = []
-    skipped_rules: list[str] = []
+    fixes: list[ConventionFix] = Field(default_factory=_empty_convention_fixes)
+    files_modified: list[str] = Field(default_factory=list)
+    skipped_rules: list[str] = Field(default_factory=list)
     duration_ms: int = Field(default=0, ge=0)
     # Design-spec fields (12-data-models.md §5) — additive, defaults provided
-    convention_fixes: list[ConventionFix] = Field(default_factory=list)
+    convention_fixes: list[ConventionFix] = Field(default_factory=_empty_convention_fixes)
     drift_score_before: float = Field(default=0.0, ge=0.0, le=10.0)
     drift_score_after: float = Field(default=0.0, ge=0.0, le=10.0)
     unresolved_drift: list[str] = Field(default_factory=list)
 
     @staticmethod
     def compute_drift_score(fixes: list[ConventionFix]) -> float:
-        """Compute drift score from fixes. must-fix=2.0, should-fix=1.0, nice-to-have=0.5. Cap=10.0."""
-        WEIGHTS = {"must-fix": 2.0, "should-fix": 1.0, "nice-to-have": 0.5}
-        raw = sum(WEIGHTS.get(f.severity, 1.0) for f in fixes)
+        """Compute drift score from fixes.
+
+        must-fix=2.0, should-fix=1.0, nice-to-have=0.5. Cap=10.0.
+        """
+        weights = {"must-fix": 2.0, "should-fix": 1.0, "nice-to-have": 0.5}
+        raw = sum(weights.get(f.severity, 1.0) for f in fixes)
         return float(min(raw, 10.0))

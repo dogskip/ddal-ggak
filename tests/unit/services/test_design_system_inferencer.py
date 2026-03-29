@@ -10,7 +10,7 @@ import pytest
 from ddk.models.design_system import DesignSystem
 from ddk.models.input import CaseInput
 from ddk.models.repo import RepoProfile
-from ddk.services.design_system_inferencer import DesignSystemInferencer, _SYSTEM_PROMPT
+from ddk.services.design_system_inferencer import _SYSTEM_PROMPT, DesignSystemInferencer
 from tests.fakes.fake_llm_adapter import FakeLLMAdapter
 
 
@@ -20,12 +20,32 @@ def mock_design_system_json() -> str:
         {
             "case_id": "will-be-overwritten",
             "inferred_tokens": [
-                {"name": "primary", "value": "#3B82F6", "category": "color", "confidence": 0.95},
-                {"name": "secondary", "value": "#6B7280", "category": "color", "confidence": 0.9},
+                {
+                    "name": "primary",
+                    "value": "#3B82F6",
+                    "category": "color",
+                    "confidence": 0.95,
+                },
+                {
+                    "name": "secondary",
+                    "value": "#6B7280",
+                    "category": "color",
+                    "confidence": 0.9,
+                },
                 {"name": "sm", "value": "0.5rem", "category": "spacing", "confidence": 0.9},
                 {"name": "md", "value": "1rem", "category": "spacing", "confidence": 0.9},
-                {"name": "heading1", "value": "2rem", "category": "typography", "confidence": 0.85},
-                {"name": "rounded", "value": "0.25rem", "category": "border_radius", "confidence": 0.8},
+                {
+                    "name": "heading1",
+                    "value": "2rem",
+                    "category": "typography",
+                    "confidence": 0.85,
+                },
+                {
+                    "name": "rounded",
+                    "value": "0.25rem",
+                    "category": "border_radius",
+                    "confidence": 0.8,
+                },
                 {"name": "lg", "value": "1024px", "category": "breakpoint", "confidence": 0.9},
             ],
             "primitive_components": ["Button", "Card", "Badge"],

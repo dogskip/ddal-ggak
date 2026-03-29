@@ -1,7 +1,8 @@
-"""Integration test — full 7-node pipeline E2E with FakeLLMAdapter (02-03 / GEN-01/02).
+"""Integration test — full 9-node pipeline E2E with FakeLLMAdapter.
 
 Pipeline under test:
-    START → intake → repo_scan → intent_extract → design_system → plan → generate → normalize → END
+    START → intake → repo_scan → intent_extract → design_system → plan
+    → generate → normalize → validate → [router] → END
 
 All LLM calls are intercepted by FakeLLMAdapter.  No real API keys required.
 """
@@ -20,9 +21,9 @@ from ddk.graph.builder import build_ddk_graph
 from ddk.graph.context import ServiceContainer
 from ddk.graph.state import initial_state
 from ddk.models.input import CaseInput
+from ddk.models.validation import RuntimeValidationReport
 from tests.fakes import FakeLLMAdapter, FakePlaywrightAdapter, InMemoryFilesystem
 from tests.fakes.fake_sandbox import TempDirSandbox
-
 
 # ---------------------------------------------------------------------------
 # FakeLLMAdapter response fixtures
@@ -84,6 +85,23 @@ _NORMALIZATION_RESPONSE = json.dumps(
         "patched_files": {},
     }
 )
+
+
+class _PassingRuntimeValidator:
+    async def run(
+        self,
+        state: dict[str, object],
+        **_: object,
+    ) -> tuple[RuntimeValidationReport, None]:
+        return (
+            RuntimeValidationReport(
+                case_id=str(state["case_id"]),
+                build_success=True,
+                type_check_success=True,
+                lint_success=True,
+            ),
+            None,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +183,7 @@ def service_container(
         build_runner=build_stub,
         browser=FakePlaywrightAdapter(),
         screenshot_diff=ss_stub,
+        runtime_validator=_PassingRuntimeValidator(),
     )
 
 
@@ -174,21 +193,21 @@ def service_container(
 
 
 class TestIngestionPipeline:
-    """E2E integration tests for the 7-node pipeline (Phase 3 completion)."""
+    """E2E integration tests for the full certification pipeline."""
 
     @pytest.mark.asyncio
-    async def test_five_node_pipeline(
+    async def test_pipeline_runs_end_to_end(
         self,
         sample_input: CaseInput,
         service_container: ServiceContainer,
     ) -> None:
-        """Full 7-node pipeline runs end-to-end and produces required outputs.
+        """Full 9-node pipeline runs end-to-end and produces required outputs.
 
         Verifies:
         - Pipeline runs to completion without errors
         - repo_profile, intent_graph, generation_plan are all non-None
-        - terminal_state is None (no error branches triggered)
-        - current_node is "normalize" (final node executed successfully in 7-node pipeline)
+        - terminal_state is "ready" after certification
+        - current_node is "certify" (final executed node before END)
         """
         graph = build_ddk_graph()
         compiled = graph.compile()
@@ -212,12 +231,14 @@ class TestIngestionPipeline:
         )
 
         # --- No error state ---
-        assert result.get("terminal_state") is None, (
-            f"Pipeline hit error state: {result.get('error_message')}"
-        )
+        assert result.get("terminal_state") == "ready"
+        assert result["scorecard"] is not None
+        assert result["release_decision"] is not None
+        assert result["evidence_pack"] is not None
+        assert result["release_decision"].decision == "ready"
 
         # --- Pipeline reached the final node ---
-        assert result["current_node"] == "normalize"  # 7-node pipeline ends at normalize
+        assert result["current_node"] == "certify"
 
     @pytest.mark.asyncio
     async def test_pipeline_preserves_case_id(

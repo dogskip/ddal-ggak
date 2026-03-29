@@ -41,26 +41,36 @@ class RuntimeValidator:
         start_ms = int(time.monotonic() * 1000)
         failures: list[FailureRecord] = []
         runtime_errors: list[str] = []
+        case_input = state.get("case_input")
+        repo_path = (
+            Path(case_input.repo_path)
+            if case_input is not None and getattr(case_input, "repo_path", None) is not None
+            else Path(".")
+        )
+        sandbox_dir = await self._sandbox.create(repo_path)
 
-        sandbox_dir = Path("/tmp/ddk-sandbox")
+        try:
+            self._materialize_generated_artifacts(state, sandbox_dir)
 
-        # --- Build ---
-        build_result = await self._build.run(["npm", "run", "build"], cwd=sandbox_dir)
-        build_success = build_result.returncode == 0
-        if not build_success and build_result.stderr:
-            failures.append(self._classifier.classify(build_result.stderr))
+            # --- Build ---
+            build_result = await self._build.run(["npm", "run", "build"], cwd=sandbox_dir)
+            build_success = build_result.returncode == 0
+            if not build_success and build_result.stderr:
+                failures.append(self._classifier.classify(build_result.stderr))
 
-        # --- TypeCheck ---
-        tc_result = await self._build.run(["npx", "tsc", "--noEmit"], cwd=sandbox_dir)
-        type_check_success = tc_result.returncode == 0
-        if not type_check_success and tc_result.stderr:
-            failures.append(self._classifier.classify(tc_result.stderr))
+            # --- TypeCheck ---
+            tc_result = await self._build.run(["npx", "tsc", "--noEmit"], cwd=sandbox_dir)
+            type_check_success = tc_result.returncode == 0
+            if not type_check_success and tc_result.stderr:
+                failures.append(self._classifier.classify(tc_result.stderr))
 
-        # --- Lint ---
-        lint_result = await self._build.run(["npx", "eslint", "."], cwd=sandbox_dir)
-        lint_success = lint_result.returncode == 0
-        if not lint_success and lint_result.stderr:
-            failures.append(self._classifier.classify(lint_result.stderr))
+            # --- Lint ---
+            lint_result = await self._build.run(["npx", "eslint", "."], cwd=sandbox_dir)
+            lint_success = lint_result.returncode == 0
+            if not lint_success and lint_result.stderr:
+                failures.append(self._classifier.classify(lint_result.stderr))
+        finally:
+            await self._sandbox.cleanup()
 
         # --- Playwright ---
         if dev_server_url is not None:
@@ -101,3 +111,14 @@ class RuntimeValidator:
             )
 
         return report, vis_report
+
+    def _materialize_generated_artifacts(self, state: dict[str, Any], sandbox_dir: Path) -> None:
+        """Write generated artifacts into the sandbox before validation begins."""
+        generated_artifacts = state.get("generated_artifacts")
+        if generated_artifacts is None:
+            return
+
+        for generated_file in generated_artifacts.files:
+            output_path = sandbox_dir / generated_file.path
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(generated_file.content, encoding="utf-8")

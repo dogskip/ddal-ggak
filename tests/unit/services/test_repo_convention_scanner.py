@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from tests.fakes.fake_llm_adapter import FakeLLMAdapter
 from ddk.services.repo_convention_scanner import RepoConventionScanner
+from tests.fakes.fake_llm_adapter import FakeLLMAdapter
 
 # Path to the shared fixture repo
 FIXTURE_REPO = Path(__file__).parent.parent.parent / "fixtures" / "repos" / "react-vite-ts"

@@ -13,7 +13,8 @@ from ddk.models.repo import DesignTokens, RepoProfile
 
 # System prompt — starts with "Analyze" (key="analyze") to avoid FakeLLMAdapter
 # collision with SemanticIntentExtractor (key="you")
-_SYSTEM_PROMPT = """Analyze UI screenshots and repository convention data to infer a complete design system.
+_SYSTEM_PROMPT = """Analyze UI screenshots and repository convention data
+to infer a complete design system.
 
 You must output a valid JSON object conforming to the DesignSystem schema.
 Do not include any explanation outside the JSON.
@@ -21,9 +22,12 @@ Do not include any explanation outside the JSON.
 ## DesignSystem Rules
 
 ### Token categories
-- **color**: Named color values (hex, rgb, hsl). Prefer semantic names: "primary", "secondary", "danger", "success", "neutral-100" etc.
-- **spacing**: Size/gap values in rem or px. Use T-shirt size names: "xs", "sm", "md", "lg", "xl", "2xl" etc.
-- **typography**: Font size values in rem or px. Use semantic names: "body", "caption", "heading1", "heading2" etc.
+- **color**: Named color values (hex, rgb, hsl). Prefer semantic names:
+  "primary", "secondary", "danger", "success", "neutral-100" etc.
+- **spacing**: Size/gap values in rem or px. Use T-shirt size names:
+  "xs", "sm", "md", "lg", "xl", "2xl" etc.
+- **typography**: Font size values in rem or px. Use semantic names:
+  "body", "caption", "heading1", "heading2" etc.
 - **border_radius**: Border radius values. Use names like "none", "sm", "md", "lg", "full".
 - **breakpoint**: Responsive breakpoints in px. Use names like "sm", "md", "lg", "xl".
 

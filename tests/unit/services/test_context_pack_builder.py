@@ -16,13 +16,11 @@ Tests verify:
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from ddk.models.context_pack import ContextChunk, ContextPack
+from ddk.models.context_pack import ContextPack
 from ddk.services.context_pack_builder import ContextPackBuilder
 
 
@@ -42,7 +40,10 @@ def basic_repo(tmp_path: Path) -> Path:
     # P3: source component
     src = tmp_path / "src"
     src.mkdir()
-    (src / "App.tsx").write_text("import React from 'react';\nexport default function App() { return <div/>; }")
+    (src / "App.tsx").write_text(
+        "import React from 'react';\n"
+        "export default function App() { return <div/>; }"
+    )
     (src / "components").mkdir()
     (src / "components" / "Button.tsx").write_text(
         "export function Button() { return <button>Click</button>; }"

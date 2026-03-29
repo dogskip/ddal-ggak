@@ -33,9 +33,7 @@ class RepoConventionScanner:
         ts_config = self._parse_tsconfig(repo_path / "tsconfig.json")
         framework = self._detect_framework(pkg)
         language: str = (
-            "typescript"
-            if ts_config or (repo_path / "tsconfig.json").exists()
-            else "javascript"
+            "typescript" if ts_config or (repo_path / "tsconfig.json").exists() else "javascript"
         )
         css_approach = self._detect_css_approach(pkg)
         package_manager = self._detect_package_manager(repo_path)
@@ -182,7 +180,9 @@ class RepoConventionScanner:
 
     async def _llm_supplement(self, profile: RepoProfile, repo_path: Path) -> RepoProfile:
         """Call haiku to infer naming conventions and patterns not found statically."""
-        assert self._llm is not None
+        if self._llm is None:
+            msg = "LLM adapter is required for _llm_supplement but was not provided"
+            raise RuntimeError(msg)
         file_tree = self._sample_file_tree(repo_path, max_paths=50)
         system_prompt = (
             "You are a senior front-end developer analyzing a repository structure.\n"

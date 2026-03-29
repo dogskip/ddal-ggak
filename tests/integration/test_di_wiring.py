@@ -14,6 +14,7 @@ Passing ``anthropic_api_key=...`` as a constructor kwarg is silently ignored unl
 ``populate_by_name=True`` is set.  Tests therefore use ``monkeypatch.setenv`` to inject
 the fake key before constructing ``DdalggakConfig()``.
 """
+
 from __future__ import annotations
 
 import math
@@ -72,8 +73,7 @@ class TestBuildRuntimeServicesDI:
         services = _build_runtime_services(cfg)
 
         assert not math.isinf(services.llm._cost_cap_usd), (
-            "cost_cap_usd must not be inf in production — "
-            "the config default is 2.0 USD"
+            "cost_cap_usd must not be inf in production — the config default is 2.0 USD"
         )
 
     def test_model_wired_from_config(self) -> None:

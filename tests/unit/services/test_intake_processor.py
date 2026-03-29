@@ -45,9 +45,7 @@ class TestIntakeProcessor:
         assert hashes[str(img_path)] == expected
         assert len(expected) == 16
 
-    async def test_image_not_found(
-        self, processor: IntakeProcessor, tmp_path: Path
-    ) -> None:
+    async def test_image_not_found(self, processor: IntakeProcessor, tmp_path: Path) -> None:
         case_input = CaseInput(
             case_id="C-002",
             image_paths=[tmp_path / "nonexistent.png"],
@@ -57,9 +55,7 @@ class TestIntakeProcessor:
         with pytest.raises(FileNotFoundError, match="nonexistent.png"):
             await processor.process(case_input)
 
-    async def test_multiple_images(
-        self, processor: IntakeProcessor, tmp_path: Path
-    ) -> None:
+    async def test_multiple_images(self, processor: IntakeProcessor, tmp_path: Path) -> None:
         imgs = []
         for i in range(3):
             p = tmp_path / f"img{i}.png"

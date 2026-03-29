@@ -37,7 +37,8 @@ class QualityGateScore(DDKBaseModel):
     @field_validator("axes")
     @classmethod
     def validate_six_axes(
-        cls, v: list[QualityAxisScore],
+        cls,
+        v: list[QualityAxisScore],
     ) -> list[QualityAxisScore]:
         if len(v) != 6:
             raise ValueError("axes는 정확히 6개여야 합니다")

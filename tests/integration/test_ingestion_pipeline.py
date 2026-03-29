@@ -140,11 +140,11 @@ def pipeline_fake_llm() -> FakeLLMAdapter:
     """FakeLLMAdapter wired with canned JSON for all LLM-calling service nodes."""
     return FakeLLMAdapter(
         responses={
-            "you": _INTENT_GRAPH_RESPONSE,          # SemanticIntentExtractor
-            "analyze": _DESIGN_SYSTEM_RESPONSE,      # DesignSystemInferencer
-            "senior": _GENERATION_PLAN_RESPONSE,     # GenerationPlanner
-            "generate": _GENERATED_NODE_RESPONSE,    # CodeGenerator
-            "normalize": _NORMALIZATION_RESPONSE,    # OutputNormalizer
+            "you": _INTENT_GRAPH_RESPONSE,  # SemanticIntentExtractor
+            "analyze": _DESIGN_SYSTEM_RESPONSE,  # DesignSystemInferencer
+            "senior": _GENERATION_PLAN_RESPONSE,  # GenerationPlanner
+            "generate": _GENERATED_NODE_RESPONSE,  # CodeGenerator
+            "normalize": _NORMALIZATION_RESPONSE,  # OutputNormalizer
         }
     )
 
@@ -170,9 +170,7 @@ def service_container(
     )
 
     ss_stub = MagicMock()
-    ss_stub.compute_ssim = MagicMock(
-        return_value=SSIMResult(score=1.0, mismatch_regions=[])
-    )
+    ss_stub.compute_ssim = MagicMock(return_value=SSIMResult(score=1.0, mismatch_regions=[]))
     ss_stub.generate_diff_image = MagicMock(return_value=tmp_path / "diff.png")
 
     return ServiceContainer(
@@ -220,15 +218,9 @@ class TestIngestionPipeline:
         assert result["case_id"] == "C-INTEGRATION-001"
 
         # --- Phase 2 required outputs (D-08) ---
-        assert result["repo_profile"] is not None, (
-            "repo_scan_node must populate repo_profile"
-        )
-        assert result["intent_graph"] is not None, (
-            "intent_extract_node must populate intent_graph"
-        )
-        assert result["generation_plan"] is not None, (
-            "plan_node must populate generation_plan"
-        )
+        assert result["repo_profile"] is not None, "repo_scan_node must populate repo_profile"
+        assert result["intent_graph"] is not None, "intent_extract_node must populate intent_graph"
+        assert result["generation_plan"] is not None, "plan_node must populate generation_plan"
 
         # --- No error state ---
         assert result.get("terminal_state") == "ready"

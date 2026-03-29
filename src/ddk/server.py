@@ -108,11 +108,13 @@ def preflight() -> str:
 
         results.append({"check": "anthropic SDK", "ok": True, "detail": "installed"})
     except ImportError:
-        results.append({
-            "check": "anthropic SDK",
-            "ok": False,
-            "detail": "설치 필요: uv add anthropic",
-        })
+        results.append(
+            {
+                "check": "anthropic SDK",
+                "ok": False,
+                "detail": "설치 필요: uv add anthropic",
+            }
+        )
 
     all_ok = all(bool(r["ok"]) for r in results)
     return json.dumps({"all_ok": all_ok, "checks": results}, ensure_ascii=False)

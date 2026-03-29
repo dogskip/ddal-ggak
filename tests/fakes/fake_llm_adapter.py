@@ -15,9 +15,7 @@ class FakeLLMAdapter:
         self.responses: dict[str, str | dict[str, Any]] = responses or {}
         self.call_log: list[dict[str, Any]] = []
 
-    async def complete(
-        self, messages: list[Message], config: LLMCallConfig
-    ) -> LLMResponse:
+    async def complete(self, messages: list[Message], config: LLMCallConfig) -> LLMResponse:
         key = self._extract_key(messages)
         self.call_log.append({"key": key, "messages": messages, "config": config})
         if key not in self.responses:

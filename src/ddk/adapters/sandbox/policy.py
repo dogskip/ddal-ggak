@@ -10,38 +10,44 @@ from __future__ import annotations
 
 from pathlib import Path
 
-ENV_WHITELIST: frozenset[str] = frozenset({
-    "PATH",
-    "HOME",
-    "USER",
-    "LANG",
-    "TERM",
-    "NODE_ENV",
-    "npm_config_cache",
-    "DDK_SANDBOX_MODE",
-    "DDK_LOG_LEVEL",
-})
+ENV_WHITELIST: frozenset[str] = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "USER",
+        "LANG",
+        "TERM",
+        "NODE_ENV",
+        "npm_config_cache",
+        "DDK_SANDBOX_MODE",
+        "DDK_LOG_LEVEL",
+    }
+)
 
-FORBIDDEN_READ_PATHS: frozenset[str] = frozenset({
-    "~/.ssh/",
-    "~/.aws/",
-    "~/.config/gcloud/",
-    "~/.gnupg/",
-    "/etc/shadow",
-    "/etc/passwd",
-})
+FORBIDDEN_READ_PATHS: frozenset[str] = frozenset(
+    {
+        "~/.ssh/",
+        "~/.aws/",
+        "~/.config/gcloud/",
+        "~/.gnupg/",
+        "/etc/shadow",
+        "/etc/passwd",
+    }
+)
 
-ALLOWED_COMMANDS: frozenset[str] = frozenset({
-    "npm",
-    "npx",
-    "pnpm",
-    "yarn",
-    "bun",
-    "node",
-    "tsc",
-    "vite",
-    "git",
-})
+ALLOWED_COMMANDS: frozenset[str] = frozenset(
+    {
+        "npm",
+        "npx",
+        "pnpm",
+        "yarn",
+        "bun",
+        "node",
+        "tsc",
+        "vite",
+        "git",
+    }
+)
 
 
 def is_command_allowed(command: str) -> bool:

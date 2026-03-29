@@ -13,9 +13,7 @@ class TestGeneratedFileDesignSpecFields:
         assert gf.is_new is False
 
     def test_is_new_can_be_set_true(self) -> None:
-        gf = GeneratedFile(
-            path="x.tsx", content="code", source_node_id="n1", is_new=True
-        )
+        gf = GeneratedFile(path="x.tsx", content="code", source_node_id="n1", is_new=True)
         assert gf.is_new is True
 
     def test_original_content_default_none(self) -> None:
@@ -73,9 +71,7 @@ class TestGeneratedArtifactSetDesignSpecFields:
         assert art.schema_version == "2.0"
 
     def test_changed_paths_can_be_set(self) -> None:
-        art = GeneratedArtifactSet(
-            case_id="c", files=[], changed_paths=["src/A.tsx", "src/B.tsx"]
-        )
+        art = GeneratedArtifactSet(case_id="c", files=[], changed_paths=["src/A.tsx", "src/B.tsx"])
         assert art.changed_paths == ["src/A.tsx", "src/B.tsx"]
 
     def test_trace_can_be_set(self) -> None:

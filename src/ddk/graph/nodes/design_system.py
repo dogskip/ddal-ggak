@@ -8,9 +8,7 @@ from ddk.graph.context import ServiceContainer
 from ddk.services.design_system_inferencer import DesignSystemInferencer
 
 
-async def design_system_node(
-    state: dict[str, Any], **kwargs: Any
-) -> dict[str, Any]:
+async def design_system_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     """Infer design system tokens and enrich repo_profile.
 
     Thin adapter: reads state → calls DesignSystemInferencer → writes state.
@@ -23,8 +21,15 @@ async def design_system_node(
             "error_message": "No LLM adapter in ServiceContainer",
         }
     inferencer = DesignSystemInferencer(llm=container.llm)
-    design_system = await inferencer.infer(state["case_input"], state["repo_profile"])
-    enriched_profile = inferencer.enrich_profile(design_system, state["repo_profile"])
+    case_input = state.get("case_input")
+    repo_profile = state.get("repo_profile")
+    if case_input is None or repo_profile is None:
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": "Missing required upstream state (case_input/repo_profile)",
+        }
+    design_system = await inferencer.infer(case_input, repo_profile)
+    enriched_profile = inferencer.enrich_profile(design_system, repo_profile)
     return {
         "repo_profile": enriched_profile,
         "current_node": "design_system",

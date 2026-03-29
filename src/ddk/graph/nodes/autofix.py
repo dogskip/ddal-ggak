@@ -5,6 +5,7 @@ BEFORE applying the fix. This enables oscillation detection on the next validate
 if the fix fails and the same failures recur, route_after_validate will find the hash
 already in history and return "exhausted".
 """
+
 from __future__ import annotations
 
 import inspect
@@ -17,9 +18,7 @@ from ddk.models.validation import FailureRecord, RuntimeValidationReport
 
 def _failure_signature(failures: list[FailureRecord]) -> int:
     """Return a stable signature for the current failure set."""
-    return hash(
-        frozenset((failure.taxonomy_id, failure.file_path or "") for failure in failures)
-    )
+    return hash(frozenset((failure.taxonomy_id, failure.file_path or "") for failure in failures))
 
 
 async def autofix_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
@@ -57,17 +56,13 @@ async def autofix_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     cur_hash = _failure_signature(failures)
     _hist_raw = state.get("failure_hash_history", [])
     if not isinstance(_hist_raw, list):
-        raise TypeError(
-            f"autofix_node: failure_hash_history must be list, got {type(_hist_raw)!r}"
-        )
+        raise TypeError(f"autofix_node: failure_hash_history must be list, got {type(_hist_raw)!r}")
     failure_hash_history: list[int] = cast(list[int], _hist_raw)
     updated_history = [*failure_hash_history, cur_hash]
 
     _attempts_raw = state.get("fix_attempts", [])
     if not isinstance(_attempts_raw, list):
-        raise TypeError(
-            f"autofix_node: fix_attempts must be list, got {type(_attempts_raw)!r}"
-        )
+        raise TypeError(f"autofix_node: fix_attempts must be list, got {type(_attempts_raw)!r}")
     existing_attempts: list[FixAttempt] = cast(list[FixAttempt], _attempts_raw)
     attempt_n = len(existing_attempts) + 1
     _arts_raw = state.get("generated_artifacts")
@@ -89,17 +84,18 @@ async def autofix_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
             "current_node": "autofix",
         }
 
+    case_id = state.get("case_id", "unknown")
     fix_attempt, patched_artifacts = await container.auto_fix_planner.plan_and_apply(
         failures=failures,
         artifacts=artifacts,
-        case_id=state["case_id"],
+        case_id=case_id,
         attempt_number=attempt_n,
     )
     rollback_controller = getattr(container, "rollback_controller", None)
     checkpoint_creator = getattr(rollback_controller, "create_checkpoint", None)
     if checkpoint_creator is not None and inspect.iscoroutinefunction(checkpoint_creator):
         checkpoint_ref = await checkpoint_creator(
-            case_id=state["case_id"],
+            case_id=case_id,
             attempt_number=attempt_n,
         )
         fix_attempt = fix_attempt.model_copy(update={"checkpoint_ref": checkpoint_ref})

@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `ScreenshotDiffAdapter` — Pillow-only SSIM visual comparison
 - `SandboxAdapter` — git-worktree isolation for generated code
 - `SecurityRedactor` — strips secrets from log output
-- 14 domain services (intent, design, planning, code-gen, linting, etc.)
+- 18 domain services (intent, design, planning, code-gen, linting, etc.)
 
 #### Phase 4 — Failure Intelligence
 - `FailureClassifier` — 11-taxonomy failure code system (FT-BUILD, FT-TYPE, FT-LINT, FT-RUNTIME, FT-VISUAL, FT-ASYNC, FT-UNKNOWN)
@@ -59,6 +59,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Requires Python ≥ 3.12
 - Visual diff uses Pillow only (scikit-image removed)
 - Playwright tests are opt-in (`-m playwright`)
-- All 451+ unit and integration tests pass under Python 3.14
+- All 494 unit and integration tests pass under Python 3.14
 
 [1.0.0]: https://github.com/bjchoi/ddalggak/releases/tag/v1.0.0

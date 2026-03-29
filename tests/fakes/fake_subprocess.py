@@ -20,13 +20,9 @@ class FakeSubprocessRunner:
         self.default_success = default_success
         self.run_log: list[dict[str, Any]] = []
 
-    async def run(
-        self, command: list[str], cwd: Path, timeout: int = 300
-    ) -> BuildResult:
+    async def run(self, command: list[str], cwd: Path, timeout: int = 300) -> BuildResult:
         key = " ".join(command)
-        self.run_log.append(
-            {"command": command, "cwd": str(cwd), "timeout": timeout}
-        )
+        self.run_log.append({"command": command, "cwd": str(cwd), "timeout": timeout})
         if key in self.results:
             return self.results[key]
         return BuildResult(

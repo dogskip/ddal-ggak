@@ -96,8 +96,7 @@ async def test_playwright_captures_console_errors_from_dev_server() -> None:
 
         assert captured_errors, "Expected at least one console error from the page"
         assert any(
-            "test-error-from-ddk-playwright-integration" in error
-            for error in captured_errors
+            "test-error-from-ddk-playwright-integration" in error for error in captured_errors
         ), f"Expected test error string in captured console output: {captured_errors}"
     finally:
         server.shutdown()

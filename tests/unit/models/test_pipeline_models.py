@@ -217,7 +217,11 @@ class TestRuntimeValidationReport:
 class TestMismatchRegion:
     def test_mismatch_region_roundtrip(self) -> None:
         region = MismatchRegion(
-            x=10, y=20, width=100, height=50, severity="high",
+            x=10,
+            y=20,
+            width=100,
+            height=50,
+            severity="high",
         )
         data = region.model_dump()
         restored = MismatchRegion.model_validate(data)

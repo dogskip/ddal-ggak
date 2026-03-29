@@ -21,9 +21,7 @@ def r01_remove_unused_import(content: str, symbol: str) -> str:
     lines = content.splitlines(keepends=True)
     escaped = re.escape(symbol)
     result = [
-        line
-        for line in lines
-        if not re.search(rf"\bimport\b.*\b{escaped}\b.*\bfrom\b", line)
+        line for line in lines if not re.search(rf"\bimport\b.*\b{escaped}\b.*\bfrom\b", line)
     ]
     return "".join(result)
 
@@ -47,18 +45,14 @@ def r04_add_cast(content: str, expression: str, target_type: str) -> str:
     return re.sub(escaped, replacement, content, count=1)
 
 
-def r05_add_dependency(
-    pkg_json_content: str, package_name: str, version: str = "latest"
-) -> str:
+def r05_add_dependency(pkg_json_content: str, package_name: str, version: str = "latest") -> str:
     """R-05 (FT-BUILD-003): Add package to package.json dependencies."""
     data: dict[str, Any] = json.loads(pkg_json_content)
     data.setdefault("dependencies", {})[package_name] = version
     return json.dumps(data, indent=2)
 
 
-def r06_fix_relative_import(
-    content: str, wrong_path: str, correct_path: str
-) -> str:
+def r06_fix_relative_import(content: str, wrong_path: str, correct_path: str) -> str:
     """R-06 (FT-BUILD-001): Replace wrong import path with correct relative path."""
     escaped = re.escape(wrong_path)
     pattern = rf"(from\s+['\"]){escaped}(['\"])"

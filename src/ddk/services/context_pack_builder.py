@@ -24,28 +24,63 @@ MAX_LINES = 300
 
 _PRIORITY_RANK: dict[str, int] = {"P1": 1, "P2": 2, "P3": 3, "P4": 4, "P5": 5}
 
-_BINARY_EXTENSIONS = frozenset({
-    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".svg",
-    ".woff", ".woff2", ".ttf", ".eot", ".otf",
-    ".mp3", ".mp4", ".wav", ".avi", ".mov",
-    ".zip", ".tar", ".gz", ".bz2", ".7z",
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
-    ".pyc", ".pyo",
-})
+_BINARY_EXTENSIONS = frozenset(
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".ico",
+        ".svg",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".otf",
+        ".mp3",
+        ".mp4",
+        ".wav",
+        ".avi",
+        ".mov",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".7z",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".pyc",
+        ".pyo",
+    }
+)
 
 # P1: entry-point files
-_P1_PATTERNS = frozenset({
-    "src/App.tsx", "src/App.jsx",
-    "src/main.tsx", "src/main.jsx",
-    "src/index.tsx", "src/index.jsx",
-    "package.json",
-})
+_P1_PATTERNS = frozenset(
+    {
+        "src/App.tsx",
+        "src/App.jsx",
+        "src/main.tsx",
+        "src/main.jsx",
+        "src/index.tsx",
+        "src/index.jsx",
+        "package.json",
+    }
+)
 
 # P2: config files
-_P2_PATTERNS = frozenset({
-    "tsconfig.json", "vite.config.ts", "vite.config.js",
-    "next.config.js", "next.config.ts",
-})
+_P2_PATTERNS = frozenset(
+    {
+        "tsconfig.json",
+        "vite.config.ts",
+        "vite.config.js",
+        "next.config.js",
+        "next.config.ts",
+    }
+)
 
 
 @dataclass
@@ -137,9 +172,7 @@ class ContextPackBuilder:
             context_pack_hash=pack_hash,
         )
 
-    def _gather_candidates(
-        self, repo_path: Path, target_files: list[str]
-    ) -> list[_Candidate]:
+    def _gather_candidates(self, repo_path: Path, target_files: list[str]) -> list[_Candidate]:
         """Scan repo_path and collect candidate files with priority classification."""
         candidates: list[_Candidate] = []
         target_dirs = {str(Path(tf).parent) for tf in target_files}

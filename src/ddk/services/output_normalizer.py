@@ -13,6 +13,7 @@ Key contract:
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -21,6 +22,8 @@ from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.normalization import ConventionFix, NormalizationReport
 from ddk.models.repo import RepoProfile
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # System prompt — MUST start with "Normalize" so FakeLLMAdapter routes to
@@ -152,8 +155,7 @@ class OutputNormalizer:
     ) -> _NormalizationLLMOutput:
         """Issue the LLM normalization call."""
         files_payload = [
-            {"path": f.path, "content": f.content, "language": f.language}
-            for f in artifacts.files
+            {"path": f.path, "content": f.content, "language": f.language} for f in artifacts.files
         ]
         user_content = json.dumps(
             {
@@ -171,7 +173,8 @@ class OutputNormalizer:
         try:
             data = json.loads(response.content)
             return _NormalizationLLMOutput(**data)
-        except Exception:
+        except Exception:  # noqa: BLE001
+            logger.warning("Normalization LLM response parsing failed", exc_info=True)
             return _NormalizationLLMOutput()
 
     def _apply_patches(

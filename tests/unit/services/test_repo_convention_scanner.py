@@ -90,9 +90,7 @@ class TestTypeScriptDetection:
 
 
 class TestCSSDetection:
-    async def test_detect_tailwind(
-        self, scanner: RepoConventionScanner, react_repo: Path
-    ) -> None:
+    async def test_detect_tailwind(self, scanner: RepoConventionScanner, react_repo: Path) -> None:
         profile = await scanner.scan(react_repo)
         assert profile.css_approach == "tailwind"
 
@@ -134,9 +132,7 @@ class TestPackageManagerDetection:
 
 
 class TestLLMSupplement:
-    async def test_llm_supplement_called_when_framework_other(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_llm_supplement_called_when_framework_other(self, tmp_path: Path) -> None:
         fake_llm = FakeLLMAdapter(
             responses={
                 "you": json.dumps({"component_pattern": "kebab-case", "file_pattern": "kebab-case"})
@@ -148,18 +144,14 @@ class TestLLMSupplement:
         assert profile.framework == "other"
         assert len(fake_llm.call_log) == 1  # LLM was called
 
-    async def test_llm_not_called_when_static_sufficient_and_no_llm(
-        self, react_repo: Path
-    ) -> None:
+    async def test_llm_not_called_when_static_sufficient_and_no_llm(self, react_repo: Path) -> None:
         # React detected statically, no LLM adapter provided → no LLM call
         scanner = RepoConventionScanner(llm=None)
         profile = await scanner.scan(react_repo)
         assert profile.framework == "react"
         # No exception raised, no LLM call possible
 
-    async def test_llm_not_called_for_react_framework(
-        self, react_repo: Path
-    ) -> None:
+    async def test_llm_not_called_for_react_framework(self, react_repo: Path) -> None:
         fake_llm = FakeLLMAdapter(responses={})
         scanner = RepoConventionScanner(llm=fake_llm)
         # react framework detected → no LLM supplement

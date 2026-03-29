@@ -42,8 +42,17 @@ class TestErrorCategory:
         assert ErrorCategory.UNKNOWN == "unknown"
 
     def test_all_categories_exist(self):
-        expected = {"llm", "build", "type_check", "lint", "runtime",
-                    "visual", "data_binding", "async_timing", "unknown"}
+        expected = {
+            "llm",
+            "build",
+            "type_check",
+            "lint",
+            "runtime",
+            "visual",
+            "data_binding",
+            "async_timing",
+            "unknown",
+        }
         actual = {e.value for e in ErrorCategory}
         assert actual == expected
 

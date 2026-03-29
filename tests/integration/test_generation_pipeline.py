@@ -170,11 +170,11 @@ def service_container_7node(
     """Full ServiceContainer wired with FakeLLMAdapter for all 5 LLM-calling nodes."""
     fake_llm = FakeLLMAdapter(
         responses={
-            "you": _INTENT_GRAPH_RESPONSE,          # SemanticIntentExtractor
-            "analyze": _DESIGN_SYSTEM_RESPONSE,      # DesignSystemInferencer
-            "senior": _GENERATION_PLAN_RESPONSE,     # GenerationPlanner
-            "generate": _GENERATED_NODE_RESPONSE,    # CodeGenerator
-            "normalize": _NORMALIZATION_RESPONSE,    # OutputNormalizer
+            "you": _INTENT_GRAPH_RESPONSE,  # SemanticIntentExtractor
+            "analyze": _DESIGN_SYSTEM_RESPONSE,  # DesignSystemInferencer
+            "senior": _GENERATION_PLAN_RESPONSE,  # GenerationPlanner
+            "generate": _GENERATED_NODE_RESPONSE,  # CodeGenerator
+            "normalize": _NORMALIZATION_RESPONSE,  # OutputNormalizer
         }
     )
 
@@ -193,9 +193,7 @@ def service_container_7node(
     )
 
     ss_stub = MagicMock()
-    ss_stub.compute_ssim = MagicMock(
-        return_value=SSIMResult(score=1.0, mismatch_regions=[])
-    )
+    ss_stub.compute_ssim = MagicMock(return_value=SSIMResult(score=1.0, mismatch_regions=[]))
     ss_stub.generate_diff_image = MagicMock(return_value=tmp_path / "diff.png")
 
     return ServiceContainer(

@@ -9,4 +9,3 @@ build/
 htmlcov/
 .pyright/
 .ruff_cache/
-uv.lock

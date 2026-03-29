@@ -92,9 +92,7 @@ def planner(fake_llm: FakeLLMAdapter) -> GenerationPlanner:
 
 
 class TestGenerationPlanner:
-    async def test_plan_returns_generation_plan(
-        self, planner: GenerationPlanner
-    ) -> None:
+    async def test_plan_returns_generation_plan(self, planner: GenerationPlanner) -> None:
         """FakeLLM response is parsed into a GenerationPlan."""
         result = await planner.plan(
             case_id="case-001",
@@ -127,9 +125,7 @@ class TestGenerationPlanner:
         assert "src/types/Header.ts" in result.target_files
         assert "src/components/Header.tsx" in result.target_files
 
-    async def test_estimated_node_count_matches(
-        self, planner: GenerationPlanner
-    ) -> None:
+    async def test_estimated_node_count_matches(self, planner: GenerationPlanner) -> None:
         """estimated_node_count matches len(nodes)."""
         result = await planner.plan(
             case_id="case-001",
@@ -164,9 +160,7 @@ class TestGenerationPlanner:
         config: LLMCallConfig = fake_llm.call_log[0]["config"]
         assert config.temperature == 0.0
 
-    async def test_deterministic_same_input(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_deterministic_same_input(self, fake_llm: FakeLLMAdapter) -> None:
         """Two calls with same input produce equivalent GenerationPlan."""
         planner = GenerationPlanner(llm=fake_llm)
         intent = _make_intent_graph()
@@ -202,9 +196,7 @@ class TestGenerationPlanner:
 
 
 class TestPlanNode:
-    async def test_plan_node_thin_adapter(
-        self, fake_llm: FakeLLMAdapter, tmp_path: Path
-    ) -> None:
+    async def test_plan_node_thin_adapter(self, fake_llm: FakeLLMAdapter, tmp_path: Path) -> None:
         """plan_node reads intent_graph + repo_profile, calls planner, writes generation_plan."""
         from unittest.mock import MagicMock
 
@@ -236,9 +228,7 @@ class TestPlanNode:
         assert result["current_node"] == "plan"
         assert isinstance(result["generation_plan"], GenerationPlan)
 
-    async def test_plan_node_no_llm_returns_error(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_plan_node_no_llm_returns_error(self, tmp_path: Path) -> None:
         """plan_node with no LLM returns error state."""
         from unittest.mock import MagicMock
 

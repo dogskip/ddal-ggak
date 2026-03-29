@@ -13,6 +13,7 @@ Key contract:
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from pydantic import BaseModel
@@ -25,6 +26,8 @@ from ddk.models.generation import (
 )
 from ddk.models.intent import IntentGraph
 from ddk.models.repo import RepoProfile
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # System prompt — MUST start with "Generate" so FakeLLMAdapter routes to the
@@ -180,5 +183,6 @@ class CodeGenerator:
         try:
             data = json.loads(response.content)
             return _GeneratedNodeOutput(**data)
-        except Exception:
+        except Exception:  # noqa: BLE001
+            logger.warning("Code generation LLM response parsing failed", exc_info=True)
             return _GeneratedNodeOutput()

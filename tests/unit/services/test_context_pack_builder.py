@@ -41,8 +41,7 @@ def basic_repo(tmp_path: Path) -> Path:
     src = tmp_path / "src"
     src.mkdir()
     (src / "App.tsx").write_text(
-        "import React from 'react';\n"
-        "export default function App() { return <div/>; }"
+        "import React from 'react';\nexport default function App() { return <div/>; }"
     )
     (src / "components").mkdir()
     (src / "components" / "Button.tsx").write_text(
@@ -110,7 +109,8 @@ class TestSortOrder:
         )
         # Filter to same-priority chunks and check path order
         component_chunks = [
-            c for c in pack.chunks
+            c
+            for c in pack.chunks
             if c.path.endswith(".tsx") and c.path.startswith("src/components/")
         ]
         paths = [c.path for c in component_chunks]
@@ -118,16 +118,12 @@ class TestSortOrder:
 
 
 class TestBudgetEnforcement:
-    async def test_max_files_six(
-        self, builder: ContextPackBuilder, tmp_path: Path
-    ) -> None:
+    async def test_max_files_six(self, builder: ContextPackBuilder, tmp_path: Path) -> None:
         """Even with 10+ candidates, output has ≤ 6 chunks."""
         src = tmp_path / "src" / "components"
         src.mkdir(parents=True)
         for i in range(12):
-            (src / f"Component{i}.tsx").write_text(
-                f"export function C{i}() {{ return <div/>; }}"
-            )
+            (src / f"Component{i}.tsx").write_text(f"export function C{i}() {{ return <div/>; }}")
         (tmp_path / "package.json").write_text('{"name":"test"}')
         (tmp_path / "tsconfig.json").write_text("{}")
 
@@ -137,9 +133,7 @@ class TestBudgetEnforcement:
         )
         assert len(pack.chunks) <= 6
 
-    async def test_max_lines_300(
-        self, builder: ContextPackBuilder, tmp_path: Path
-    ) -> None:
+    async def test_max_lines_300(self, builder: ContextPackBuilder, tmp_path: Path) -> None:
         """Output total_lines ≤ 300."""
         # Create files with many lines
         src = tmp_path / "src"
@@ -174,9 +168,7 @@ class TestBudgetEnforcement:
 
 
 class TestDeterminism:
-    async def test_deterministic_hash(
-        self, builder: ContextPackBuilder, basic_repo: Path
-    ) -> None:
+    async def test_deterministic_hash(self, builder: ContextPackBuilder, basic_repo: Path) -> None:
         """Same input → same context_pack_hash."""
         pack1 = builder.build(
             target_files=["src/components/NewComponent.tsx"],
@@ -218,9 +210,7 @@ class TestDeterminism:
         )
         assert pack1.context_pack_hash != pack2.context_pack_hash
 
-    async def test_hash_is_16_chars(
-        self, builder: ContextPackBuilder, basic_repo: Path
-    ) -> None:
+    async def test_hash_is_16_chars(self, builder: ContextPackBuilder, basic_repo: Path) -> None:
         """context_pack_hash is a 16-char hex string (SHA256[:16])."""
         pack = builder.build(
             target_files=["src/components/NewComponent.tsx"],
@@ -301,9 +291,7 @@ class TestExclusions:
         paths = [c.path for c in pack.chunks]
         assert not any(p.endswith((".png", ".jpg")) for p in paths)
 
-    async def test_pycache_excluded(
-        self, builder: ContextPackBuilder, tmp_path: Path
-    ) -> None:
+    async def test_pycache_excluded(self, builder: ContextPackBuilder, tmp_path: Path) -> None:
         """__pycache__ directories are excluded."""
         (tmp_path / "package.json").write_text('{"name":"test"}')
         cache = tmp_path / "__pycache__"
@@ -319,9 +307,7 @@ class TestExclusions:
 
 
 class TestLineBucket:
-    async def test_line_bucket_formula(
-        self, builder: ContextPackBuilder, tmp_path: Path
-    ) -> None:
+    async def test_line_bucket_formula(self, builder: ContextPackBuilder, tmp_path: Path) -> None:
         """line_bucket = ceil(line_count / 50) influences sort order.
 
         A file with 51 lines has bucket=2; a file with 50 lines has bucket=1.
@@ -341,8 +327,7 @@ class TestLineBucket:
             repo_path=tmp_path,
         )
         component_chunks = [
-            c for c in pack.chunks
-            if c.path in ("src/components/aaa.tsx", "src/components/bbb.tsx")
+            c for c in pack.chunks if c.path in ("src/components/aaa.tsx", "src/components/bbb.tsx")
         ]
         if len(component_chunks) == 2:
             # bbb (bucket=1) should come before aaa (bucket=2)
@@ -363,9 +348,7 @@ class TestModelStructure:
         )
         assert isinstance(pack, ContextPack)
 
-    async def test_node_name_set(
-        self, builder: ContextPackBuilder, basic_repo: Path
-    ) -> None:
+    async def test_node_name_set(self, builder: ContextPackBuilder, basic_repo: Path) -> None:
         """node_name is set on the ContextPack."""
         pack = builder.build(
             target_files=["src/components/New.tsx"],

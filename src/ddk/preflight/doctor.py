@@ -23,7 +23,7 @@ class CheckResult(TypedDict):
     """Result of a single preflight check."""
 
     name: str
-    status: str       # "pass" | "warn" | "fail"
+    status: str  # "pass" | "warn" | "fail"
     detail: str
     critical: bool
 
@@ -109,9 +109,7 @@ class PreflightDoctor:
         return CheckResult(
             name="LLM API key",
             status="fail",
-            detail=(
-                "No LLM API key found. Set DDK_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY."
-            ),
+            detail=("No LLM API key found. Set DDK_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY."),
             critical=True,
         )
 
@@ -167,6 +165,7 @@ class PreflightDoctor:
                     break
             # Strip any trailing non-digit suffix like "(Apple"
             import re as _re  # noqa: PLC0415
+
             ver_match = _re.match(r"(\d+)\.(\d+)", ver_str_raw)
             major = int(ver_match.group(1)) if ver_match else 0
             minor = int(ver_match.group(2)) if ver_match else 0

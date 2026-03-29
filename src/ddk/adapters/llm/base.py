@@ -47,9 +47,7 @@ class LLMResponse:
 class LLMAdapter(Protocol):
     """Protocol for LLM provider adapters (Anthropic, OpenAI, etc.)."""
 
-    async def complete(
-        self, messages: list[Message], config: LLMCallConfig
-    ) -> LLMResponse: ...
+    async def complete(self, messages: list[Message], config: LLMCallConfig) -> LLMResponse: ...
 
     async def complete_structured(
         self,

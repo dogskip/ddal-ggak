@@ -13,8 +13,8 @@ from .templates import TEMPLATES
 class GeneratedDocument:
     """단일 생성 문서."""
 
-    key: str          # e.g. "01-srs"
-    filename: str     # e.g. "01-srs.md"
+    key: str  # e.g. "01-srs"
+    filename: str  # e.g. "01-srs.md"
     content: str
     cost_usd: float = 0.0
 
@@ -70,10 +70,7 @@ class DesignGenerator:
                 except Exception as exc:  # noqa: BLE001
                     result.errors[key] = str(exc)
 
-        tasks = [
-            generate_one(idx, key)
-            for idx, key in enumerate(TEMPLATES.keys(), 1)
-        ]
+        tasks = [generate_one(idx, key) for idx, key in enumerate(TEMPLATES.keys(), 1)]
         await asyncio.gather(*tasks)
 
         # Sort documents in template order

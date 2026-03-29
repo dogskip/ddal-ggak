@@ -1,4 +1,5 @@
 """Tests for DdalggakConfig — validates AliasChoices env-var fallback behaviour."""
+
 from __future__ import annotations
 
 import pytest

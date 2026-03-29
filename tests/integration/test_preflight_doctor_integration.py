@@ -35,17 +35,13 @@ class TestPreflightDoctorIntegration:
         """Dev environment must run Python 3.12+."""
         results = PreflightDoctor().run_checks()
         python_result = next(r for r in results if "Python" in r["name"])
-        assert python_result["status"] == "pass", (
-            f"Python check failed: {python_result['detail']}"
-        )
+        assert python_result["status"] == "pass", f"Python check failed: {python_result['detail']}"
 
     def test_uv_check_passes_in_dev_env(self) -> None:
         """uv must be on PATH in the dev environment."""
         results = PreflightDoctor().run_checks()
         uv_result = next(r for r in results if "uv" in r["name"])
-        assert uv_result["status"] == "pass", (
-            f"uv not found: {uv_result['detail']}"
-        )
+        assert uv_result["status"] == "pass", f"uv not found: {uv_result['detail']}"
 
     def test_git_check_present(self) -> None:
         """git check result must be present (pass or warn — never crash)."""

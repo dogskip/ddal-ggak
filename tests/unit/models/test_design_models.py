@@ -223,9 +223,7 @@ def _make_quality_axes() -> list[QualityAxisScore]:
         ("operability", 3, "운영 가능"),
         ("compliance", 4, "표준 적합"),
     ]
-    return [
-        QualityAxisScore(axis=a, score=s, rationale=r) for a, s, r in axes_data
-    ]
+    return [QualityAxisScore(axis=a, score=s, rationale=r) for a, s, r in axes_data]
 
 
 def test_quality_gate_score_roundtrip():

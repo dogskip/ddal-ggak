@@ -86,9 +86,7 @@ class TestSemanticIntentExtractor:
         fake_llm = FakeLLMAdapter(responses={"you": mock_intent_graph_json})
         extractor = SemanticIntentExtractor(llm=fake_llm)
         result = await extractor.extract(case_input)
-        expected_hash = hashlib.sha256(
-            case_input.image_paths[0].read_bytes()
-        ).hexdigest()[:16]
+        expected_hash = hashlib.sha256(case_input.image_paths[0].read_bytes()).hexdigest()[:16]
         assert result.source_image_hash == expected_hash
 
     async def test_image_sent_as_base64(
@@ -155,9 +153,7 @@ class TestIntentExtractNode:
         assert isinstance(result["intent_graph"], IntentGraph)
         assert result["intent_graph"].id == "C-001"
 
-    async def test_intent_extract_node_no_llm_returns_error(
-        self, case_input: CaseInput
-    ) -> None:
+    async def test_intent_extract_node_no_llm_returns_error(self, case_input: CaseInput) -> None:
         from ddk.graph.nodes.intent_extract import intent_extract_node
 
         state = {"case_input": case_input}

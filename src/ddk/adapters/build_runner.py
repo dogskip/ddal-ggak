@@ -22,6 +22,4 @@ class BuildResult:
 class BuildRunner(Protocol):
     """Protocol for running build commands (npm build, tsc, etc.)."""
 
-    async def run(
-        self, command: list[str], cwd: Path, timeout: int = 300
-    ) -> BuildResult: ...
+    async def run(self, command: list[str], cwd: Path, timeout: int = 300) -> BuildResult: ...

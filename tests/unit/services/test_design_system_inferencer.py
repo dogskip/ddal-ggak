@@ -101,9 +101,7 @@ class TestDesignSystemInferencer:
         repo_profile: RepoProfile,
         mock_design_system_json: str,
     ) -> None:
-        ds = DesignSystem.model_validate(
-            json.loads(mock_design_system_json) | {"case_id": "C-001"}
-        )
+        ds = DesignSystem.model_validate(json.loads(mock_design_system_json) | {"case_id": "C-001"})
         inferencer = DesignSystemInferencer(llm=FakeLLMAdapter())
         enriched = inferencer.enrich_profile(ds, repo_profile)
         assert enriched.design_tokens.colors["primary"] == "#3B82F6"
@@ -114,9 +112,7 @@ class TestDesignSystemInferencer:
         repo_profile: RepoProfile,
         mock_design_system_json: str,
     ) -> None:
-        ds = DesignSystem.model_validate(
-            json.loads(mock_design_system_json) | {"case_id": "C-001"}
-        )
+        ds = DesignSystem.model_validate(json.loads(mock_design_system_json) | {"case_id": "C-001"})
         inferencer = DesignSystemInferencer(llm=FakeLLMAdapter())
         enriched = inferencer.enrich_profile(ds, repo_profile)
         assert enriched.design_tokens.spacing["sm"] == "0.5rem"
@@ -127,9 +123,7 @@ class TestDesignSystemInferencer:
         repo_profile: RepoProfile,
         mock_design_system_json: str,
     ) -> None:
-        ds = DesignSystem.model_validate(
-            json.loads(mock_design_system_json) | {"case_id": "C-001"}
-        )
+        ds = DesignSystem.model_validate(json.loads(mock_design_system_json) | {"case_id": "C-001"})
         inferencer = DesignSystemInferencer(llm=FakeLLMAdapter())
         enriched = inferencer.enrich_profile(ds, repo_profile)
         assert "heading1" in enriched.design_tokens.typography
@@ -139,9 +133,7 @@ class TestDesignSystemInferencer:
         repo_profile: RepoProfile,
         mock_design_system_json: str,
     ) -> None:
-        ds = DesignSystem.model_validate(
-            json.loads(mock_design_system_json) | {"case_id": "C-001"}
-        )
+        ds = DesignSystem.model_validate(json.loads(mock_design_system_json) | {"case_id": "C-001"})
         inferencer = DesignSystemInferencer(llm=FakeLLMAdapter())
         enriched = inferencer.enrich_profile(ds, repo_profile)
         assert enriched.design_tokens.border_radius["rounded"] == "0.25rem"
@@ -151,9 +143,7 @@ class TestDesignSystemInferencer:
         repo_profile: RepoProfile,
         mock_design_system_json: str,
     ) -> None:
-        ds = DesignSystem.model_validate(
-            json.loads(mock_design_system_json) | {"case_id": "C-001"}
-        )
+        ds = DesignSystem.model_validate(json.loads(mock_design_system_json) | {"case_id": "C-001"})
         inferencer = DesignSystemInferencer(llm=FakeLLMAdapter())
         enriched = inferencer.enrich_profile(ds, repo_profile)
         assert enriched.design_tokens.breakpoints["lg"] == "1024px"
@@ -183,9 +173,7 @@ class TestDesignSystemInferencer:
         repo_profile: RepoProfile,
         mock_design_system_json: str,
     ) -> None:
-        ds = DesignSystem.model_validate(
-            json.loads(mock_design_system_json) | {"case_id": "C-001"}
-        )
+        ds = DesignSystem.model_validate(json.loads(mock_design_system_json) | {"case_id": "C-001"})
         inferencer = DesignSystemInferencer(llm=FakeLLMAdapter())
         enriched = inferencer.enrich_profile(ds, repo_profile)
         # Original profile should not be mutated
@@ -215,9 +203,7 @@ class TestDesignSystemNode:
         assert result["current_node"] == "design_system"
         assert result["repo_profile"].design_tokens.colors.get("primary") == "#3B82F6"
 
-    async def test_design_system_node_no_llm_returns_error(
-        self, case_input: CaseInput
-    ) -> None:
+    async def test_design_system_node_no_llm_returns_error(self, case_input: CaseInput) -> None:
         from ddk.graph.nodes.design_system import design_system_node
 
         profile = RepoProfile(framework="react")

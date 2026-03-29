@@ -17,7 +17,12 @@ async def repo_scan_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]
     container: ServiceContainer | None = kwargs.get("context")
     llm = container.llm if container else None
     scanner = RepoConventionScanner(llm=llm)
-    case_input = state["case_input"]
+    case_input = state.get("case_input")
+    if case_input is None:
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": "Missing upstream state: case_input",
+        }
     profile = await scanner.scan(case_input.repo_path)
     return {
         "repo_profile": profile,

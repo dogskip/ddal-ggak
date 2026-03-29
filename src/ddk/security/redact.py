@@ -16,9 +16,7 @@ REDACT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("bearer_token", re.compile(r"(Bearer\s+[a-zA-Z0-9\-_.~+/]+=*)")),
     (
         "env_secret",
-        re.compile(
-            r"([A-Z_]{3,}_(?:KEY|TOKEN|SECRET|PASSWORD|PASS)=[^\s\"']+)"
-        ),
+        re.compile(r"([A-Z_]{3,}_(?:KEY|TOKEN|SECRET|PASSWORD|PASS)=[^\s\"']+)"),
     ),
     (
         "private_key",
@@ -29,9 +27,7 @@ REDACT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ),
     (
         "jwt",
-        re.compile(
-            r"(eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,})"
-        ),
+        re.compile(r"(eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,})"),
     ),
 ]
 

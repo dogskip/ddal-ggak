@@ -9,3 +9,7 @@ build/
 htmlcov/
 .pyright/
 .ruff_cache/
+.pytest_cache/
+.env
+*.pem
+*.key

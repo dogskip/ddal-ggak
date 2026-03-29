@@ -36,3 +36,16 @@ jobs:
         run: uv sync --extra dev
       - name: Run tests (excluding playwright)
         run: uv run pytest tests/ -q -m "not playwright" --tb=short --cov=src/ddk --cov-report=term-missing
+
+  security-audit:
+    name: Security Audit (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --extra dev
+      - name: Audit dependencies for known CVEs
+        run: uv run pip-audit --ignore-vuln CVE-2026-4539

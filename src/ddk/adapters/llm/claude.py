@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 import anthropic
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from .base import LLMAdapter, LLMCallConfig, LLMResponse, Message
 
@@ -29,8 +30,23 @@ class ClaudeAdapter:
     """Anthropic Claude adapter implementing the LLMAdapter protocol."""
 
     def __init__(self, api_key: str, default_model: str = "claude-3-5-sonnet-20241022") -> None:
+        if not api_key:
+            raise ValueError(
+                "ClaudeAdapter requires a non-empty api_key. "
+                "Set DDK_ANTHROPIC_API_KEY (or ANTHROPIC_API_KEY) in the environment."
+            )
         self._client = anthropic.AsyncAnthropic(api_key=api_key)
         self._default_model = default_model
+
+    @retry(
+        retry=retry_if_exception_type((anthropic.RateLimitError, anthropic.InternalServerError)),
+        wait=wait_exponential(multiplier=1, min=2, max=60),
+        stop=stop_after_attempt(5),
+        reraise=True,
+    )
+    async def _messages_create(self, **kwargs: Any) -> anthropic.types.Message:
+        """Call messages.create with exponential backoff on 429 / 529 errors."""
+        return await self._client.messages.create(**kwargs)  # type: ignore[call-overload,return-value]
 
     async def complete(self, messages: list[Message], config: LLMCallConfig) -> LLMResponse:
         """Send messages to Claude and return a text response."""
@@ -46,7 +62,7 @@ class ClaudeAdapter:
         if system_prompt:
             kwargs["system"] = system_prompt
 
-        response: anthropic.types.Message = await self._client.messages.create(**kwargs)  # type: ignore[call-overload]
+        response: anthropic.types.Message = await self._messages_create(**kwargs)
         content = _extract_text(response)  # type: ignore[reportUnknownArgumentType]
         usage = response.usage  # type: ignore[reportUnknownMemberType]
         input_tok = int(usage.input_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
@@ -94,7 +110,7 @@ class ClaudeAdapter:
         if system_prompt:
             kwargs["system"] = system_prompt
 
-        response: anthropic.types.Message = await self._client.messages.create(**kwargs)  # type: ignore[call-overload]
+        response: anthropic.types.Message = await self._messages_create(**kwargs)
         content = _extract_tool_input(response)  # type: ignore[reportUnknownArgumentType]
         usage = response.usage  # type: ignore[reportUnknownMemberType]
         input_tok = int(usage.input_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]

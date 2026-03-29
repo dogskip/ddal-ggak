@@ -9,8 +9,8 @@
 - [x] **Phase 1: Foundation & Core Infrastructure** - 모델, Protocol, DI, 테스트 더블, 로깅, 워크스페이스, 프리플라이트 — 모든 후속 Phase의 기반
 - [x] **Phase 2: Ingestion & Analysis** - 디자인 시안 입력부터 생성 계획 그래프까지 5단계 분석 파이프라인 (completed 2026-03-28)
 - [x] **Phase 3: Code Generation & Normalization** - 생성 계획에서 코드 생성 후 레포 규칙에 맞게 정규화 — forward path 완성 (completed 2026-03-29)
-- [ ] **Phase 4: Validation & Self-Healing** - 샌드박스 검증, 비주얼 리그레션, 실패 분류, 자동수정 루프 — 최고 위험/복잡도 Phase
-- [ ] **Phase 5: Certification, CLI & E2E** - 증거팩, 스코어카드, 릴리즈 판정, LangGraph 통합, CLI 진입점, E2E 테스트
+- [x] **Phase 4: Validation & Self-Healing** - 샌드박스 검증, 비주얼 리그레션, 실패 분류, 자동수정 루프 — 최고 위험/복잡도 Phase (completed 2026-03-29)
+- [x] **Phase 5: Certification, CLI & E2E** - 증거팩, 스코어카드, 릴리즈 판정, LangGraph 통합, CLI 진입점, E2E 테스트 (completed 2026-03-29)
 
 ## Phase Details
 
@@ -80,7 +80,15 @@ Plans:
   3. FailureClassifier가 모든 실패에 안정 taxonomy ID(build/type/runtime/visual/data-binding/async)를 부여하고, AutoFixPlanner가 9개 수리 규칙에서 올바른 규칙을 선택
   4. 자동수정 루프가 패치 적용 → 재검증 → 3회 retry 예산 준수; 진동 감지(A→B→A) 시 즉시 중단; 각 시도마다 git 체크포인트(refs/ddk/fix/{case_id}/attempt-{n}) 생성, 실패 시 자동 롤백
   5. 실패 없는 케이스는 검증 통과; 수정 가능한 실패는 자동수정 트리거; retry 예산 초과 시 taxonomy ID가 포함된 명확한 실패 리포트 출력
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [x] 04-01-PLAN.md — Wave 0: Foundations (deps, GraphState field, protocol extension, fakes)
+- [x] 04-02-PLAN.md — Wave 1: FailureClassifier + RollbackController (pure logic services)
+- [x] 04-03-PLAN.md — Wave 2: RuntimeValidator (sandbox orchestration, VALID-01/02/03)
+- [x] 04-04-PLAN.md — Wave 3: AutoFixPlanner (9-rule hybrid, VALID-04)
+- [x] 04-05-PLAN.md — Wave 4: validate/autofix nodes + router + builder.py extension
+- [x] 04-06-PLAN.md — Wave 5: Integration tests (real Playwright + SSIM) + final gate
 
 ### Phase 5: Certification, CLI & E2E
 **Goal**: 파이프라인 전체를 LangGraph 10-노드 그래프로 조립하고, 증거팩·스코어카드·릴리즈 판정을 구현한 뒤, `ddk` CLI 진입점과 E2E 테스트로 v1.0을 마무리한다
@@ -92,7 +100,15 @@ Plans:
   3. `build_ddk_graph()`가 전체 10-노드 LangGraph StateGraph를 conditional edges, 상태 전이, _node_wrapper 에러 바운더리와 함께 구성 — 그래프 토폴로지 테스트 통과
   4. `ddk run <image> --prompt "..."`가 전체 파이프라인을 end-to-end 실행; `ddk rollback`, `ddk status`, `ddk certify` 서브커맨드 작동; 실패 시 non-zero exit code 반환
   5. FakeLLM + fixture repo로 전체 파이프라인(intake → release decision) E2E 테스트 실행 시 유효한 EvidencePack 생성 확인
-**Plans**: TBD
+**Plans**: Execution-tracked waves
+
+Execution waves:
+- [x] Certification services + `certify` node + 10-node graph integration
+- [x] CLI/runtime commands: `ddk run`, `ddk status`, `ddk certify`, `ddk rollback`
+- [x] Artifact persistence + E2E-style integration coverage
+- [x] Real git rollback CLI integration coverage
+- [x] Real Chromium Playwright gate coverage + Pillow-only visual diff alignment
+- [x] MCP server, installer, and slash-command regression coverage
 
 ## Progress
 
@@ -104,5 +120,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation & Core Infrastructure | 7/7 | Complete | 2026-03-27 |
 | 2. Ingestion & Analysis | 5/5 | Complete ✅ verified | 2026-03-28 |
 | 3. Code Generation & Normalization | 4/4 | Complete   | 2026-03-29 |
-| 4. Validation & Self-Healing | 0/TBD | Not started | - |
-| 5. Certification, CLI & E2E | 0/TBD | Not started | - |
+| 4. Validation & Self-Healing | 6/6 | Complete ✅ verified | 2026-03-29 |
+| 5. Certification, CLI & E2E | delivered | Complete ✅ verified | 2026-03-29 |

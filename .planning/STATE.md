@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 2 verified — ready for Phase 3
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-03-29T05:22:15.222Z"
+status: Phase 5 verified — v1.0 delivery pipeline complete
+stopped_at: Completed Phase 5 certification-cli-e2e execution
+last_updated: "2026-03-29T22:40:00+09:00"
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 16
-  completed_plans: 13
+  completed_phases: 5
+  total_plans: 22
+  completed_plans: 22
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Evidence-gated delivery — 증거 없이는 어떤 코드도 "완성"으로 인정하지 않는다.
-**Current focus:** Phase 02 — ingestion-analysis
+**Current focus:** v1.0 verified complete — all gates green
 
 ## Current Position
 
-Phase: 02 (ingestion-analysis) — VERIFIED ✅ | Phase 03 (code-generation-normalization) — NEXT
+Phase: 05 (certification-cli-e2e) — VERIFIED ✅ | Milestone v1.0 — COMPLETE ✅
 
 ## Performance Metrics
 
@@ -95,10 +95,15 @@ Recent decisions affecting current work:
 - [Phase 03]: System prompt 'Generate' → FakeLLM key=generate; node-by-node LLM calls; model=claude-3-5-sonnet-20241022 temperature=0.0
 - [Phase 03]: LLM-based (haiku) normalization — NOT rule-based AST, per 16-prompt-design.md §6
 - [Phase 03]: D-08 Phase 3 completion: 7-node graph replacing plan→END with plan→generate→normalize→END
+- [Phase 04]: GraphState public contract is now 22 fields including failure_hash_history
+- [Phase 04]: node_wrapper must support both direct runtime.context injection and config['configurable']['__pregel_runtime'].context fallback
+- [Phase 04]: Playwright/SSIM integration tests remain opt-in with pytest marker; default regression uses -m 'not playwright'
+- [Post-v1.0]: Visual regression path aligned to Pillow-only LocalScreenshotDiffAdapter; `scikit-image` removed from runtime dependencies and Chromium-backed Playwright integration validated
+- [Post-v1.0]: MCP server tool surface (`design_new`, `preflight`, `ddk_version`), installer registration, slash-command templates, and `ddk serve/install` CLI flows are now regression-covered
 
 ### Pending Todos
 
-None yet.
+- None
 
 ### Blockers/Concerns
 
@@ -108,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T05:22:15.218Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-03-29T23:20:00+09:00
+Stopped at: Completed post-v1.0 hardening and absolute final gate
 Resume file: None

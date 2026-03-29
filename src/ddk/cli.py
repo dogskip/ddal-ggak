@@ -398,13 +398,23 @@ def rollback(
     attempt_number: int = typer.Option(..., "--attempt", min=1, help="복구할 fix attempt 번호"),
     case_id: str = typer.Option(..., "--case-id", help="복구할 case ID"),
     repo: Path = typer.Option(Path("."), "--repo", help="대상 레포 루트"),  # noqa: B008
+    force: bool = typer.Option(False, "--force", help="미커밋 변경사항을 버리고 강제 롤백"),
 ) -> None:
     """지정한 case/attempt의 git checkpoint로 롤백합니다."""
+    from .exceptions import DirtyWorkingTreeError  # noqa: PLC0415
     from .services.rollback_controller import RollbackController  # noqa: PLC0415
 
     controller = RollbackController(git=LocalGitAdapter(), repo_path=repo.resolve())
     try:
-        asyncio.run(controller.rollback_to_latest(case_id=case_id, attempt_number=attempt_number))
+        asyncio.run(
+            controller.rollback_to_latest(
+                case_id=case_id, attempt_number=attempt_number, force=force
+            )
+        )
+    except DirtyWorkingTreeError as exc:
+        err_console.print(f"❌ rollback 실패: 미커밋 변경사항이 있습니다 — {exc}")
+        err_console.print("   --force 플래그를 사용하면 변경사항을 버리고 강제 롤백합니다.")
+        raise typer.Exit(1) from exc
     except ValueError as exc:
         err_console.print(f"❌ rollback 실패: {exc}")
         raise typer.Exit(1) from exc

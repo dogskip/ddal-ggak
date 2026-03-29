@@ -1,9 +1,11 @@
-"""Integration test — full 5-node ingestion pipeline E2E with FakeLLMAdapter (02-05).
+"""Integration test — full 7-node pipeline E2E with FakeLLMAdapter (03-03).
 
 Pipeline under test:
-    START → intake → repo_scan → intent_extract → design_system → plan → END
+    START → intake → repo_scan → intent_extract → design_system → plan → generate → normalize → END
 
 All LLM calls are intercepted by FakeLLMAdapter.  No real API keys required.
+Note: generate/normalize LLM calls are NOT triggered here because _GENERATION_PLAN_RESPONSE
+      has an empty execution_order — both services short-circuit before calling LLM.
 """
 
 from __future__ import annotations
@@ -66,6 +68,15 @@ _GENERATION_PLAN_RESPONSE = json.dumps(
     }
 )
 
+# Phase 3 nodes — not called when execution_order is empty, but included for completeness
+_GENERATED_NODE_RESPONSE = json.dumps(
+    {"files": [], "entry_point": None, "component_exports": []}
+)
+
+_NORMALIZATION_RESPONSE = json.dumps(
+    {"convention_fixes": [], "unresolved_drift": [], "patched_files": {}}
+)
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -100,12 +111,14 @@ def sample_input(repo_path: Path) -> CaseInput:
 
 @pytest.fixture()
 def pipeline_fake_llm() -> FakeLLMAdapter:
-    """FakeLLMAdapter wired with canned JSON for all 3 LLM-calling service nodes."""
+    """FakeLLMAdapter wired with canned JSON for all LLM-calling service nodes."""
     return FakeLLMAdapter(
         responses={
-            "you": _INTENT_GRAPH_RESPONSE,      # SemanticIntentExtractor
-            "analyze": _DESIGN_SYSTEM_RESPONSE,  # DesignSystemInferencer
-            "senior": _GENERATION_PLAN_RESPONSE, # GenerationPlanner
+            "you": _INTENT_GRAPH_RESPONSE,          # SemanticIntentExtractor
+            "analyze": _DESIGN_SYSTEM_RESPONSE,      # DesignSystemInferencer
+            "senior": _GENERATION_PLAN_RESPONSE,     # GenerationPlanner
+            "generate": _GENERATED_NODE_RESPONSE,    # CodeGenerator (not called — empty plan)
+            "normalize": _NORMALIZATION_RESPONSE,    # OutputNormalizer (not called — empty artifacts)
         }
     )
 
@@ -153,7 +166,7 @@ def service_container(
 
 
 class TestIngestionPipeline:
-    """E2E integration tests for the 5-node ingestion pipeline."""
+    """E2E integration tests for the 7-node pipeline (Phase 3 completion)."""
 
     @pytest.mark.asyncio
     async def test_five_node_pipeline(
@@ -161,13 +174,13 @@ class TestIngestionPipeline:
         sample_input: CaseInput,
         service_container: ServiceContainer,
     ) -> None:
-        """Full 5-node pipeline runs end-to-end and produces required outputs.
+        """Full 7-node pipeline runs end-to-end and produces required outputs.
 
         Verifies:
         - Pipeline runs to completion without errors
         - repo_profile, intent_graph, generation_plan are all non-None
         - terminal_state is None (no error branches triggered)
-        - current_node is "plan" (final node executed successfully)
+        - current_node is "normalize" (final node executed successfully)
         """
         graph = build_ddk_graph()
         compiled = graph.compile()
@@ -196,7 +209,7 @@ class TestIngestionPipeline:
         )
 
         # --- Pipeline reached the final node ---
-        assert result["current_node"] == "plan"
+        assert result["current_node"] == "normalize"  # Phase 3 extends pipeline to normalize
 
     @pytest.mark.asyncio
     async def test_pipeline_preserves_case_id(

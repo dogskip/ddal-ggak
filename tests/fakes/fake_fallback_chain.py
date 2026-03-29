@@ -16,15 +16,11 @@ class FakeFallbackChain:
         self.attempt = 0
         self.call_log: list[dict[str, Any]] = []
 
-    async def complete(
-        self, messages: list[Message], config: LLMCallConfig
-    ) -> LLMResponse:
+    async def complete(self, messages: list[Message], config: LLMCallConfig) -> LLMResponse:
         self.attempt += 1
         self.call_log.append({"attempt": self.attempt, "model": config.model})
         if self.attempt <= self.fail_count:
-            raise ConnectionError(
-                f"Provider failed (attempt {self.attempt}/{self.fail_count})"
-            )
+            raise ConnectionError(f"Provider failed (attempt {self.attempt}/{self.fail_count})")
         return LLMResponse(content=self.success_content, model=config.model)
 
     async def complete_structured(

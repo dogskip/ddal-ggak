@@ -22,15 +22,21 @@ async def normalize_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]
             "error_message": "No LLM adapter in ServiceContainer",
         }
     generated_artifacts = state.get("generated_artifacts")
+    repo_profile = state.get("repo_profile")
     if generated_artifacts is None:
         return {
             "terminal_state": "manual-review-required",
             "error_message": "generated_artifacts is None — generate node must run first",
         }
+    if repo_profile is None:
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": "repo_profile is None — repo_scan node must run first",
+        }
     normalizer = OutputNormalizer(llm=llm)
     report, patched = await normalizer.normalize(
         artifacts=generated_artifacts,
-        repo_profile=state["repo_profile"],
+        repo_profile=repo_profile,
     )
     return {
         "normalization_report": report,

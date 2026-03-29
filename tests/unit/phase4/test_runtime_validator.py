@@ -26,6 +26,7 @@ from tests.fakes import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_state(case_id: str = "test-case") -> dict[str, Any]:
     return {"case_id": case_id, "generated_artifacts": None}
 
@@ -35,7 +36,7 @@ def make_validator(
     build_runner: FakeBuildRunner | None = None,
     playwright: FakePlaywrightAdapter | None = None,
     screenshot_diff: FakeSSIMAdapter | None = None,
-    ) -> RuntimeValidator:
+) -> RuntimeValidator:
     return RuntimeValidator(
         sandbox=TempDirSandbox(),
         build_runner=build_runner or FakeBuildRunner(),
@@ -52,6 +53,7 @@ class NoCleanupSandbox(TempDirSandbox):
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSuccessPath:
     async def test_validate_success_returns_passing_report(self) -> None:
@@ -99,9 +101,7 @@ class TestSuccessPath:
 class TestBuildFailure:
     async def test_validate_build_failure_captures_ft_build_001(self) -> None:
         validator = make_validator(
-            build_runner=FakeBuildRunner(
-                returncode=1, stderr="Cannot find module './Button'"
-            )
+            build_runner=FakeBuildRunner(returncode=1, stderr="Cannot find module './Button'")
         )
         report, _ = await validator.run(make_state())
         assert report.build_success is False
@@ -109,9 +109,7 @@ class TestBuildFailure:
 
     async def test_validate_syntax_error_has_valid_taxonomy_id(self) -> None:
         validator = make_validator(
-            build_runner=FakeBuildRunner(
-                returncode=1, stderr="SyntaxError: Unexpected token"
-            )
+            build_runner=FakeBuildRunner(returncode=1, stderr="SyntaxError: Unexpected token")
         )
         report, _ = await validator.run(make_state())
         assert len(report.failures) > 0
@@ -122,12 +120,8 @@ class TestBuildFailure:
 class TestPlaywright:
     async def test_validate_playwright_console_errors_captured(self) -> None:
         errors = [ConsoleEntry(level="error", message="Uncaught TypeError: foo is null")]
-        validator = make_validator(
-            playwright=FakePlaywrightAdapter(console_errors=errors)
-        )
-        report, _ = await validator.run(
-            make_state(), dev_server_url="http://localhost:3000"
-        )
+        validator = make_validator(playwright=FakePlaywrightAdapter(console_errors=errors))
+        report, _ = await validator.run(make_state(), dev_server_url="http://localhost:3000")
         assert len(report.runtime_errors) > 0
 
     async def test_validate_playwright_failed_requests_ft_runtime_003(self) -> None:
@@ -137,12 +131,8 @@ class TestPlaywright:
                 failure_text="net::ERR_CONNECTION_REFUSED",
             )
         ]
-        validator = make_validator(
-            playwright=FakePlaywrightAdapter(failed_requests=reqs)
-        )
-        report, _ = await validator.run(
-            make_state(), dev_server_url="http://localhost:3000"
-        )
+        validator = make_validator(playwright=FakePlaywrightAdapter(failed_requests=reqs))
+        report, _ = await validator.run(make_state(), dev_server_url="http://localhost:3000")
         assert any(f.taxonomy_id == "FT-RUNTIME-003" for f in report.failures)
 
 

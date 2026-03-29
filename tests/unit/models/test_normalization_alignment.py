@@ -25,65 +25,81 @@ class TestConventionFixDesignSpecFields:
 
     def test_fix_type_default_naming(self) -> None:
         fix = ConventionFix(
-            file_path="x", rule_id="R1", description="d",
-            before_snippet="b", after_snippet="a"
+            file_path="x", rule_id="R1", description="d", before_snippet="b", after_snippet="a"
         )
         assert fix.fix_type == "naming"
 
     def test_severity_default_must_fix(self) -> None:
         fix = ConventionFix(
-            file_path="x", rule_id="R1", description="d",
-            before_snippet="b", after_snippet="a"
+            file_path="x", rule_id="R1", description="d", before_snippet="b", after_snippet="a"
         )
         assert fix.severity == "must-fix"
 
     def test_before_default_none(self) -> None:
         fix = ConventionFix(
-            file_path="x", rule_id="R1", description="d",
-            before_snippet="b", after_snippet="a"
+            file_path="x", rule_id="R1", description="d", before_snippet="b", after_snippet="a"
         )
         assert fix.before is None
 
     def test_after_default_none(self) -> None:
         fix = ConventionFix(
-            file_path="x", rule_id="R1", description="d",
-            before_snippet="b", after_snippet="a"
+            file_path="x", rule_id="R1", description="d", before_snippet="b", after_snippet="a"
         )
         assert fix.after is None
 
     def test_fix_type_all_valid_literals(self) -> None:
         valid_types = [
-            "naming", "import_order", "file_placement", "token_replace",
-            "primitive_reuse", "helper_dedup", "type_annotation"
+            "naming",
+            "import_order",
+            "file_placement",
+            "token_replace",
+            "primitive_reuse",
+            "helper_dedup",
+            "type_annotation",
         ]
         for ft in valid_types:
             fix = ConventionFix(
-                file_path="x", rule_id="R1", description="d",
-                before_snippet="b", after_snippet="a", fix_type=ft  # type: ignore
+                file_path="x",
+                rule_id="R1",
+                description="d",
+                before_snippet="b",
+                after_snippet="a",
+                fix_type=ft,  # type: ignore
             )
             assert fix.fix_type == ft
 
     def test_severity_all_valid_literals(self) -> None:
         for sev in ["must-fix", "should-fix", "nice-to-have"]:
             fix = ConventionFix(
-                file_path="x", rule_id="R1", description="d",
-                before_snippet="b", after_snippet="a", severity=sev  # type: ignore
+                file_path="x",
+                rule_id="R1",
+                description="d",
+                before_snippet="b",
+                after_snippet="a",
+                severity=sev,  # type: ignore
             )
             assert fix.severity == sev
 
     def test_before_after_can_be_set(self) -> None:
         fix = ConventionFix(
-            file_path="x", rule_id="R1", description="d",
-            before_snippet="old", after_snippet="new",
-            before="const a = 1", after="const A = 1",
+            file_path="x",
+            rule_id="R1",
+            description="d",
+            before_snippet="old",
+            after_snippet="new",
+            before="const a = 1",
+            after="const A = 1",
         )
         assert fix.before == "const a = 1"
         assert fix.after == "const A = 1"
 
     def test_existing_fields_still_present(self) -> None:
         fix = ConventionFix(
-            file_path="src/App.tsx", rule_id="NAMING-001",
-            description="Rename", before_snippet="old", after_snippet="new"
+            file_path="src/App.tsx",
+            rule_id="NAMING-001",
+            description="Rename",
+            before_snippet="old",
+            after_snippet="new",
         )
         assert fix.file_path == "src/App.tsx"
         assert fix.rule_id == "NAMING-001"
@@ -93,10 +109,15 @@ class TestConventionFixDesignSpecFields:
 
     def test_roundtrip_with_new_fields(self) -> None:
         fix = ConventionFix(
-            file_path="x", rule_id="R1", description="d",
-            before_snippet="b", after_snippet="a",
-            fix_type="import_order", severity="should-fix",
-            before="import B", after="import A",
+            file_path="x",
+            rule_id="R1",
+            description="d",
+            before_snippet="b",
+            after_snippet="a",
+            fix_type="import_order",
+            severity="should-fix",
+            before="import B",
+            after="import A",
         )
         data = fix.model_dump()
         restored = ConventionFix.model_validate(data)
@@ -126,18 +147,23 @@ class TestNormalizationReportDesignSpecFields:
 
     def test_drift_score_bounds_ge_0(self) -> None:
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             NormalizationReport(case_id="c", drift_score_before=-0.1)
 
     def test_drift_score_bounds_le_10(self) -> None:
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             NormalizationReport(case_id="c", drift_score_after=10.1)
 
     def test_existing_fields_still_present(self) -> None:
         fix = ConventionFix(
-            file_path="a.tsx", rule_id="R1", description="fix",
-            before_snippet="b", after_snippet="a"
+            file_path="a.tsx",
+            rule_id="R1",
+            description="fix",
+            before_snippet="b",
+            after_snippet="a",
         )
         report = NormalizationReport(
             case_id="c",

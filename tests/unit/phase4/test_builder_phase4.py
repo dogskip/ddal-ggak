@@ -1,4 +1,5 @@
 """Tests for builder.py certification graph topology."""
+
 from __future__ import annotations
 
 from ddk.graph.builder import build_ddk_graph

@@ -31,9 +31,7 @@ class GenerationPlan(DDKBaseModel):
 class GeneratedFile(DDKBaseModel):
     path: str
     content: str
-    language: Literal["typescript", "javascript", "css", "html", "json", "other"] = (
-        "typescript"
-    )
+    language: Literal["typescript", "javascript", "css", "html", "json", "other"] = "typescript"
     source_node_id: str
     # Design-spec fields (12-data-models.md §4) — additive, defaults provided
     is_new: bool = False

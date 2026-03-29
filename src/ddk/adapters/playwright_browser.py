@@ -37,9 +37,7 @@ class PlaywrightAdapter(Protocol):
         viewport: tuple[int, int] = (1280, 800),
     ) -> Path: ...
 
-    async def get_console_errors(
-        self, url: str, wait_ms: int = 5000
-    ) -> list[ConsoleEntry]: ...
+    async def get_console_errors(self, url: str, wait_ms: int = 5000) -> list[ConsoleEntry]: ...
 
     async def get_failed_requests(
         self,

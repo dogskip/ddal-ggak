@@ -28,14 +28,10 @@ class FakePlaywrightAdapter:
         output_path: Path,
         viewport: tuple[int, int] = (1280, 800),
     ) -> Path:
-        self.capture_log.append(
-            {"url": url, "output_path": str(output_path), "viewport": viewport}
-        )
+        self.capture_log.append({"url": url, "output_path": str(output_path), "viewport": viewport})
         return self.screenshot_path
 
-    async def get_console_errors(
-        self, url: str, wait_ms: int = 5000
-    ) -> list[ConsoleEntry]:
+    async def get_console_errors(self, url: str, wait_ms: int = 5000) -> list[ConsoleEntry]:
         return self.console_errors
 
     async def get_failed_requests(

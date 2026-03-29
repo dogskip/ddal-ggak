@@ -1,4 +1,5 @@
 """Tests for route_after_validate — Wave 4 TDD (VALID-04)."""
+
 from __future__ import annotations
 
 import uuid
@@ -99,9 +100,7 @@ def test_route_exhausted_on_oscillation() -> None:
             file_path="src/App.tsx",
         )
     ]
-    expected_hash = hash(
-        frozenset((f.taxonomy_id, f.file_path or "") for f in failures)
-    )
+    expected_hash = hash(frozenset((f.taxonomy_id, f.file_path or "") for f in failures))
     report = RuntimeValidationReport(
         case_id="tc",
         build_success=False,

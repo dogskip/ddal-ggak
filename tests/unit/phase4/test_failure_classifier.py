@@ -59,27 +59,21 @@ class TestTypeTaxonomy:
         assert result.taxonomy_id == "FT-TYPE-001"
         assert result.severity == "major"
 
-    def test_classify_implicit_any_returns_ft_type_002(
-        self, classifier: FailureClassifier
-    ) -> None:
+    def test_classify_implicit_any_returns_ft_type_002(self, classifier: FailureClassifier) -> None:
         result = classifier.classify("Parameter 'event' implicitly has an 'any' type")
         assert result.taxonomy_id == "FT-TYPE-002"
         assert result.severity == "minor"
 
 
 class TestLintTaxonomy:
-    def test_classify_unused_var_returns_ft_lint_001(
-        self, classifier: FailureClassifier
-    ) -> None:
+    def test_classify_unused_var_returns_ft_lint_001(self, classifier: FailureClassifier) -> None:
         result = classifier.classify("Unused variable 'myVar' is defined but never used")
         assert result.taxonomy_id == "FT-LINT-001"
         assert result.severity == "minor"
 
 
 class TestRuntimeTaxonomy:
-    def test_classify_null_ref_returns_ft_runtime_002(
-        self, classifier: FailureClassifier
-    ) -> None:
+    def test_classify_null_ref_returns_ft_runtime_002(self, classifier: FailureClassifier) -> None:
         result = classifier.classify(
             "Uncaught TypeError: Cannot read properties of null (reading 'value')"
         )

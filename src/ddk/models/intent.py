@@ -58,9 +58,7 @@ class ComponentSpec(DDKBaseModel):
 
 class InteractionSpec(DDKBaseModel):
     id: str  # "int-001"
-    trigger: Literal[
-        "click", "hover", "focus", "submit", "change", "keydown", "scroll"
-    ]
+    trigger: Literal["click", "hover", "focus", "submit", "change", "keydown", "scroll"]
     source_component_id: str
     action: Literal[
         "navigate",

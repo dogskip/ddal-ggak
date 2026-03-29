@@ -1,4 +1,5 @@
 """Tests for validate_node — Wave 4 TDD (VALID-01/02/03)."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock

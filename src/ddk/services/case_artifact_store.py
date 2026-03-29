@@ -43,9 +43,10 @@ class CaseArtifactStore:
             if value is not None:
                 self._write_model(file_name, value)
 
-        self._write_json("fix-attempts.json", [
-            attempt.model_dump(mode="json") for attempt in state.get("fix_attempts", [])
-        ])
+        self._write_json(
+            "fix-attempts.json",
+            [attempt.model_dump(mode="json") for attempt in state.get("fix_attempts", [])],
+        )
         self._write_json("llm-call-records.json", list(state.get("llm_call_records", [])))
         self._write_json("status.json", self.build_status_summary(state))
         self._persist_input_images(case_input)

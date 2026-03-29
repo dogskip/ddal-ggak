@@ -1,4 +1,5 @@
 """route_after_validate — pure routing function for LangGraph conditional edge. VALID-04."""
+
 from __future__ import annotations
 
 from typing import Any, Literal, cast
@@ -9,9 +10,7 @@ from ddk.models.visual import VisualRegressionReport
 
 def _failure_signature(failures: list[FailureRecord]) -> int:
     """Return a stable signature for the current failure set."""
-    return hash(
-        frozenset((failure.taxonomy_id, failure.file_path or "") for failure in failures)
-    )
+    return hash(frozenset((failure.taxonomy_id, failure.file_path or "") for failure in failures))
 
 
 def route_after_validate(
@@ -41,9 +40,7 @@ def route_after_validate(
             return False
         if report is None:
             return vis_report is None or vis_report.pass_result
-        checks_pass = (
-            report.build_success and report.type_check_success and report.lint_success
-        )
+        checks_pass = report.build_success and report.type_check_success and report.lint_success
         if not checks_pass or report.failures:
             return False
         return vis_report is None or vis_report.pass_result

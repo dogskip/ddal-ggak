@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,8 @@ from .services.case_artifact_store import CaseArtifactStore
 from .services.pipeline_runner import PipelineRunner, RuntimeServices
 from .workspace.manager import WorkspaceManager
 
+logger = logging.getLogger(__name__)
+
 app = typer.Typer(
     name="ddk",
     help="ddalggak — AI-powered design & development assistant",
@@ -41,6 +44,7 @@ err_console = Console(stderr=True, style="red")
 # ---------------------------------------------------------------------------
 # Global options (shared state via Context)
 # ---------------------------------------------------------------------------
+
 
 class _State:
     config: DdalggakConfig | None = None
@@ -67,6 +71,10 @@ def main(
     try:
         _state.config = DdalggakConfig()
     except Exception:  # noqa: BLE001
+        logger.warning(
+            "Failed to load config from environment — falling back to defaults",
+            exc_info=True,
+        )
         _state.config = DdalggakConfig.model_construct()
 
 
@@ -74,11 +82,13 @@ def main(
 # ddk --version
 # ---------------------------------------------------------------------------
 
+
 @app.command()
 def version() -> None:
     """Print the installed ddalggak version."""
     try:
         from importlib.metadata import version as pkg_version  # noqa: PLC0415
+
         ver = pkg_version("ddalggak")
     except Exception:  # noqa: BLE001
         ver = "0.0.0-dev"
@@ -88,6 +98,7 @@ def version() -> None:
 # ---------------------------------------------------------------------------
 # ddk preflight
 # ---------------------------------------------------------------------------
+
 
 @app.command()
 def preflight() -> None:
@@ -105,6 +116,7 @@ def preflight() -> None:
 
     try:
         import anthropic as _  # noqa: F401, PLC0415
+
         checks.append(("anthropic SDK", True, "installed"))
     except ImportError:
         checks.append(("anthropic SDK", False, "not installed — run: uv add anthropic"))
@@ -122,6 +134,7 @@ def preflight() -> None:
 # ---------------------------------------------------------------------------
 # ddk design new <IDEA>
 # ---------------------------------------------------------------------------
+
 
 @design_app.command("new")
 def design_new(
@@ -168,6 +181,7 @@ async def _run_design_new(
     interview_result = None
     if non_interactive:
         from .design.interviewer import InterviewResult  # noqa: PLC0415
+
         interview_result = InterviewResult(
             project_name=idea[:50],
             original_idea=idea,
@@ -180,8 +194,10 @@ async def _run_design_new(
             return Prompt.ask(f"\n[cyan]{question}[/cyan]")
 
         interview_result = await interviewer.run(idea=idea, ask_fn=ask_fn)
-        console.print(f"\n[green]인터뷰 완료[/green] — {len(interview_result.turns)}개 질문, "
-                      f"{len(interview_result.extracted_requirements)}개 요구사항 도출\n")
+        console.print(
+            f"\n[green]인터뷰 완료[/green] — {len(interview_result.turns)}개 질문, "
+            f"{len(interview_result.extracted_requirements)}개 요구사항 도출\n"
+        )
 
     # Phase 2: Generate 10 documents
     console.print("[bold]Step 2/2:[/bold] 설계 문서 생성 (10개)\n")
@@ -534,7 +550,7 @@ def install(
     if success_count > 0:
         console.print("\n[bold]다음 단계:[/bold]")
         console.print("  1. AI 도구를 재시작하세요")
-        console.print("  2. /ddk:design \"쇼핑몰\" 명령을 실행하세요")
+        console.print('  2. /ddk:design "쇼핑몰" 명령을 실행하세요')
 
 
 # ---------------------------------------------------------------------------

@@ -218,9 +218,7 @@ def test_cli_rollback_delegates_to_checkpoint_ref(tmp_path: Path) -> None:
         )
 
     assert result.exit_code == 0, result.stdout
-    assert fake_git.calls == [
-        (tmp_path.resolve(), "refs/ddk/fix/C-123/attempt-2")
-    ]
+    assert fake_git.calls == [(tmp_path.resolve(), "refs/ddk/fix/C-123/attempt-2")]
 
 
 def test_cli_rollback_restores_real_git_checkpoint(tmp_path: Path) -> None:

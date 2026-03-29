@@ -138,9 +138,7 @@ class TestFakePlaywrightAdapter:
 
     async def test_returns_screenshot_path(self) -> None:
         fake = FakePlaywrightAdapter(screenshot_path=Path("/tmp/shot.png"))
-        result = await fake.capture_screenshot(
-            "http://localhost:3000", Path("/out/shot.png")
-        )
+        result = await fake.capture_screenshot("http://localhost:3000", Path("/out/shot.png"))
         assert result == Path("/tmp/shot.png")
 
     async def test_close(self) -> None:
@@ -168,9 +166,7 @@ class TestFakeFallbackChain:
 class TestFakeRollbackController:
     async def test_create_and_rollback(self) -> None:
         ctrl = FakeRollbackController()
-        commit = await ctrl.create_checkpoint(
-            Path("/repo"), "refs/ddk/fix/C-001/attempt-1"
-        )
+        commit = await ctrl.create_checkpoint(Path("/repo"), "refs/ddk/fix/C-001/attempt-1")
         assert commit.startswith("fake-")
         await ctrl.rollback_to(Path("/repo"), "refs/ddk/fix/C-001/attempt-1")
         assert len(ctrl.rollback_log) == 1

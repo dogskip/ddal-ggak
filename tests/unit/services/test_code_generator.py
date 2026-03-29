@@ -168,9 +168,7 @@ def generator(fake_llm: FakeLLMAdapter) -> CodeGenerator:
 
 
 class TestCodeGenerator:
-    async def test_generate_all_returns_artifact_set(
-        self, generator: CodeGenerator
-    ) -> None:
+    async def test_generate_all_returns_artifact_set(self, generator: CodeGenerator) -> None:
         """generate_all() returns GeneratedArtifactSet with correct case_id."""
         plan = _make_one_node_plan()
         result = await generator.generate_all(
@@ -182,9 +180,7 @@ class TestCodeGenerator:
         assert isinstance(result, GeneratedArtifactSet)
         assert result.case_id == "case-001"
 
-    async def test_one_llm_call_per_node(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_one_llm_call_per_node(self, fake_llm: FakeLLMAdapter) -> None:
         """generate_all() with 3-node plan makes exactly 3 LLM calls (one per node)."""
         generator = CodeGenerator(llm=fake_llm)
         plan = _make_three_node_plan()
@@ -196,9 +192,7 @@ class TestCodeGenerator:
         )
         assert len(fake_llm.call_log) == 3
 
-    async def test_empty_plan_returns_empty_artifacts(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_empty_plan_returns_empty_artifacts(self, fake_llm: FakeLLMAdapter) -> None:
         """Empty execution_order → empty GeneratedArtifactSet, 0 LLM calls."""
         generator = CodeGenerator(llm=fake_llm)
         plan = _make_empty_plan()
@@ -213,9 +207,7 @@ class TestCodeGenerator:
         assert result.file_map == {}
         assert len(fake_llm.call_log) == 0
 
-    async def test_file_map_contains_all_paths(
-        self, generator: CodeGenerator
-    ) -> None:
+    async def test_file_map_contains_all_paths(self, generator: CodeGenerator) -> None:
         """file_map keys match file paths from LLM response."""
         plan = _make_one_node_plan()
         result = await generator.generate_all(
@@ -229,9 +221,7 @@ class TestCodeGenerator:
             "export const Button = () => <button/>;"
         )
 
-    async def test_generation_trace_has_one_entry_per_node(
-        self, generator: CodeGenerator
-    ) -> None:
+    async def test_generation_trace_has_one_entry_per_node(self, generator: CodeGenerator) -> None:
         """generation_trace has one entry for each node processed."""
         plan = _make_one_node_plan()
         result = await generator.generate_all(
@@ -243,9 +233,7 @@ class TestCodeGenerator:
         assert len(result.generation_trace) == 1
         assert "node-001" in result.generation_trace[0]
 
-    async def test_model_is_claude_sonnet(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_model_is_claude_sonnet(self, fake_llm: FakeLLMAdapter) -> None:
         """CodeGenerator uses model=claude-3-5-sonnet-20241022."""
         generator = CodeGenerator(llm=fake_llm)
         plan = _make_one_node_plan()
@@ -259,9 +247,7 @@ class TestCodeGenerator:
         config: LLMCallConfig = fake_llm.call_log[0]["config"]
         assert config.model == "claude-3-5-sonnet-20241022"
 
-    async def test_temperature_is_zero(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_temperature_is_zero(self, fake_llm: FakeLLMAdapter) -> None:
         """CodeGenerator uses temperature=0.0 for determinism."""
         generator = CodeGenerator(llm=fake_llm)
         plan = _make_one_node_plan()
@@ -313,9 +299,7 @@ class TestGenerateNode:
         assert result["current_node"] == "generate"
         assert isinstance(result["generated_artifacts"], GeneratedArtifactSet)
 
-    async def test_generate_node_no_llm_returns_error(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_generate_node_no_llm_returns_error(self, tmp_path: Path) -> None:
         """generate_node with no LLM returns terminal_state=manual-review-required."""
         from ddk.graph.context import ServiceContainer
         from ddk.graph.nodes.generate import generate_node

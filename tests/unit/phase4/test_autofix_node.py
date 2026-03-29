@@ -1,4 +1,5 @@
 """Tests for autofix_node — Wave 4 TDD (VALID-04)."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -118,9 +119,7 @@ async def test_autofix_node_appends_failure_hash_before_fix() -> None:
     assert "failure_hash_history" in result
     assert len(result["failure_hash_history"]) == 1
     # Hash must be based on (taxonomy_id, file_path), not UUID
-    expected_hash = hash(
-        frozenset((f.taxonomy_id, f.file_path or "") for f in report.failures)
-    )
+    expected_hash = hash(frozenset((f.taxonomy_id, f.file_path or "") for f in report.failures))
     assert result["failure_hash_history"][0] == expected_hash
 
 

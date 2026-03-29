@@ -70,7 +70,7 @@ class PipelineRunner:
             rollback_controller=rollback_controller,
         )
         builder_module = import_module("ddk.graph.builder")
-        build_graph = cast(Callable[[], Any], builder_module.__dict__["build_ddk_graph"])
+        build_graph = cast(Callable[[], Any], builder_module.build_ddk_graph)  # type: ignore[union-attr]
         compiled = build_graph().compile()
         result = await compiled.ainvoke(initial_state(case_input), context=container)
         return cast(dict[str, Any], result)

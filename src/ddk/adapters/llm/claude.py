@@ -163,14 +163,16 @@ def _split_messages(messages: list[Message]) -> tuple[str, list[dict[str, Any]]]
             # Build multi-part content with image blocks first, then text
             content_parts: list[dict[str, Any]] = []
             for img_b64, media_type in msg.images:
-                content_parts.append({
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": media_type,
-                        "data": img_b64,
-                    },
-                })
+                content_parts.append(
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": media_type,
+                            "data": img_b64,
+                        },
+                    }
+                )
             content_parts.append({"type": "text", "text": msg.content})
             rest.append({"role": msg.role, "content": content_parts})
         else:

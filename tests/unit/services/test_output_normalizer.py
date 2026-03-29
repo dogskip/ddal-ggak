@@ -199,9 +199,7 @@ class TestOutputNormalizer:
 
 
 class TestNormalizeNode:
-    async def test_normalize_node_thin_adapter(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_normalize_node_thin_adapter(self, fake_llm: FakeLLMAdapter) -> None:
         """normalize_node reads state, calls OutputNormalizer, writes normalization_report."""
         from ddk.graph.context import ServiceContainer
         from ddk.graph.nodes.normalize import normalize_node
@@ -222,9 +220,7 @@ class TestNormalizeNode:
         assert isinstance(result["normalization_report"], NormalizationReport)
         assert isinstance(result["generated_artifacts"], GeneratedArtifactSet)
 
-    async def test_normalize_node_guards_none_artifacts(
-        self, fake_llm: FakeLLMAdapter
-    ) -> None:
+    async def test_normalize_node_guards_none_artifacts(self, fake_llm: FakeLLMAdapter) -> None:
         """normalize_node with None artifacts must enter manual-review-required."""
         from ddk.graph.context import ServiceContainer
         from ddk.graph.nodes.normalize import normalize_node

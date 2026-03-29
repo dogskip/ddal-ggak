@@ -5,6 +5,7 @@ Hash tracking is autofix_node's responsibility. If validate_node appended the ha
 route_after_validate would find cur_hash in seen on the very first cycle and return
 "exhausted" before autofix ever runs.
 """
+
 from __future__ import annotations
 
 from typing import Any

@@ -99,11 +99,7 @@ class GenerationPlanner:
         # Collect unique target_files from all node target_path values
         if not data.get("target_files"):
             data["target_files"] = list(
-                dict.fromkeys(
-                    n.get("target_path", "")
-                    for n in nodes_data
-                    if n.get("target_path")
-                )
+                dict.fromkeys(n.get("target_path", "") for n in nodes_data if n.get("target_path"))
             )
         # Set estimated_node_count to match nodes length
         data["estimated_node_count"] = len(nodes_data)

@@ -3,6 +3,7 @@
 The adapter uses a histogram-based pixel-difference method (not scikit-image SSIM).
 These tests validate boundary properties and confirm the 0.92 threshold is reasonable.
 """
+
 from __future__ import annotations
 
 import random
@@ -72,9 +73,7 @@ class TestSSIMAlgorithm:
         black = _solid_image(64, 64, 0, tmp_path=tmp_path / "black")
         white = _solid_image(64, 64, 255, tmp_path=tmp_path / "white")
         result = self.adapter.compute_ssim(black, white)
-        assert result.score <= 0.10, (
-            f"Black-vs-white should score <= 0.10, got {result.score}"
-        )
+        assert result.score <= 0.10, f"Black-vs-white should score <= 0.10, got {result.score}"
 
     # --- Random noise -------------------------------------------------------
 
@@ -88,9 +87,7 @@ class TestSSIMAlgorithm:
         solid = _solid_image(64, 64, 128, tmp_path=tmp_path / "solid")
         noisy = _noisy_image(64, 64, seed=42, tmp_path=tmp_path / "noise")
         result = self.adapter.compute_ssim(solid, noisy)
-        assert result.score <= 0.85, (
-            f"Noise-vs-solid should score <= 0.85, got {result.score}"
-        )
+        assert result.score <= 0.85, f"Noise-vs-solid should score <= 0.85, got {result.score}"
 
     # --- Score is bounded ---------------------------------------------------
 

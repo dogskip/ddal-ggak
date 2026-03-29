@@ -73,10 +73,19 @@ class TestInitialState:
 
     def test_all_optional_fields_are_none(self, state: GraphState) -> None:
         none_fields = [
-            "repo_profile", "intent_graph", "generation_plan", "generated_artifacts",
-            "normalization_report", "runtime_validation_report", "visual_regression_report",
-            "scorecard", "release_decision", "evidence_pack",
-            "terminal_state", "error_message", "pre_run_checkpoint_ref",
+            "repo_profile",
+            "intent_graph",
+            "generation_plan",
+            "generated_artifacts",
+            "normalization_report",
+            "runtime_validation_report",
+            "visual_regression_report",
+            "scorecard",
+            "release_decision",
+            "evidence_pack",
+            "terminal_state",
+            "error_message",
+            "pre_run_checkpoint_ref",
             "reproducibility_seed",
         ]
         for field in none_fields:

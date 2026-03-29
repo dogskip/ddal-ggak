@@ -20,8 +20,13 @@ class ConventionFix(DDKBaseModel):
     after_snippet: str
     # Design-spec fields (12-data-models.md §5) — additive, defaults provided
     fix_type: Literal[
-        "naming", "import_order", "file_placement", "token_replace",
-        "primitive_reuse", "helper_dedup", "type_annotation"
+        "naming",
+        "import_order",
+        "file_placement",
+        "token_replace",
+        "primitive_reuse",
+        "helper_dedup",
+        "type_annotation",
     ] = "naming"
     severity: Literal["must-fix", "should-fix", "nice-to-have"] = "must-fix"
     before: str | None = None

@@ -11,9 +11,7 @@ from ddk.adapters.screenshot_diff import ScreenshotDiffAdapter
 
 class TestProtocolsAreRuntimeCheckable:
     def test_llm_adapter_is_protocol(self):
-        assert hasattr(LLMAdapter, "__protocol_attrs__") or hasattr(
-            LLMAdapter, "_is_protocol"
-        )
+        assert hasattr(LLMAdapter, "__protocol_attrs__") or hasattr(LLMAdapter, "_is_protocol")
 
     def test_filesystem_port_is_protocol(self):
         assert hasattr(FilesystemPort, "__protocol_attrs__") or hasattr(
@@ -21,9 +19,7 @@ class TestProtocolsAreRuntimeCheckable:
         )
 
     def test_git_adapter_is_protocol(self):
-        assert hasattr(GitAdapter, "__protocol_attrs__") or hasattr(
-            GitAdapter, "_is_protocol"
-        )
+        assert hasattr(GitAdapter, "__protocol_attrs__") or hasattr(GitAdapter, "_is_protocol")
 
     def test_sandbox_adapter_is_protocol(self):
         assert hasattr(SandboxAdapter, "__protocol_attrs__") or hasattr(
@@ -31,9 +27,7 @@ class TestProtocolsAreRuntimeCheckable:
         )
 
     def test_build_runner_is_protocol(self):
-        assert hasattr(BuildRunner, "__protocol_attrs__") or hasattr(
-            BuildRunner, "_is_protocol"
-        )
+        assert hasattr(BuildRunner, "__protocol_attrs__") or hasattr(BuildRunner, "_is_protocol")
 
     def test_playwright_adapter_is_protocol(self):
         assert hasattr(PlaywrightAdapter, "__protocol_attrs__") or hasattr(

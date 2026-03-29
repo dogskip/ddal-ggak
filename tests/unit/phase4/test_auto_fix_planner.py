@@ -75,9 +75,7 @@ class TestDeterministicRules:
 class TestAutoFixPlannerLLM:
     async def test_r09_calls_llm_with_autofix_key(self) -> None:
         fake_llm = FakeLLMAdapter(
-            responses={
-                "autofix": "// fixed\nexport default function App() { return <div/>; }"
-            }
+            responses={"autofix": "// fixed\nexport default function App() { return <div/>; }"}
         )
         planner = AutoFixPlanner(llm=fake_llm)
         failure = FailureRecord(

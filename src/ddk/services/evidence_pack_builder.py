@@ -53,8 +53,7 @@ class EvidencePackBuilder:
                 case_id,
             ),
             fix_attempt_refs=[
-                f"fix-attempt:{case_id}:{attempt.attempt_number}"
-                for attempt in fix_attempts
+                f"fix-attempt:{case_id}:{attempt.attempt_number}" for attempt in fix_attempts
             ],
             scorecard_ref=f"scorecard:{case_id}",
             release_decision_ref=f"release-decision:{case_id}",

@@ -5,6 +5,7 @@ These tests do NOT call external services; they check that:
 - expected output markers are present
 - env-var plumbing works (AliasChoices fallback)
 """
+
 from __future__ import annotations
 
 from pathlib import Path

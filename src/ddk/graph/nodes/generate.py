@@ -22,11 +22,35 @@ async def generate_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
             "error_message": "No LLM adapter in ServiceContainer",
         }
     generator = CodeGenerator(llm=llm)
+    generation_plan = state.get("generation_plan")
+    repo_profile = state.get("repo_profile")
+    intent_graph = state.get("intent_graph")
+    case_input = state.get("case_input")
+    missing = [
+        k
+        for k, v in [
+            ("generation_plan", generation_plan),
+            ("repo_profile", repo_profile),
+            ("intent_graph", intent_graph),
+            ("case_input", case_input),
+        ]
+        if v is None
+    ]
+    if missing:
+        return {
+            "terminal_state": "manual-review-required",
+            "error_message": f"Missing upstream state: {', '.join(missing)}",
+        }
+    # Pyright cannot narrow through list-comprehension guards above
+    assert generation_plan is not None  # guarded above
+    assert repo_profile is not None  # guarded above
+    assert intent_graph is not None  # guarded above
+    assert case_input is not None  # guarded above
     generated_artifacts = await generator.generate_all(
-        plan=state["generation_plan"],
-        repo_profile=state["repo_profile"],
-        intent_graph=state["intent_graph"],
-        prompt=state["case_input"].prompt,
+        plan=generation_plan,
+        repo_profile=repo_profile,
+        intent_graph=intent_graph,
+        prompt=case_input.prompt,
     )
     return {
         "generated_artifacts": generated_artifacts,

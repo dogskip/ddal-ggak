@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
+import os
 import shutil
 import tempfile
+import time
 from pathlib import Path
 
 from .base import CommandResult
+from .policy import ALLOWED_COMMANDS, is_command_allowed, is_env_allowed
 
 
 class TempDirSandbox:
@@ -34,5 +38,49 @@ class TempDirSandbox:
         cwd: Path | None = None,
         timeout: int = 300,
     ) -> CommandResult:
-        """This sandbox delegates command execution to the build runner."""
-        return CommandResult(returncode=0, stdout="", stderr="", duration_ms=0)
+        """Execute a command inside the sandbox with policy enforcement.
+
+        The command's base executable must be in the ALLOWED_COMMANDS set.
+        Environment variables are filtered through the ENV_WHITELIST.
+        """
+        if not command:
+            return CommandResult(returncode=1, stdout="", stderr="Empty command", duration_ms=0)
+
+        if not is_command_allowed(command[0]):
+            return CommandResult(
+                returncode=126,
+                stdout="",
+                stderr=f"Command not allowed: {command[0]}. Allowed: {sorted(ALLOWED_COMMANDS)}",
+                duration_ms=0,
+            )
+
+        work_dir = cwd or self._sandbox_path
+        env = {k: v for k, v in os.environ.items() if is_env_allowed(k)}
+
+        start = time.monotonic()
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                cwd=str(work_dir) if work_dir else None,
+                env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                process.communicate(), timeout=timeout
+            )
+            duration_ms = int((time.monotonic() - start) * 1000)
+            return CommandResult(
+                returncode=process.returncode or 0,
+                stdout=stdout_bytes.decode(errors="replace"),
+                stderr=stderr_bytes.decode(errors="replace"),
+                duration_ms=duration_ms,
+            )
+        except TimeoutError:
+            duration_ms = int((time.monotonic() - start) * 1000)
+            return CommandResult(
+                returncode=124,
+                stdout="",
+                stderr=f"Command timed out after {timeout}s",
+                duration_ms=duration_ms,
+            )

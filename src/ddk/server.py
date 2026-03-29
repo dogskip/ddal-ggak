@@ -98,7 +98,10 @@ def preflight() -> str:
     py_ok = sys.version_info >= (3, 12)
     results.append({"check": "Python >= 3.12", "ok": py_ok, "detail": sys.version.split()[0]})
 
-    cfg = DdalggakConfig.model_construct()
+    try:
+        cfg = DdalggakConfig()
+    except Exception:  # noqa: BLE001
+        cfg = DdalggakConfig.model_construct()
     api_ok = bool(cfg.anthropic_api_key)
     detail = "설정됨" if api_ok else "없음"
     results.append({"check": "DDK_ANTHROPIC_API_KEY", "ok": api_ok, "detail": detail})

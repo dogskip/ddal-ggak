@@ -48,6 +48,7 @@ class ScorecardCalculator:
                 "failure_count": str(len(failures)),
                 "fix_attempts": str(len(fix_attempts)),
                 "terminal_state": str(state.get("terminal_state")),
+                **({"visual_skipped": "true"} if visual is None else {}),
             },
         )
 
@@ -57,6 +58,8 @@ class ScorecardCalculator:
         visual: VisualRegressionReport | None,
         failures: list[FailureRecord],
     ) -> float:
+        if runtime is None:
+            return _clamp(0.0)
         score = 1.0
 
         for failure in failures:
@@ -67,13 +70,12 @@ class ScorecardCalculator:
             else:
                 score -= 0.05
 
-        if runtime is not None:
-            if not runtime.build_success:
-                score -= 0.25
-            if not runtime.type_check_success:
-                score -= 0.20
-            if not runtime.lint_success:
-                score -= 0.10
+        if not runtime.build_success:
+            score -= 0.25
+        if not runtime.type_check_success:
+            score -= 0.20
+        if not runtime.lint_success:
+            score -= 0.10
 
         if visual is not None and not visual.pass_result:
             score -= max(0.10, min(0.40, 1.0 - visual.ssim_score))
@@ -96,6 +98,8 @@ class ScorecardCalculator:
         state: dict[str, Any],
         failures: list[FailureRecord],
     ) -> float:
+        if state.get("runtime_validation_report") is None:
+            return _clamp(0.0)
         score = 1.0 if not failures else 0.70
         if state.get("terminal_state") == "manual-review-required":
             score = min(score, 0.50)

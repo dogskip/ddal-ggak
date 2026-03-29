@@ -93,6 +93,7 @@ class LocalGitAdapter:
                     staged=tree.get("staged", []),
                 )
         await self._run_git(repo_path, "reset", "--hard", ref_name)
+        await self._run_git(repo_path, "clean", "-fd")
 
     async def _run_git(self, repo_path: Path, *args: str) -> str:
         """Execute a git subprocess command and return stdout."""

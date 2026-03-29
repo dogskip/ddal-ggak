@@ -10,6 +10,8 @@ from .playwright_browser import ConsoleEntry, FailedRequestEntry
 class NullPlaywrightAdapter:
     """Return empty browser diagnostics when no live browser is configured."""
 
+    is_null: bool = True
+
     async def capture_screenshot(
         self,
         url: str,

@@ -45,6 +45,15 @@ class ReleaseGate:
     ) -> list[BlockerItem]:
         blockers: list[BlockerItem] = []
 
+        if runtime is None:
+            blockers.append(
+                BlockerItem(
+                    id="missing-runtime-evidence",
+                    category="evidence",
+                    description="No runtime validation evidence provided",
+                    severity="critical",
+                )
+            )
         if runtime is not None:
             for failure in runtime.failures:
                 blockers.append(

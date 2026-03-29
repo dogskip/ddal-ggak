@@ -9,6 +9,7 @@ from typing import Any
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
 from ddk.models.fix import FixAttempt
+from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.validation import FailureRecord
 
 # ─────────────────────────────────────────────
@@ -99,6 +100,65 @@ The file has the following error(s). Regenerate the file fixing ONLY the listed 
 Respond with the complete fixed file content only — no markdown fences.
 """
 
+# Rule ID to function mapping for deterministic rules
+_RULE_FUNCTIONS: dict[str, Any] = {
+    "R-01": r01_remove_unused_import,
+    "R-03": r03_add_any_annotation,
+    "R-04": r04_add_cast,
+    "R-05": r05_add_dependency,
+    "R-06": r06_fix_relative_import,
+    "R-07": r07_add_optional_chaining,
+    "R-08": r08_add_await,
+}
+
+
+def _apply_rule_to_content(rule_id: str, content: str, failure: FailureRecord) -> str:
+    """Apply a deterministic rule function to file content and return the modified content."""
+    if rule_id == "R-01":
+        match = re.search(r"['\"](\w+)['\"]", failure.message)
+        symbol = match.group(1) if match else "Unknown"
+        return r01_remove_unused_import(content, symbol)
+    if rule_id == "R-03":
+        match = re.search(r"['\"](\w+)['\"]", failure.message)
+        symbol = match.group(1) if match else "x"
+        return r03_add_any_annotation(content, symbol)
+    if rule_id == "R-04":
+        expr = failure.message.split("'")[1] if "'" in failure.message else "expr"
+        return r04_add_cast(content, expr, "any")
+    if rule_id == "R-05":
+        match = re.search(r"['\"]([^'\"]+)['\"]", failure.message)
+        pkg = match.group(1) if match else "unknown-pkg"
+        return r05_add_dependency(content, pkg)
+    if rule_id == "R-06":
+        parts = failure.message.split("'")
+        wrong = parts[1] if len(parts) > 1 else ""
+        correct = parts[3] if len(parts) > 3 else wrong
+        return r06_fix_relative_import(content, wrong, correct)
+    if rule_id == "R-07":
+        match = re.search(r"(\w+(?:\.\w+)+)", failure.message)
+        expr = match.group(1) if match else ""
+        return r07_add_optional_chaining(content, expr)
+    if rule_id == "R-08":
+        match = re.search(r"(\w+\([^)]*\))", failure.message)
+        call_expr = match.group(1) if match else ""
+        return r08_add_await(content, call_expr)
+    return content
+
+
+def _update_artifacts(
+    artifacts: GeneratedArtifactSet,
+    file_path: str,
+    new_content: str,
+) -> GeneratedArtifactSet:
+    """Return a new GeneratedArtifactSet with the specified file's content updated."""
+    updated_files: list[GeneratedFile] = []
+    for f in artifacts.files:
+        if f.path == file_path:
+            updated_files.append(f.model_copy(update={"content": new_content}))
+        else:
+            updated_files.append(f)
+    return artifacts.model_copy(update={"files": updated_files})
+
 
 class AutoFixPlanner:
     """9-rule hybrid patch planner. R-01~R-08 deterministic, R-09 LLM. VALID-04."""
@@ -135,9 +195,10 @@ class AutoFixPlanner:
 
         files_patched: list[str] = []
         patch_description = f"No applicable rule for {primary.taxonomy_id}"
+        updated_artifacts = artifacts
 
         if rule_id == "R-09":
-            file_content = ""
+            file_content = self._find_file_content(artifacts, primary.file_path)
             messages = [
                 Message(role="system", content=_AUTOFIX_SYSTEM_PROMPT),
                 Message(
@@ -154,17 +215,39 @@ class AutoFixPlanner:
                 max_tokens=4096,
                 temperature=0.0,
             )
-            await self.llm.complete(messages, config)
+            response = await self.llm.complete(messages, config)
+            if (
+                response.content
+                and primary.file_path
+                and isinstance(artifacts, GeneratedArtifactSet)
+            ):
+                updated_artifacts = _update_artifacts(
+                    artifacts, primary.file_path, response.content
+                )
             files_patched = [primary.file_path] if primary.file_path else []
             patch_description = f"R-09: LLM regeneration for {primary.taxonomy_id}"
 
-        elif rule_id == "R-01":
-            match = re.search(r"['\"](\w+)['\"]", primary.message)
-            symbol = match.group(1) if match else "Unknown"
+        elif rule_id == "R-02":
             files_patched = [primary.file_path] if primary.file_path else []
-            patch_description = f"R-01: Remove unused import '{symbol}'"
+            patch_description = f"{rule_id}: eslint --fix for {primary.file_path}"
 
-        elif rule_id in ("R-02", "R-03", "R-04", "R-05", "R-06", "R-07", "R-08"):
+        elif (
+            rule_id in _RULE_FUNCTIONS
+            and primary.file_path
+            and isinstance(artifacts, GeneratedArtifactSet)
+        ):
+            file_content = self._find_file_content(artifacts, primary.file_path)
+            new_content = _apply_rule_to_content(rule_id, file_content, primary)
+            if new_content != file_content:
+                updated_artifacts = _update_artifacts(artifacts, primary.file_path, new_content)
+            match = re.search(r"['\"](\w+)['\"]", primary.message)
+            symbol = match.group(1) if match else ""
+            files_patched = [primary.file_path]
+            patch_description = f"{rule_id}: Applied to {primary.file_path}"
+            if rule_id == "R-01":
+                patch_description = f"R-01: Remove unused import '{symbol}'"
+
+        elif rule_id != "none":
             files_patched = [primary.file_path] if primary.file_path else []
             patch_description = f"{rule_id}: Applied to {primary.file_path}"
 
@@ -180,4 +263,14 @@ class AutoFixPlanner:
             remaining_failures=[f.id for f in failures[1:]],
             duration_ms=duration_ms,
         )
-        return attempt, artifacts
+        return attempt, updated_artifacts
+
+    @staticmethod
+    def _find_file_content(artifacts: Any, file_path: str | None) -> str:
+        """Find and return file content from artifacts, or empty string."""
+        if not file_path or not isinstance(artifacts, GeneratedArtifactSet):
+            return ""
+        for f in artifacts.files:
+            if f.path == file_path:
+                return f.content
+        return ""

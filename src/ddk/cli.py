@@ -66,6 +66,9 @@ def main(
     output: Path = typer.Option(Path("."), "-o", "--output", help="Output directory"),  # noqa: B008
 ) -> None:
     """ddalggak — 아이디어를 설계문서와 코드로 변환하는 AI 어시스턴트."""
+    from .logging.setup import configure_logging
+
+    configure_logging(level=log_level)
     _state.dry_run = dry_run
     _state.output_dir = output
     try:

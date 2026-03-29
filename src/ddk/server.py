@@ -41,7 +41,11 @@ async def design_new(
             }
         )
 
-    llm = ClaudeAdapter(api_key=cfg.anthropic_api_key, default_model=cfg.llm_model)
+    llm = ClaudeAdapter(
+        api_key=cfg.anthropic_api_key,
+        default_model=cfg.llm_model,
+        cost_cap_usd=cfg.cost_cap_usd,
+    )
     out_path = Path(output_dir)
 
     # MCP 환경에서는 인터랙티브 인터뷰 불가 → non_interactive 기본값 True

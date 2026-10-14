@@ -13,3 +13,10 @@ htmlcov/
 .env
 *.pem
 *.key
+.DS_Store
+node_modules/
+.ddk-home/
+logs/
+.mypy_cache/
+.coverage.*
+coverage.xml

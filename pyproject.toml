@@ -5,12 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "ddalggak"
 version = "1.0.0"
-description = "AI 코딩 워크플로우 — generate → validate → auto-fix closed loop"
+description = "Turn a design image into code that is built, rendered in a real browser, compared with the design and auto-fixed, then certified with evidence."
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.12"
 keywords = ["ai", "coding", "langgraph", "llm", "automation", "mcp", "cli"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -21,23 +22,21 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
-    "typer>=0.15.0,<1.0.0",
-    "pydantic>=2.7.0,<3.0.0",
-    "pydantic-settings>=2.0.0,<3.0.0",
-    "langgraph>=1.0.0,<2.0.0",
+    "typer>=0.27.0,<1.0.0",
+    "pydantic>=2.13.4,<3.0.0",
+    "pydantic-settings>=2.14.2,<3.0.0",
+    "langgraph>=1.2.9,<2.0.0",
     "structlog>=24.0.0,<26.0.0",
-    "gitpython>=3.1.40,<4.0.0",
-    "anthropic>=0.40.0,<1.0.0",
+    "gitpython>=3.1.60,<4.0.0",
+    "anthropic>=0.120.0,<1.0.0",
     "rich>=13.0.0,<14.0.0",
-    "mcp>=1.0.0,<2.0.0",
-    "Pillow>=12.1.1,<13.0.0",
+    "mcp>=1.28.1,<2.0.0",
+    "Pillow>=12.3.0,<13.0.0",
     "tenacity>=8.0.0,<10.0.0",
+    "playwright>=1.49.0,<2.0.0",
 ]
 
 [project.optional-dependencies]
-visual = [
-    "playwright>=1.44.0,<2.0.0",
-]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
@@ -46,7 +45,6 @@ dev = [
     "ruff>=0.5.0,<1.0.0",
     "pyright>=1.1.380",
     "pytest-playwright>=0.5.0",
-    "playwright>=1.44.0,<2.0.0",
     "pip-audit>=2.7.0",
 ]
 
@@ -54,10 +52,10 @@ dev = [
 ddk = "ddk.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/bjchoi/ddalggak"
-Documentation = "https://github.com/bjchoi/ddalggak/blob/main/docs/USER-GUIDE.md"
-Changelog = "https://github.com/bjchoi/ddalggak/blob/main/CHANGELOG.md"
-"Bug Tracker" = "https://github.com/bjchoi/ddalggak/issues"
+Homepage = "https://github.com/dogskip/ddal-ggak"
+Documentation = "https://github.com/dogskip/ddal-ggak/blob/main/docs/USER-GUIDE.md"
+Changelog = "https://github.com/dogskip/ddal-ggak/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/dogskip/ddal-ggak/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ddk"]
@@ -84,6 +82,10 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Typer declares options as argument defaults, and ``t`` only looks up a message.
+extend-immutable-calls = ["typer.Option", "typer.Argument", "ddk.i18n.t"]
 
 [tool.pyright]
 pythonVersion = "3.12"

@@ -11,6 +11,8 @@ htmlcov/
 .ruff_cache/
 .pytest_cache/
 .env
+.env.*
+!.env.example
 *.pem
 *.key
 .DS_Store
@@ -21,6 +23,14 @@ logs/
 .coverage.*
 coverage.xml
 
-# Generated test workspaces can contain intentionally unsafe filesystem entries.
-/evidence/*-run/
-/.planning/phases/08-verified-change/evidence/**/test_*current
+# Local plans, reviews, launch drafts and raw execution evidence.
+/.planning/
+/evidence/
+/docs/design/
+/docs/superpowers/
+/docs/launch/
+
+# Generated browser reports may contain source, local paths or screenshots.
+/test-results/
+/playwright-report/
+/benchmarks/compliance-matrix.json

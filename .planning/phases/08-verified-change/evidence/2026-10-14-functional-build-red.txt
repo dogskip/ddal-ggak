@@ -1,8 +1,0 @@
-Building source distribution...
-  × Failed to build `/Users/bjchoi/.codex/worktrees/b48f/ddalggak`
-  ├─▶ Invalid tar file
-  ├─▶ failed to unpack
-  │   `/Users/bjchoi/.cache/uv/sdists-v9/.tmpEODIj5/ddalggak-1.0.0/evidence/2026-10-14-functional-mcp-final-raw-run/test_case_import_refuses_a_sym0/inputs/environment.json`
-  ╰─▶ symlink path
-      `/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-final-raw-run/test_case_import_refuses_a_sym0/original/.ddk/verified-change/1/cases/00000000-0000-4000-8000-000000000001/inputs/environment.json`
-      is absolute, but external symlinks are not allowed

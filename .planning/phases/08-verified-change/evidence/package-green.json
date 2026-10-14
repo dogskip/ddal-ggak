@@ -1,7 +1,0 @@
-{
-  "schema_sha256": "d63ad780df2fbcfa638a1afa83dc0a7fe1bb11fe3eb3e310fed9fd6eae179e1f",
-  "parse": "passed",
-  "direct_jsonschema_dependency": true,
-  "distribution": "/tmp/ddk-installed-wheel-check/lib/python3.12/site-packages/ddk",
-  "wheel_sha256": "2e085294bfb1c04c8a3a8d8c6087c8ed184b35f04dc9ae64b034df9624abac44"
-}

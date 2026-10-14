@@ -1,6 +1,0 @@
-Using Python 3.12.12 environment at: /tmp/ddk-isolated-installed
-Resolved 72 packages in 50ms
-Prepared 1 package in 17ms
-Uninstalled 1 package in 17ms
-Installed 1 package in 10ms
- ~ ddalggak==1.0.0 (from file:///tmp/ddk-isolated-final-dist/ddalggak-1.0.0-py3-none-any.whl)

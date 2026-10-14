@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -38,8 +38,8 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: uv sync --extra dev
-      - name: Run tests (excluding playwright)
-        run: uv run pytest tests/ -q -m "not playwright" --tb=short --cov=src/ddk --cov-report=term-missing
+      - name: Run tests (excluding opt-in browser and Docker tests)
+        run: uv run pytest tests/ -q -m "not playwright and not docker" --tb=short --cov=src/ddk --cov-report=term-missing
 
   package:
     name: Build & install the wheel
@@ -51,14 +51,16 @@ jobs:
           enable-cache: true
       - name: Build
         run: uv build
-      - name: The wheel carries the demo project and the slash commands
-        run: python3 scripts/check_wheel.py dist/*.whl
+      - name: Check runtime assets and exclude private material from wheel and source archive
+        run: python3 scripts/check_wheel.py dist/*
       - name: Install it into a clean environment and start the CLI
         run: |
           uv venv --python 3.12 "$RUNNER_TEMP/wheel-env"
           uv pip install --python "$RUNNER_TEMP/wheel-env/bin/python" dist/*.whl
           "$RUNNER_TEMP/wheel-env/bin/ddk" --help
           "$RUNNER_TEMP/wheel-env/bin/ddk" demo --help
+          "$RUNNER_TEMP/wheel-env/bin/ddk" change --help
+          "$RUNNER_TEMP/wheel-env/bin/python" -c 'from ddk.models.verified_change import contract_validator; contract_validator()'
           "$RUNNER_TEMP/wheel-env/bin/python" -m ddk version
 
   e2e:

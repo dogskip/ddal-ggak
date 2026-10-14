@@ -1,7 +1,0 @@
-{
-  "command": "env -u DDK_CHROMIUM_PATH DDK_E2E=1 .venv/bin/pytest tests/e2e/test_demo.py -q",
-  "headless": true,
-  "chromium_path_override": null,
-  "result": "passed",
-  "dependency_entries_preserved": 5430
-}

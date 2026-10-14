@@ -1,5 +1,0 @@
-Command: PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -p no:cacheprovider tests/unit/adapters/test_verified_browser.py tests/e2e/test_verified_browser.py -q --basetemp=.planning/phases/08-verified-change/evidence/verified-browser-async-confirmed-run
-................................                                         [100%]
-32 passed in 15.21s
-
-Exit code: 0

@@ -1,11 +1,12 @@
-"""Fail unless a built wheel holds what ``ddk demo`` and ``ddk install`` need at run time.
+"""Check runtime assets and publication boundaries in built distributions.
 
-Usage: ``uv build && python scripts/check_wheel.py dist/*.whl``
+Usage: ``uv build && python scripts/check_wheel.py dist/*``
 """
 
 from __future__ import annotations
 
 import sys
+import tarfile
 import zipfile
 from pathlib import Path
 
@@ -17,21 +18,43 @@ REQUIRED = (
     "ddk/assets/demo/vite-app/src/App.tsx",
     "ddk/assets/commands/claude/design.md",
     "ddk/assets/verified-change/contract.schema.json",
+    "ddk/assets/verified-change/chromium-seccomp.json",
+    "ddk/assets/verified-change/LICENSE-moby",
 )
-FORBIDDEN_PARTS = ("node_modules/", "__pycache__/", ".ddk/")
+FORBIDDEN_PARTS = (
+    "node_modules/",
+    "__pycache__/",
+    ".ddk/",
+    ".planning/",
+    "evidence/",
+    "docs/design/",
+    "docs/superpowers/",
+    "docs/launch/",
+    "test-results/",
+    "playwright-report/",
+)
 
 
 def problems(wheel: Path) -> list[str]:
-    names = zipfile.ZipFile(wheel).namelist()
-    found = [f"missing from the wheel: {path}" for path in REQUIRED if path not in names]
+    if wheel.name.endswith(".tar.gz"):
+        with tarfile.open(wheel) as archive:
+            names = [name.partition("/")[2] for name in archive.getnames()]
+        required = tuple("src/" + path for path in REQUIRED) + (
+            "tests/fixtures/verified-change/contract-examples.json",
+        )
+    else:
+        with zipfile.ZipFile(wheel) as archive:
+            names = archive.namelist()
+        required = REQUIRED
+    found = [f"missing from the distribution: {path}" for path in required if path not in names]
     for part in FORBIDDEN_PARTS:
-        found.extend(f"must not be in the wheel: {name}" for name in names if part in name)
+        found.extend(f"must not be in the distribution: {name}" for name in names if part in name)
     return found
 
 
 def main(paths: list[str]) -> int:
     if not paths:
-        print("usage: check_wheel.py <wheel>...", file=sys.stderr)
+        print("usage: check_wheel.py <wheel-or-sdist>...", file=sys.stderr)
         return 2
     failed = False
     for path in paths:

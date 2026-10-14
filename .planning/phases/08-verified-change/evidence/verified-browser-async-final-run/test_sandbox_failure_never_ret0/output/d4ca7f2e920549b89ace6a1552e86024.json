@@ -1,1 +1,0 @@
-{"cleanup_complete":true,"environment_sha256":"2e639ad1b3bc022b879e6b8933a5965d9059044659ef3c779a7dddf0aa22f1d2","errors":[{"code":"browser_unavailable","detail":"RuntimeError: sandbox unavailable"}],"fixture_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reason_code":"browser_unavailable","steps":[],"visuals":[]}

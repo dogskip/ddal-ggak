@@ -1,1 +1,0 @@
-{"result": "passed", "python_modules_compared": 151, "installed_package": "/private/tmp/ddk-isolated-installed/lib/python3.12/site-packages/ddk", "actual_isolated_command": "passed", "cleanup_complete": true}

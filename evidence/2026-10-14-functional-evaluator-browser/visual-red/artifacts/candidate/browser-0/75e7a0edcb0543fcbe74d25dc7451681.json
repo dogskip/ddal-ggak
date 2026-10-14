@@ -1,1 +1,0 @@
-{"cleanup_complete":true,"environment_sha256":"9b570e63d38a09331dcc7e4d920ea7cc9b710116cadf4e317c42b77925e21e19","errors":[],"fixture_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reason_code":null,"steps":["snapshot"],"visuals":[{"mismatch_ppm":0,"passed":true,"ssim":1.0,"step_id":"snapshot"}]}

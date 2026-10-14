@@ -1,5 +1,0 @@
-Command: PYTHONDONTWRITEBYTECODE=1 .venv/bin/pytest -p no:cacheprovider tests/e2e -m playwright -q --basetemp=.planning/phases/08-verified-change/evidence/verified-browser-async-all-headless-run
-s...........s                                                            [100%]
-11 passed, 2 skipped in 15.12s
-
-Exit code: 0

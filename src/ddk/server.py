@@ -1,11 +1,158 @@
 """ddalggak MCP 서버 — FastMCP 기반 Design Studio 엔진."""
 
 import json
+import re
+import sys
+from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
+from anyio import AsyncFile
+from jsonschema import Draft202012Validator
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.exceptions import ToolError
+from mcp.server.stdio import stdio_server
+from mcp.types import ContentBlock, ToolAnnotations
+from mcp.types import Tool as MCPTool
+from pydantic import Field
 
-mcp = FastMCP("ddk")  # description 파라미터 미지원 버전 호환
+from ddk.models.verified_change import ContractError, Record, canonical_json
+from ddk.security.mcp_stdio import BoundedStdin
+
+if TYPE_CHECKING:
+    from ddk.services.verified_change_service import VerifiedChangeService
+
+_VERIFIED_TOOLS = frozenset({"ddk_verify", "ddk_status"})
+_UNAVAILABLE_CODES = frozenset({"isolation_unavailable", "environment_gap"})
+type _PathValue = Annotated[
+    str, Field(strict=True, min_length=1, max_length=4096, pattern=r"^[^\x00-\x1f\x7f]+$")
+]
+type _Identifier = Annotated[
+    str,
+    Field(
+        strict=True,
+        min_length=36,
+        max_length=36,
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    ),
+]
+type _RequirementId = Annotated[str, Field(strict=True, min_length=1, max_length=128)]
+type _ProjectInputs = Annotated[dict[_PathValue, _PathValue], Field(max_length=256)]
+type _ChangeRequirements = Annotated[
+    dict[_PathValue, Annotated[list[_RequirementId], Field(min_length=1, max_length=256)]],
+    Field(max_length=20),
+]
+
+
+class _BoundedFastMCP(FastMCP):
+    async def run_stdio_async(self) -> None:
+        stdin = cast(AsyncFile[str], BoundedStdin(sys.stdin.buffer))
+        async with stdio_server(stdin=stdin) as (read_stream, write_stream):
+            await self._mcp_server.run(
+                read_stream, write_stream, self._mcp_server.create_initialization_options()
+            )
+
+    async def list_tools(self) -> list[MCPTool]:
+        tools = await super().list_tools()
+        for tool in tools:
+            if tool.name in _VERIFIED_TOOLS:
+                tool.inputSchema["additionalProperties"] = False
+        return tools
+
+    async def call_tool(
+        self, name: str, arguments: dict[str, Any]
+    ) -> Sequence[ContentBlock] | dict[str, Any]:
+        if name in _VERIFIED_TOOLS:
+            try:
+                canonical_json({"name": name, "arguments": arguments})
+            except ContractError as error:
+                code = "request_size_limit" if str(error) == "record_size_limit" else "invalid_json"
+                raise ToolError("invalid_tool_input:" + code) from None
+            tool = next(tool for tool in await self.list_tools() if tool.name == name)
+            validator = cast(Any, Draft202012Validator(tool.inputSchema))
+            if next(validator.iter_errors(arguments), None):
+                raise ToolError("invalid_tool_input:schema")
+        return await super().call_tool(name, arguments)
+
+
+mcp = _BoundedFastMCP("ddk")
+
+
+def _verified_service(repository: str) -> "VerifiedChangeService":
+    from ddk.services.verified_change_service import VerifiedChangeService  # noqa: PLC0415
+
+    return VerifiedChangeService(Path(repository))
+
+
+def _service_error(error: ValueError | OSError) -> ToolError:
+    if isinstance(error, FileNotFoundError):
+        code = "record_not_found"
+    elif isinstance(error, PermissionError):
+        code = "permission_denied"
+    elif isinstance(error, OSError):
+        code = "io_error"
+    else:
+        match = re.match(r"[a-z][a-z0-9_]{0,79}(?=[:;\s]|$)", str(error))
+        code = match[0] if match else "verified_change_error"
+    return ToolError(code)
+
+
+def _verified_result(record: Record) -> str:
+    return canonical_json(record).decode("utf-8")
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+    structured_output=False,
+)
+async def ddk_verify(
+    case_id: _Identifier,
+    baseline: _PathValue,
+    candidate: _PathValue,
+    run_id: _Identifier,
+    repository: _PathValue = ".",
+    project_inputs: _ProjectInputs | None = None,
+    change_requirements: _ChangeRequirements | None = None,
+) -> str:
+    """Verify a frozen case without a model or host execution permission.
+
+    Paths refer to this server's local filesystem. Use a stable run_id: the same
+    request returns saved state; changed input with the same ID is a conflict.
+    Execution requires isolation. Results and cancellation state remain queryable
+    with ddk_status. Raw JSON frames are limited to 2 MiB of UTF-8 and depth 32.
+    """
+    try:
+        record = await _verified_service(repository).verify(
+            case_id,
+            baseline=Path(baseline),
+            candidate=Path(candidate),
+            run_id=run_id,
+            project_inputs=project_inputs,
+            change_requirements=change_requirements,
+            trusted_local_approved=False,
+        )
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
+    for action in record.get("actions", []):
+        if action.get("code") in _UNAVAILABLE_CODES:
+            raise ToolError(f"{action['code']}:run_id={run_id}; query ddk_status")
+    return _verified_result(record)
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+    structured_output=False,
+)
+def ddk_status(run_id: _Identifier, repository: _PathValue = ".") -> str:
+    """Query the saved run by its exact ID without starting or resuming execution."""
+    try:
+        return _verified_result(_verified_service(repository).status(run_id))
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
 
 
 @mcp.tool()

@@ -67,6 +67,9 @@ def preflight() -> None:
 
 @app.command(help=t("환경 점검 — Python, uv, API 키, Node.js, git, 헤드리스 Chromium 확인."))
 def doctor(
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    as_json: bool = typer.Option(False, "--json"),
+    repo: Path = typer.Option(Path("."), "--repo"),
     install_browser: bool = typer.Option(
         False,
         "--install-browser",
@@ -74,6 +77,25 @@ def doctor(
     ),
 ) -> None:
     """Check every tool the loop needs and say which ones are optional."""
+    if dry_run or as_json:
+        import asyncio
+
+        from ddk.services.verified_host import readiness
+
+        from .verified import emit_result
+
+        result = asyncio.run(readiness(repo))
+        emit_result(result, as_json)
+        if not as_json:
+            from rich.table import Table
+
+            table = Table("Check", "Status", "Action")
+            for row in result["checks"]:
+                table.add_row(row["name"], row["status"], row["action"] or "")
+            console.print(table)
+        if result["status"] == "blocked":
+            raise typer.Exit(2)
+        return
     from ddk.preflight.doctor import PreflightDoctor  # noqa: PLC0415
 
     if install_browser:
@@ -112,7 +134,9 @@ def doctor(
     console.print(t("\n[green]✅ 모든 검사 통과.[/green]"))
 
 
-@app.command(help=t(".ddk/ 작업 폴더를 초기화합니다 (이미 있으면 안전하게 건너뜀)."))
+@app.command(
+    "workspace-init", help=t(".ddk/ 작업 폴더를 초기화합니다 (이미 있으면 안전하게 건너뜀).")
+)
 def init(
     path: Path = typer.Argument(Path("."), help=t("프로젝트 루트 경로")),
 ) -> None:

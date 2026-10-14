@@ -1,7 +1,9 @@
 """ddalggak MCP 서버 — FastMCP 기반 Design Studio 엔진."""
 
 import json
+import os
 import re
+import sqlite3
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -18,11 +20,23 @@ from pydantic import Field
 
 from ddk.models.verified_change import ContractError, Record, canonical_json
 from ddk.security.mcp_stdio import BoundedStdin
+from ddk.services.verified_repair import RepairProvider
 
 if TYPE_CHECKING:
     from ddk.services.verified_change_service import VerifiedChangeService
 
-_VERIFIED_TOOLS = frozenset({"ddk_verify", "ddk_status"})
+_VERIFIED_TOOLS = frozenset(
+    {
+        "ddk_verify",
+        "ddk_status",
+        "ddk_doctor",
+        "ddk_init",
+        "ddk_repair",
+        "ddk_probe",
+        "ddk_apply",
+        "ddk_query_ledger",
+    }
+)
 _UNAVAILABLE_CODES = frozenset({"isolation_unavailable", "environment_gap"})
 type _PathValue = Annotated[
     str, Field(strict=True, min_length=1, max_length=4096, pattern=r"^[^\x00-\x1f\x7f]+$")
@@ -288,3 +302,266 @@ def ddk_version() -> str:
 def run_server() -> None:
     """MCP 서버 진입점 — stdio transport로 실행."""
     mcp.run()
+
+
+def _owner_grant(capability: str, repository: str, approved: bool) -> None:
+    granted = set(os.environ.get("DDK_MCP_CAPABILITIES", "").split(","))
+    if not approved or capability not in granted:
+        raise ToolError("owner_capability_required:" + capability)
+    allowed = Path(os.environ.get("DDK_MCP_REPOSITORY", ".")).resolve()
+    if Path(repository).resolve() != allowed:
+        raise ToolError("repository_not_granted")
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+)
+async def ddk_doctor(repository: _PathValue = ".") -> str:
+    """Inspect local prerequisites without installing or starting project commands."""
+    from ddk.services.verified_host import readiness
+
+    return canonical_json(await readiness(Path(repository))).decode()
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False
+    ),
+)
+async def ddk_init(
+    request: Annotated[str, Field(strict=True, min_length=1, max_length=8192)],
+    repository: _PathValue = ".",
+    git_base: Annotated[str, Field(strict=True, min_length=1, max_length=128)] = "HEAD",
+    approved: bool = False,
+    dry_run: bool = True,
+) -> str:
+    """Compile reviewed checks into a fixed case; writes require an owner init grant."""
+    if not dry_run:
+        _owner_grant("init", repository, approved)
+    from ddk.services.case_bootstrapper import CaseBootstrapper
+
+    try:
+        return canonical_json(
+            await CaseBootstrapper(Path(repository)).initialize(
+                request, git_base=git_base, dry_run=dry_run
+            )
+        ).decode()
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
+
+
+def _lazy_provider(kind: str, endpoint: str | None) -> RepairProvider:
+    from ddk.adapters.verified_provider import provider_for
+    from ddk.services.verified_budget import ProviderResult
+    from ddk.services.verified_repair import RepairRequest
+
+    async def call(request: RepairRequest) -> ProviderResult:
+        return await provider_for(kind, endpoint)(request)
+
+    return call
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True
+    ),
+)
+async def ddk_repair(
+    source_run_id: _Identifier,
+    baseline: _PathValue,
+    candidate: _PathValue,
+    run_id: _Identifier,
+    repository: _PathValue = ".",
+    approved: bool = False,
+    trusted_local: bool = False,
+    provider: Annotated[str, Field(strict=True, max_length=64)] = "anthropic",
+    endpoint: _PathValue | None = None,
+    price_json: Annotated[str, Field(strict=True, max_length=16384)] | None = None,
+    input_limit: Annotated[int, Field(strict=True, ge=1, le=1000000)] = 32000,
+    output_limit: Annotated[int, Field(strict=True, ge=1, le=128000)] = 4096,
+) -> str:
+    """Repair a source run only under both owner and per-request grants."""
+    _owner_grant("repair", repository, approved)
+    if trusted_local:
+        _owner_grant("trusted-local", repository, approved)
+    if provider == "openai-compatible":
+        granted_endpoint = os.environ.get("DDK_MCP_PROVIDER_ENDPOINT")
+        if (
+            endpoint is None
+            or granted_endpoint is None
+            or endpoint.rstrip("/") != granted_endpoint.rstrip("/")
+        ):
+            raise ToolError("provider_endpoint_not_granted")
+    elif endpoint is not None:
+        raise ToolError("provider_endpoint_not_granted")
+    from ddk.adapters.verified_provider import default_price
+    from ddk.models.verified_change import decode_json
+    from ddk.services.verified_budget import VerifiedPrice
+
+    service = _verified_service(repository)
+    try:
+        source = service.store.run(source_run_id)
+        case = service.store.case(source["case_id"])
+        price = (
+            VerifiedPrice(**decode_json(price_json.encode()))
+            if price_json
+            else default_price("claude-sonnet-5-5", case["evaluator_sha256"])
+        )
+        if price.provider != provider:
+            raise ValueError("price_provider_mismatch")
+        result = await service.repair(
+            source_run_id,
+            baseline=Path(baseline),
+            candidate=Path(candidate),
+            run_id=run_id,
+            price=price,
+            input_limit=input_limit,
+            output_limit=output_limit,
+            provider=_lazy_provider(provider, endpoint),
+            provider_approved=True,
+            trusted_local_approved=trusted_local,
+        )
+        return _verified_result(result)
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True
+    ),
+)
+async def ddk_probe(
+    url: _PathValue,
+    repository: _PathValue = ".",
+    approved: bool = False,
+    width: Annotated[int, Field(strict=True, ge=1, le=16384)] = 1280,
+    height: Annotated[int, Field(strict=True, ge=1, le=16384)] = 800,
+    selector: _PathValue | None = None,
+) -> str:
+    """Capture private browser evidence; never change criteria or apply source."""
+    _owner_grant("probe", repository, approved)
+    from uuid import uuid4
+
+    from ddk.adapters.verified_probe import capture_probe
+
+    try:
+        return canonical_json(
+            await capture_probe(
+                url,
+                Path(repository) / ".ddk/probes" / str(uuid4()),
+                viewport=(width, height),
+                selector=selector,
+                repository=Path(repository),
+            )
+        ).decode()
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=False
+    ),
+)
+def ddk_apply(
+    run_id: _Identifier,
+    repository: _PathValue = ".",
+    approved: bool = False,
+    quiescence_confirmed: bool = False,
+    local_storage_confirmed: bool = False,
+    trusted_local: bool = False,
+    apply_id: _Identifier | None = None,
+    target_run_id: _Identifier | None = None,
+) -> str:
+    """Apply a ready record with owner permission and the existing storage confirmations."""
+    _owner_grant("apply", repository, approved)
+    if trusted_local:
+        _owner_grant("trusted-local", repository, approved)
+    from uuid import uuid4
+
+    from ddk.models.verified_change import record_digest
+
+    service = _verified_service(repository)
+    try:
+        run = service.store.run(run_id)
+        return _verified_result(
+            service.apply(
+                apply_id=apply_id or str(uuid4()),
+                case_id=run["case_id"],
+                run_id=run_id,
+                run_sha256=record_digest(run),
+                changes_sha256=record_digest(run["changes"]),
+                quiescence_confirmed=quiescence_confirmed,
+                local_storage_confirmed=local_storage_confirmed,
+                required_assurance="trusted-local" if trusted_local else "isolated",
+                target_run_id=target_run_id,
+            )
+        )
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+)
+def ddk_query_ledger(
+    table: Annotated[str, Field(strict=True, min_length=1, max_length=64)],
+    repository: _PathValue = ".",
+    limit: Annotated[int, Field(strict=True, ge=1, le=1000)] = 100,
+) -> str:
+    """Read a bounded catalog projection; raw requests, source and logs are excluded."""
+    from ddk.services.verified_change_store import VerifiedChangeStore
+    from ddk.services.verified_index import VerifiedIndexCatalog
+
+    try:
+        safe = {
+            "case_id",
+            "run_id",
+            "transaction_id",
+            "requirement_id",
+            "check_id",
+            "lesson_id",
+            "artifact_id",
+            "call_id",
+            "round_no",
+            "phase",
+            "status",
+            "verdict",
+            "state",
+            "operation",
+            "kind",
+            "reason_code",
+            "record_sha256",
+            "started_at",
+            "finished_at",
+            "actual_cost_microusd",
+            "reserved_cost_microusd",
+            "total_cost_microusd",
+            "size_bytes",
+            "assurance_level",
+        }
+        rows = VerifiedIndexCatalog(VerifiedChangeStore(Path(repository), create=False)).query(
+            table, limit=limit, columns=safe
+        )
+        return canonical_json(
+            {
+                "table": table,
+                "derived": True,
+                "rows": rows,
+            }
+        ).decode()
+    except sqlite3.Error:
+        raise _service_error(ValueError("catalog_reindex_required")) from None
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None

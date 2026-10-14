@@ -170,7 +170,19 @@ def content(result):
 async def test_actual_cli_stdio_lists_existing_tools_and_reports_errors(tmp_path, monkeypatch):
     async with connected(tmp_path, monkeypatch) as (session, _):
         tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-        assert set(tools) == {"design_new", "preflight", "ddk_version", "ddk_verify", "ddk_status"}
+        assert set(tools) == {
+            "design_new",
+            "preflight",
+            "ddk_version",
+            "ddk_verify",
+            "ddk_status",
+            "ddk_doctor",
+            "ddk_init",
+            "ddk_repair",
+            "ddk_apply",
+            "ddk_probe",
+            "ddk_query_ledger",
+        }
         assert tools["ddk_verify"].inputSchema["additionalProperties"] is False
         assert not (await session.call_tool("ddk_version")).isError
         unknown = await session.call_tool("unknown")

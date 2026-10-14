@@ -18,7 +18,21 @@ async def _list_tool_names() -> list[str]:
 def test_mcp_server_registers_expected_tools() -> None:
     tool_names = anyio.run(_list_tool_names)
 
-    assert tool_names == ["ddk_status", "ddk_verify", "ddk_version", "design_new", "preflight"]
+    assert tool_names == sorted(
+        [
+            "ddk_status",
+            "ddk_verify",
+            "ddk_version",
+            "design_new",
+            "preflight",
+            "ddk_doctor",
+            "ddk_init",
+            "ddk_repair",
+            "ddk_apply",
+            "ddk_probe",
+            "ddk_query_ledger",
+        ]
+    )
 
 
 def test_run_server_delegates_to_fastmcp() -> None:

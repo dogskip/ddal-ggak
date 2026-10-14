@@ -6,6 +6,8 @@ from __future__ import annotations
 from . import delivery as delivery
 from . import demo as demo
 from . import evidence as evidence
+from . import oneclick as oneclick
+from . import probe as probe
 from . import studio as studio
 from . import verified as verified
 from . import workspace as workspace

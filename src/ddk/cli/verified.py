@@ -97,7 +97,7 @@ def _emit(payload: Record, as_json: bool) -> None:
     if as_json:
         typer.echo(json.dumps(payload, ensure_ascii=False, allow_nan=False))
         return
-    for key in ("decision", "assurance", "case_id", "run_id", "apply_id", "state"):
+    for key in ("status", "decision", "assurance", "case_id", "run_id", "apply_id", "state"):
         if key in payload:
             typer.echo(f"{key}: {payload[key]}")
     if "error" in payload:
@@ -121,6 +121,8 @@ def _exit_code(payload: Record) -> int:
         return {"applied": 0, "rolled_back": 0, "conflict": 1, "unknown": 1}.get(
             payload["state"], 2
         )
+    if payload.get("status") == "blocked" and not payload.get("dry_run"):
+        return 2
     return 0
 
 
@@ -156,8 +158,11 @@ def _execute(
 
 @change_app.command(help="Check a fixed case against explicit baseline and candidate directories.")
 def verify(
-    baseline: Path = typer.Option(..., "--baseline", help="Baseline source directory."),
-    candidate: Path = typer.Option(..., "--candidate", help="Candidate source directory."),
+    baseline: Path | None = typer.Option(None, "--baseline", help="Baseline source directory."),
+    git_base: str | None = typer.Option(None, "--git-base", help="Immutable Git baseline ref."),
+    candidate: Path | None = typer.Option(
+        None, "--candidate", help="Candidate source directory; defaults to Git worktree."
+    ),
     case: Path | None = typer.Option(None, "--case", help="Import this case definition file."),
     case_id: str | None = typer.Option(None, "--case-id", help="Use an already imported case ID."),
     inputs: Path | None = typer.Option(None, "--inputs", help="Input directory for --case."),
@@ -203,6 +208,7 @@ def verify(
                 project_inputs=mapped_inputs,
                 change_requirements=mapped_requirements,
                 trusted_local_approved=trusted_local,
+                **({"git_base": git_base} if git_base is not None else {}),
             )
         )
 
@@ -377,3 +383,11 @@ def recover(
         )
 
     _execute(as_json, execute, identifiers={"apply_id": apply_id})
+
+
+execute_command = _execute
+emit_result = _emit
+
+
+def repair_provider() -> RepairProvider:
+    return _repair_provider()

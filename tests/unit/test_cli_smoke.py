@@ -155,22 +155,22 @@ class TestPreflightCommand:
 # ---------------------------------------------------------------------------
 class TestInitCommand:
     def test_creates_ddk_directory(self, tmp_path: Path) -> None:
-        result = runner.invoke(app, ["init", str(tmp_path)])
+        result = runner.invoke(app, ["workspace-init", str(tmp_path)])
         assert result.exit_code == 0
         assert (tmp_path / ".ddk").exists()
 
     def test_is_idempotent(self, tmp_path: Path) -> None:
-        runner.invoke(app, ["init", str(tmp_path)])
-        result = runner.invoke(app, ["init", str(tmp_path)])
+        runner.invoke(app, ["workspace-init", str(tmp_path)])
+        result = runner.invoke(app, ["workspace-init", str(tmp_path)])
         assert result.exit_code == 0
 
     def test_prints_success_message(self, tmp_path: Path) -> None:
-        result = runner.invoke(app, ["init", str(tmp_path)])
+        result = runner.invoke(app, ["workspace-init", str(tmp_path)])
         assert result.exit_code == 0
         assert ".ddk" in result.output or "✅" in result.output
 
     def test_default_path_uses_cwd(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.chdir(tmp_path)
-        result = runner.invoke(app, ["init"])
+        result = runner.invoke(app, ["workspace-init"])
         assert result.exit_code == 0
         assert (tmp_path / ".ddk").exists()

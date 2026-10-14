@@ -26,7 +26,8 @@ from ddk.services.verified_change_store import VerifiedChangeStore
 
 EXAMPLES = json.loads(
     (
-        Path(__file__).resolve().parents[2] / "docs/design/verified-change/contract-examples.json"
+        Path(__file__).resolve().parents[2]
+        / "tests/fixtures/verified-change/contract-examples.json"
     ).read_text()
 )
 

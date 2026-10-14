@@ -20,7 +20,7 @@ from ddk.services.verified_change_engine import (
 )
 from ddk.services.verified_change_store import VerifiedChangeStore
 
-DATA = Path(__file__).resolve().parents[2] / "docs/design/verified-change/contract-examples.json"
+DATA = Path(__file__).resolve().parents[2] / "tests/fixtures/verified-change/contract-examples.json"
 RUN_ID = "00000000-0000-4000-8000-000000000055"
 
 

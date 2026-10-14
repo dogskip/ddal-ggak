@@ -16,7 +16,8 @@ from ddk.services.verified_change_store import VerifiedChangeStore
 
 _EXAMPLES = json.loads(
     (
-        Path(__file__).resolve().parents[3] / "docs/design/verified-change/contract-examples.json"
+        Path(__file__).resolve().parents[3]
+        / "tests/fixtures/verified-change/contract-examples.json"
     ).read_text()
 )
 _APPLY_ID = "00000000-0000-4000-8000-000000000004"

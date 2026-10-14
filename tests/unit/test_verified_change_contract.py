@@ -16,7 +16,7 @@ from ddk.models.verified_change import (
     validate_record,
 )
 
-DATA = Path(__file__).resolve().parents[2] / "docs/design/verified-change"
+DATA = Path(__file__).resolve().parents[2] / "tests/fixtures/verified-change"
 EXAMPLES = json.loads((DATA / "contract-examples.json").read_text())
 CASES = {
     x["record"]["case_id"]: x["record"]

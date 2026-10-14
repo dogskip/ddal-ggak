@@ -9,7 +9,6 @@ import re
 from datetime import datetime
 from functools import lru_cache
 from importlib.resources import files
-from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urljoin, urlsplit
 
@@ -131,11 +130,7 @@ def _date_time(value: object) -> bool:
 @lru_cache(maxsize=1)
 def contract_validator() -> Draft202012Validator:
     packaged = files("ddk").joinpath("assets/verified-change/contract.schema.json")
-    if packaged.is_file():
-        payload = packaged.read_bytes()
-    else:
-        source = Path(__file__).resolve().parents[3]
-        payload = (source / "docs/design/verified-change/contract.schema.json").read_bytes()
+    payload = packaged.read_bytes()
     schema = decode_json(payload)
     _local_references(schema)
     Draft202012Validator.check_schema(schema)

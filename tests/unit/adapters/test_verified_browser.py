@@ -24,7 +24,7 @@ def png(color: tuple[int, int, int], size: tuple[int, int] = (12, 12)) -> bytes:
 
 
 def environment() -> dict[str, Any]:
-    examples = json.loads(Path("docs/design/verified-change/contract-examples.json").read_text())
+    examples = json.loads(Path("tests/fixtures/verified-change/contract-examples.json").read_text())
     return next(
         entry["record"]
         for entry in examples["valid"]

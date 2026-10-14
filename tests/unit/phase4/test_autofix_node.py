@@ -8,6 +8,7 @@ from ddk.graph.nodes.autofix import autofix_node
 from ddk.models.fix import FixAttempt
 from ddk.models.generation import GeneratedArtifactSet
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
+from ddk.services.failure_signature import failure_signature
 
 
 def _make_artifacts(case_id: str = "tc") -> GeneratedArtifactSet:
@@ -15,7 +16,11 @@ def _make_artifacts(case_id: str = "tc") -> GeneratedArtifactSet:
 
 
 class FakeAutoFixPlanner:
-    async def plan_and_apply(self, failures, artifacts, case_id, attempt_number):
+    def __init__(self) -> None:
+        self.visual_seen: list[object] = []
+
+    async def plan_and_apply(self, failures, artifacts, case_id, attempt_number, visual=None):
+        self.visual_seen.append(visual)
         attempt = FixAttempt(
             attempt_number=attempt_number,
             case_id=case_id,
@@ -33,6 +38,11 @@ class FakeRollbackController:
     async def create_checkpoint(self, case_id: str, attempt_number: int) -> str:
         self.calls.append((case_id, attempt_number))
         return f"fake-ref:{case_id}:{attempt_number}"
+
+
+class UnavailableRollbackController:
+    async def create_checkpoint(self, case_id: str, attempt_number: int) -> str:
+        raise ValueError("fatal: not a git repository")
 
 
 def make_report_with_failure(file_path: str = "src/App.tsx") -> RuntimeValidationReport:
@@ -118,9 +128,8 @@ async def test_autofix_node_appends_failure_hash_before_fix() -> None:
     result = await autofix_node(state, context=container)
     assert "failure_hash_history" in result
     assert len(result["failure_hash_history"]) == 1
-    # Hash must be based on (taxonomy_id, file_path), not UUID
-    expected_hash = hash(frozenset((f.taxonomy_id, f.file_path or "") for f in report.failures))
-    assert result["failure_hash_history"][0] == expected_hash
+    # Signature must not depend on the per-run UUID
+    assert result["failure_hash_history"][0] == failure_signature(report.failures)
 
 
 async def test_autofix_node_none_artifacts_returns_manual_review() -> None:
@@ -136,3 +145,93 @@ async def test_autofix_node_none_artifacts_returns_manual_review() -> None:
     }
     result = await autofix_node(state, context=container)
     assert result.get("terminal_state") == "manual-review-required"
+
+
+class NoOpAutoFixPlanner:
+    async def plan_and_apply(self, failures, artifacts, case_id, attempt_number, visual=None):
+        attempt = FixAttempt(
+            attempt_number=attempt_number,
+            case_id=case_id,
+            rule_id="none",
+            patch_description="No patch applied: model returned the file unchanged",
+            success=False,
+        )
+        return attempt, artifacts
+
+
+async def test_autofix_node_hands_over_to_a_human_when_nothing_was_changed() -> None:
+    """Re-validating unchanged code cannot help, so an empty attempt ends the loop."""
+    container = MagicMock()
+    container.auto_fix_planner = NoOpAutoFixPlanner()
+    state = {
+        "case_id": "tc",
+        "fix_attempts": [],
+        "retry_budget_remaining": 2,
+        "generated_artifacts": _make_artifacts(),
+        "runtime_validation_report": make_report_with_failure(),
+        "failure_hash_history": [],
+    }
+
+    result = await autofix_node(state, context=container)
+
+    assert result["terminal_state"] == "manual-review-required"
+    assert "unchanged" in result["error_message"]
+    assert result["retry_budget_remaining"] == 1
+    assert len(result["fix_attempts"]) == 1
+
+
+async def test_autofix_node_keeps_going_after_a_real_patch() -> None:
+    container = MagicMock()
+    container.auto_fix_planner = FakeAutoFixPlanner()
+    state = {
+        "case_id": "tc",
+        "fix_attempts": [],
+        "retry_budget_remaining": 2,
+        "generated_artifacts": _make_artifacts(),
+        "runtime_validation_report": make_report_with_failure(),
+        "failure_hash_history": [],
+    }
+
+    result = await autofix_node(state, context=container)
+
+    assert "terminal_state" not in result
+
+
+async def test_autofix_node_hands_the_visual_report_to_the_planner() -> None:
+    planner = FakeAutoFixPlanner()
+    container = MagicMock()
+    container.auto_fix_planner = planner
+    visual = object()
+    state = {
+        "case_id": "tc",
+        "fix_attempts": [],
+        "retry_budget_remaining": 2,
+        "generated_artifacts": _make_artifacts(),
+        "runtime_validation_report": make_report_with_failure(),
+        "visual_regression_report": visual,
+        "failure_hash_history": [],
+    }
+
+    await autofix_node(state, context=container)
+
+    assert planner.visual_seen == [visual]
+
+
+async def test_autofix_node_carries_on_when_no_checkpoint_can_be_made() -> None:
+    """A folder without git history must not stop the repair loop."""
+    container = MagicMock()
+    container.auto_fix_planner = FakeAutoFixPlanner()
+    container.rollback_controller = UnavailableRollbackController()
+    state = {
+        "case_id": "tc",
+        "fix_attempts": [],
+        "retry_budget_remaining": 2,
+        "generated_artifacts": _make_artifacts(),
+        "runtime_validation_report": make_report_with_failure(),
+        "failure_hash_history": [],
+    }
+
+    result = await autofix_node(state, context=container)
+
+    assert "terminal_state" not in result
+    assert result["fix_attempts"][0].checkpoint_ref is None

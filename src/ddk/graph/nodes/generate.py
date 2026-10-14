@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
-from ddk.graph.context import ServiceContainer
+from ddk.graph.context import ServiceContainer, primary_model_from
 from ddk.services.code_generator import CodeGenerator
+from ddk.services.context_pack_builder import ContextPackBuilder
+from ddk.services.images import encode_design_image
 
 
 async def generate_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
@@ -21,7 +24,7 @@ async def generate_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
             "terminal_state": "manual-review-required",
             "error_message": "No LLM adapter in ServiceContainer",
         }
-    generator = CodeGenerator(llm=llm)
+    generator = CodeGenerator(llm=llm, model=primary_model_from(container))
     generation_plan = state.get("generation_plan")
     repo_profile = state.get("repo_profile")
     intent_graph = state.get("intent_graph")
@@ -42,15 +45,28 @@ async def generate_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
             "error_message": f"Missing upstream state: {', '.join(missing)}",
         }
     # Pyright cannot narrow through list-comprehension guards above
-    assert generation_plan is not None  # guarded above
-    assert repo_profile is not None  # guarded above
-    assert intent_graph is not None  # guarded above
-    assert case_input is not None  # guarded above
+    if generation_plan is None:
+        raise RuntimeError("generation_plan is None after guard")
+    if repo_profile is None:
+        raise RuntimeError("repo_profile is None after guard")
+    if intent_graph is None:
+        raise RuntimeError("intent_graph is None after guard")
+    if case_input is None:
+        raise RuntimeError("case_input is None after guard")
+    images = [encode_design_image(path) for path in case_input.image_paths]
+    repo_root = Path(case_input.repo_path)
+    builder = (container.context_pack_builder if container is not None else None) or (
+        ContextPackBuilder()
+    )
+    context = builder.build(generation_plan.target_files, repo_root)
     generated_artifacts = await generator.generate_all(
         plan=generation_plan,
         repo_profile=repo_profile,
         intent_graph=intent_graph,
         prompt=case_input.prompt,
+        images=images,
+        context=context,
+        repo_root=repo_root,
     )
     return {
         "generated_artifacts": generated_artifacts,

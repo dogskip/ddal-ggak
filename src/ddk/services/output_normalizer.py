@@ -7,6 +7,9 @@ Key contract:
 - Empty artifacts (files=[]) → short-circuit, 0 LLM calls, returns the SAME object (identity)
 - One LLM call for non-empty artifacts
 - drift_score_before from all convention_fixes; drift_score_after from unresolved_drift only
+- A cut-off or unreadable answer leaves the files as they were and is named in ``skipped_rules``
+- A patch is applied only for a generated file, and not when it is empty, shrinks the file to under
+  half, or adds a placeholder comment such as ``// ... rest unchanged``
 - System prompt starts with "Normalize" so FakeLLMAdapter routes to key "normalize"
 """
 
@@ -14,16 +17,27 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
-from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
+from ddk.adapters.llm.parsing import parse_llm_json
+from ddk.models.config import DEFAULT_LIGHT_MODEL
+from ddk.models.generation import GeneratedArtifactSet
 from ddk.models.normalization import ConventionFix, NormalizationReport
 from ddk.models.repo import RepoProfile
 
 logger = logging.getLogger(__name__)
+
+_MAX_TOKENS = 16_384
+_MIN_KEPT_SHARE = 0.5
+# A comment that says code was left out, e.g. "// ... rest of the component unchanged".
+_ELISION = re.compile(
+    r"^\s*(?://|/\*|\{/\*|\*)[^\n]*(?:\.\.\.|…|rest of|unchanged|existing code|omitted)",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 # ---------------------------------------------------------------------------
 # System prompt — MUST start with "Normalize" so FakeLLMAdapter routes to
@@ -58,6 +72,8 @@ Respond with a JSON object matching this exact schema:
 Rules:
 - Apply all auto-fixable violations and list them in convention_fixes
 - Leave issues that need human judgement in unresolved_drift
+- Every patched file must be complete: never abbreviate it with placeholders such as
+  "// ... rest unchanged"
 - Respond with valid JSON only — no markdown fences, no commentary
 """
 
@@ -73,12 +89,13 @@ class _NormalizationLLMOutput(BaseModel):
 class OutputNormalizer:
     """Applies LLM-driven convention normalization to a GeneratedArtifactSet."""
 
-    def __init__(self, llm: LLMAdapter) -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_LIGHT_MODEL) -> None:
         self._llm = llm
         self._config = LLMCallConfig(
-            model="claude-3-haiku-20240307",
+            model=model,
             temperature=0.0,
-            max_tokens=2048,
+            max_tokens=_MAX_TOKENS,
+            effort="low",
         )
 
     # ------------------------------------------------------------------
@@ -115,7 +132,7 @@ class OutputNormalizer:
                 artifacts,  # identity: same object reference
             )
 
-        llm_output = await self._call_llm(artifacts, repo_profile)
+        llm_output, skipped_rules = await self._call_llm(artifacts, repo_profile)
 
         # Parse convention fixes into ConventionFix model instances
         convention_fixes: list[ConventionFix] = []
@@ -139,9 +156,9 @@ class OutputNormalizer:
             unresolved_drift=llm_output.unresolved_drift,
         )
 
-        # Apply patched file content (if LLM returned any patches)
-        patched = self._apply_patches(artifacts, llm_output.patched_files)
-
+        patched, modified, rejected = self._apply_patches(artifacts, llm_output.patched_files)
+        report.files_modified = modified
+        report.skipped_rules = [*skipped_rules, *rejected]
         return report, patched
 
     # ------------------------------------------------------------------
@@ -152,8 +169,8 @@ class OutputNormalizer:
         self,
         artifacts: GeneratedArtifactSet,
         repo_profile: RepoProfile,
-    ) -> _NormalizationLLMOutput:
-        """Issue the LLM normalization call."""
+    ) -> tuple[_NormalizationLLMOutput, list[str]]:
+        """Issue the LLM normalization call; an unusable answer becomes "nothing to apply"."""
         files_payload = [
             {"path": f.path, "content": f.content, "language": f.language} for f in artifacts.files
         ]
@@ -170,46 +187,53 @@ class OutputNormalizer:
             Message(role="user", content=user_content),
         ]
         response = await self._llm.complete(messages, self._config)
+        if response.truncated:
+            logger.warning("Normalization answer was cut off at %s tokens", _MAX_TOKENS)
+            return _NormalizationLLMOutput(), ["normalization-truncated"]
         try:
-            data = json.loads(response.content)
-            return _NormalizationLLMOutput(**data)
+            data = parse_llm_json(response.content)
+            return _NormalizationLLMOutput(**data), []
         except Exception:  # noqa: BLE001
             logger.warning("Normalization LLM response parsing failed", exc_info=True)
-            return _NormalizationLLMOutput()
+            return _NormalizationLLMOutput(), ["normalization-unparseable"]
 
     def _apply_patches(
         self,
         artifacts: GeneratedArtifactSet,
         patched_files: dict[str, str],
-    ) -> GeneratedArtifactSet:
-        """Return a new GeneratedArtifactSet with patched file contents applied."""
-        if not patched_files:
-            return artifacts
-
-        updated_files: list[GeneratedFile] = []
-        updated_file_map: dict[str, str] = dict(artifacts.file_map)
-
-        for gf in artifacts.files:
-            if gf.path in patched_files:
-                new_content = patched_files[gf.path]
-                updated_files.append(
-                    GeneratedFile(
-                        path=gf.path,
-                        content=new_content,
-                        language=gf.language,
-                        source_node_id=gf.source_node_id,
-                        is_new=gf.is_new,
-                        original_content=gf.content,
-                    )
-                )
-                updated_file_map[gf.path] = new_content
+    ) -> tuple[GeneratedArtifactSet, list[str], list[str]]:
+        """Apply the sound patches; returns the new set, the modified paths and the rejections."""
+        generated = {f.path: f for f in artifacts.files}
+        accepted: dict[str, str] = {}
+        rejected: list[str] = []
+        for path, content in patched_files.items():
+            original = generated.get(path)
+            if original is None:
+                rejected.append(f"patch-rejected:{path}:unknown-file")
+            elif content == original.content:
+                continue
+            elif (problem := _patch_problem(original.content, content)) is not None:
+                rejected.append(f"patch-rejected:{path}:{problem}")
             else:
-                updated_files.append(gf)
+                accepted[path] = content
+        if not accepted:
+            return artifacts, [], rejected
 
-        return GeneratedArtifactSet(
-            case_id=artifacts.case_id,
-            files=updated_files,
-            file_map=updated_file_map,
-            generation_trace=artifacts.generation_trace,
-            changed_paths=artifacts.changed_paths,
+        files = [
+            f.model_copy(update={"content": accepted[f.path]}) if f.path in accepted else f
+            for f in artifacts.files
+        ]
+        patched = artifacts.model_copy(
+            update={"files": files, "file_map": {**artifacts.file_map, **accepted}}
         )
+        return patched, list(accepted), rejected
+
+
+def _patch_problem(original: str, patched: str) -> str | None:
+    if not patched.strip():
+        return "empty"
+    if len(patched) < len(original) * _MIN_KEPT_SHARE:
+        return "shrunk"
+    if len(_ELISION.findall(patched)) > len(_ELISION.findall(original)):
+        return "elided"
+    return None

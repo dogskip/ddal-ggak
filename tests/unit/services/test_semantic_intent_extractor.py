@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.input import CaseInput
 from ddk.models.intent import IntentGraph
 from ddk.services.semantic_intent_extractor import _SYSTEM_PROMPT, SemanticIntentExtractor
@@ -115,7 +116,7 @@ class TestSemanticIntentExtractor:
         fake_llm = FakeLLMAdapter(responses={"you": mock_intent_graph_json})
         extractor = SemanticIntentExtractor(llm=fake_llm)
         await extractor.extract(case_input)
-        assert fake_llm.call_log[0]["config"].model == "claude-3-5-sonnet-20241022"
+        assert fake_llm.call_log[0]["config"].model == DEFAULT_PRIMARY_MODEL
 
     async def test_confidence_in_result(
         self, case_input: CaseInput, mock_intent_graph_json: str

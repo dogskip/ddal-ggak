@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ddk.graph.context import ServiceContainer
+from ddk.graph.context import ServiceContainer, primary_model_from
 from ddk.services.design_system_inferencer import DesignSystemInferencer
 
 
@@ -20,7 +20,10 @@ async def design_system_node(state: dict[str, Any], **kwargs: Any) -> dict[str, 
             "terminal_state": "manual-review-required",
             "error_message": "No LLM adapter in ServiceContainer",
         }
-    inferencer = DesignSystemInferencer(llm=container.llm)
+    inferencer = DesignSystemInferencer(
+        llm=container.llm,
+        model=primary_model_from(container),
+    )
     case_input = state.get("case_input")
     repo_profile = state.get("repo_profile")
     if case_input is None or repo_profile is None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.validation import FailureRecord
 from ddk.services.auto_fix_planner import (
     AutoFixPlanner,
@@ -83,17 +84,29 @@ class TestAutoFixPlannerLLM:
             taxonomy_id="FT-BUILD-002",
             severity="critical",
             message="SyntaxError: Unexpected token",
+            file_path="src/App.tsx",
             raw_output="SyntaxError",
+        )
+        artifacts = GeneratedArtifactSet(
+            case_id="test-case",
+            files=[
+                GeneratedFile(
+                    path="src/App.tsx",
+                    content="export default function App() { return <div/ }",
+                    source_node_id="n1",
+                )
+            ],
         )
         attempt, _ = await planner.plan_and_apply(
             failures=[failure],
-            artifacts=None,
+            artifacts=artifacts,
             case_id="test-case",
             attempt_number=1,
         )
         assert len(fake_llm.call_log) == 1
         assert fake_llm.call_log[0]["key"] == "autofix"
         assert attempt.rule_id == "R-09"
+        assert attempt.files_patched == ["src/App.tsx"]
 
 
 class TestNoApplicableRule:
@@ -129,10 +142,36 @@ class TestTaxonomyDispatch:
             raw_output="",
             file_path="src/App.tsx",
         )
-        attempt, _ = await planner.plan_and_apply(
+        artifacts = GeneratedArtifactSet(
+            case_id="test-case",
+            files=[
+                GeneratedFile(
+                    path="src/App.tsx",
+                    content="import { Foo } from './Foo';\nexport const x = 1;\n",
+                    source_node_id="n1",
+                )
+            ],
+        )
+        attempt, patched = await planner.plan_and_apply(
             failures=[failure],
-            artifacts=None,
+            artifacts=artifacts,
             case_id="test-case",
             attempt_number=1,
         )
         assert attempt.rule_id == "R-01"
+        assert patched.files[0].content == "export const x = 1;\n"
+
+    async def test_rule_is_not_claimed_when_there_is_nothing_to_patch(self) -> None:
+        planner = AutoFixPlanner(llm=FakeLLMAdapter(responses={}))
+        failure = FailureRecord(
+            id="f3",
+            taxonomy_id="FT-LINT-001",
+            severity="minor",
+            message="Unused variable 'Foo'",
+            file_path="src/App.tsx",
+        )
+        attempt, _ = await planner.plan_and_apply(
+            failures=[failure], artifacts=None, case_id="test-case", attempt_number=1
+        )
+        assert attempt.rule_id == "none"
+        assert attempt.success is False

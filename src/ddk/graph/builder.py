@@ -2,7 +2,9 @@
 
 10-node pipeline: START → intake → repo_scan → intent_extract → design_system → plan
                  → generate → normalize → validate → [route_after_validate]
+                 (a stage that needs a human jumps to certify; the rest is skipped)
                  → {pass→certify, exhausted→certify, fix_available→autofix} ↩ validate
+                 (autofix → certify when the patch changed nothing)
                  → certify → END
 """
 
@@ -22,7 +24,7 @@ from ddk.graph.nodes.normalize import normalize_node
 from ddk.graph.nodes.plan import plan_node
 from ddk.graph.nodes.repo_scan import repo_scan_node
 from ddk.graph.nodes.validate import validate_node
-from ddk.graph.router import route_after_validate
+from ddk.graph.router import route_after_autofix, route_after_stage, route_after_validate
 from ddk.graph.state import GraphState
 
 
@@ -53,17 +55,20 @@ def build_ddk_graph() -> StateGraph:  # type: ignore[type-arg, return-value]
     workflow.add_node("autofix", node_wrapper(autofix_node))  # type: ignore[arg-type]
     workflow.add_node("certify", node_wrapper(certify_node))  # type: ignore[arg-type]
 
-    # Linear pipeline edges
+    # Linear pipeline edges; a stage that needs a human skips the rest and keeps its own message
     workflow.add_edge(START, "intake")
-    workflow.add_edge("intake", "repo_scan")
-    workflow.add_edge("repo_scan", "intent_extract")
-    workflow.add_edge("intent_extract", "design_system")
-    workflow.add_edge("design_system", "plan")
-    workflow.add_edge("plan", "generate")
-    workflow.add_edge("generate", "normalize")
-
-    # normalize → validate (Phase 4: no longer goes directly to END)
-    workflow.add_edge("normalize", "validate")
+    for current, following in (
+        ("intake", "repo_scan"),
+        ("repo_scan", "intent_extract"),
+        ("intent_extract", "design_system"),
+        ("design_system", "plan"),
+        ("plan", "generate"),
+        ("generate", "normalize"),
+        ("normalize", "validate"),
+    ):
+        workflow.add_conditional_edges(
+            current, route_after_stage, {"continue": following, "certify": "certify"}
+        )
 
     # Conditional edge: validate → router → {pass|exhausted→certify, fix_available→autofix}
     workflow.add_conditional_edges(
@@ -76,8 +81,12 @@ def build_ddk_graph() -> StateGraph:  # type: ignore[type-arg, return-value]
         },
     )
 
-    # autofix back-edge → validate (self-healing loop)
-    workflow.add_edge("autofix", "validate")
+    # autofix back-edge → validate (self-healing loop), unless nothing could be patched
+    workflow.add_conditional_edges(
+        "autofix",
+        route_after_autofix,
+        {"validate": "validate", "certify": "certify"},
+    )
     workflow.add_edge("certify", END)
 
     return workflow  # pyright: ignore[reportUnknownVariableType]

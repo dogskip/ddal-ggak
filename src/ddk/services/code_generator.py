@@ -1,10 +1,14 @@
 """CodeGenerator service — Phase 3 (GEN-01).
 
-Responsible for iterating over a GenerationPlan's execution_order and calling the
-LLM once per node to produce React/TypeScript source files.
+Walks a GenerationPlan's execution_order and calls the model once per node.
 
 Key contract:
 - One LLM call per node in plan.execution_order; empty plan → 0 LLM calls
+- Every call carries the design image(s), the user's request, the extracted intent, the
+  repository conventions and key files, and the files generated for earlier nodes
+- The answer is a set of ``=== FILE: path ===`` blocks (a JSON ``files`` list is still read)
+- An answer without a usable file, or one cut off by the token limit, is a ``GenerationError``
+  that names the node; nothing is silently skipped
 - Returns GeneratedArtifactSet with case_id, files, file_map (path→content), generation_trace
 - generation_trace entries are formatted as "{node_id}:{node.target_path}"
 - System prompt starts with "Generate" so FakeLLMAdapter routes to key "generate"
@@ -12,73 +16,67 @@ Key contract:
 
 from __future__ import annotations
 
-import json
 import logging
+from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
-
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
+from ddk.adapters.llm.parsing import parse_llm_json
+from ddk.exceptions import GenerationError
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
+from ddk.models.context_pack import ContextPack
 from ddk.models.generation import (
     GeneratedArtifactSet,
     GeneratedFile,
+    GenerationNode,
     GenerationPlan,
 )
 from ddk.models.intent import IntentGraph
 from ddk.models.repo import RepoProfile
+from ddk.security.repo_paths import UnsafeRepositoryPathError, normalize_repo_relative_path
+from ddk.security.secret_paths import is_secret_path
+from ddk.services.file_blocks import is_protected_path, language_of, parse_file_blocks
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# System prompt — MUST start with "Generate" so FakeLLMAdapter routes to the
-# "generate" key via:  msg.content.split()[0].lower() == "generate"
-# ---------------------------------------------------------------------------
-_SYSTEM_PROMPT = """\
-Generate React/TypeScript component code for the following planned node.
+_MAX_TOKENS = 16_384
+_INTENT_CHARS = 4000
+_PROFILE_CHARS = 2500
+_ORIGINAL_CHARS = 200_000
 
-You will receive a JSON object describing a single component node.
-Respond with a JSON object matching this schema:
-{
-  "files": [
-    {
-      "path": "<relative file path, e.g. src/components/Button.tsx>",
-      "content": "<full TypeScript/TSX source code>",
-      "language": "typescript"
-    }
-  ],
-  "entry_point": "<path to main exported file, or null>",
-  "component_exports": ["<exported component name>", ...]
-}
+# System prompt — MUST start with "Generate" so FakeLLMAdapter routes to the "generate" key.
+_SYSTEM_PROMPT = """\
+Generate the source files for one planned node of a React/TypeScript UI so that the page looks \
+like the attached reference design.
+
+You get the node to build, the user's request, the intent extracted from the design, the \
+repository's conventions and key files, and the files already generated for earlier nodes.
 
 Rules:
-- Write idiomatic React 18 with TypeScript strict mode
-- Use named exports; no default exports
-- Respond with valid JSON only — no markdown fences, no commentary
+- Match the design: layout, spacing, sizes, colors, fonts and the visible text of the image.
+- Follow the repository: framework, styling approach, file layout and naming. Reuse existing \
+components and tokens instead of writing duplicates.
+- Import earlier generated files by their exact paths and exported names.
+- TypeScript strict mode. No `any`, no `@ts-ignore`. Do not add dependencies and do not touch \
+package.json, lockfiles, tsconfig or lint configuration.
+- Answer with the complete content of every file this node creates or changes, each introduced \
+by a line
+=== FILE: relative/path.tsx ===
+and nothing else: no explanation, no markdown fences, no JSON.
 """
-
-
-class _GeneratedNodeOutput(BaseModel):
-    """Internal model for the LLM's per-node response."""
-
-    files: list[dict[str, Any]] = []
-    entry_point: str | None = None
-    component_exports: list[str] = []
 
 
 class CodeGenerator:
     """Calls the LLM once per planned node and assembles a GeneratedArtifactSet."""
 
-    def __init__(self, llm: LLMAdapter) -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_PRIMARY_MODEL) -> None:
         self._llm = llm
         self._config = LLMCallConfig(
-            model="claude-3-5-sonnet-20241022",
+            model=model,
             temperature=0.0,
-            max_tokens=4096,
+            max_tokens=_MAX_TOKENS,
+            metadata={"purpose": "generate"},
         )
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     async def generate_all(
         self,
@@ -86,103 +84,201 @@ class CodeGenerator:
         repo_profile: RepoProfile,
         intent_graph: IntentGraph,
         prompt: str,
+        *,
+        images: list[tuple[str, str]] | None = None,
+        context: ContextPack | None = None,
+        repo_root: Path | None = None,
     ) -> GeneratedArtifactSet:
         """Generate code for every node in plan.execution_order.
 
         Args:
             plan: The generation plan with ordered node list.
             repo_profile: Repository conventions used to guide the LLM.
-            intent_graph: Semantic intent context (provided to LLM in user message).
-            prompt: Original user prompt for context.
+            intent_graph: Semantic intent context.
+            prompt: Original user prompt.
+            images: Design images as ``(base64, media_type)``, sent with every node.
+            context: Key files of the repository, read-only.
+            repo_root: Used to tell new files from changed ones.
 
-        Returns:
-            GeneratedArtifactSet aggregating all generated files.
+        Raises:
+            GenerationError: a node produced no usable file or was cut off.
         """
         if not plan.execution_order:
-            return GeneratedArtifactSet(
-                case_id=plan.case_id,
-                files=[],
-                file_map={},
-                generation_trace=[],
-                changed_paths=[],
-            )
+            return GeneratedArtifactSet(case_id=plan.case_id, files=[])
 
-        # Build id→node lookup from the list
-        node_map = {node.id: node for node in plan.nodes}
-
-        all_files: list[GeneratedFile] = []
-        file_map: dict[str, str] = {}
-        generation_trace: list[str] = []
+        nodes = {node.id: node for node in plan.nodes}
+        files: dict[str, GeneratedFile] = {}
+        by_node: dict[str, list[str]] = {}
+        trace: list[str] = []
+        tokens = 0
 
         for node_id in plan.execution_order:
-            node = node_map[node_id]
-            node_output = await self._generate_node(
-                node_id=node_id,
-                node=node,
-                repo_profile=repo_profile,
-                intent_graph=intent_graph,
-                prompt=prompt,
+            node = nodes[node_id]
+            user = _node_prompt(
+                node, prompt, repo_profile, intent_graph, context, files, by_node, nodes
             )
-
-            # Record trace entry: "{node_id}:{target_path}"
-            generation_trace.append(f"{node_id}:{node.target_path}")
-
-            for file_dict in node_output.files:
-                path = file_dict["path"]
-                content = file_dict.get("content", "")
-                language = file_dict.get("language", "typescript")
-                gf = GeneratedFile(
-                    path=path,
-                    content=content,
-                    language=language,  # type: ignore[arg-type]
-                    source_node_id=node_id,
-                    is_new=file_dict.get("is_new", False),
+            messages = [
+                Message(role="system", content=_SYSTEM_PROMPT),
+                Message(role="user", content=user, images=list(images) if images else None),
+            ]
+            response = await self._llm.complete(messages, self._config)
+            tokens += response.input_tokens + response.output_tokens
+            if response.truncated:
+                raise GenerationError(
+                    f"Node {node_id} ({node.target_path}): the model's answer was cut off at "
+                    f"{self._config.max_tokens} tokens; split the node or raise the limit."
                 )
-                all_files.append(gf)
-                # file_map maps path → content string (not GeneratedFile)
-                file_map[path] = content
 
+            produced = _usable_files(response.content, node_id, repo_root)
+            if not produced:
+                raise GenerationError(
+                    f"Node {node_id} ({node.target_path}): the model returned no usable file."
+                )
+            trace.append(f"{node_id}:{node.target_path}")
+            by_node[node_id] = [f.path for f in produced]
+            for generated in produced:
+                files[generated.path] = generated
+
+        ordered = list(files.values())
         return GeneratedArtifactSet(
             case_id=plan.case_id,
-            files=all_files,
-            file_map=file_map,
-            generation_trace=generation_trace,
-            changed_paths=[f.path for f in all_files],
-        )
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
-
-    async def _generate_node(
-        self,
-        node_id: str,
-        node: Any,
-        repo_profile: RepoProfile,
-        intent_graph: IntentGraph,
-        prompt: str,
-    ) -> _GeneratedNodeOutput:
-        """Issue a single LLM call for one planned node."""
-        user_content = json.dumps(
-            {
-                "node_id": node_id,
-                "target_path": node.target_path,
-                "node_type": node.node_type,
-                "dependencies": node.dependencies,
-                "repo_framework": repo_profile.framework,
-                "user_prompt": prompt,
-                "intent_summary": str(intent_graph),
+            files=ordered,
+            file_map={f.path: f.content for f in ordered},
+            generation_trace=trace,
+            total_tokens_used=tokens,
+            changed_paths=[f.path for f in ordered],
+            trace={
+                "images": len(images or []),
+                "context_pack_hash": context.context_pack_hash if context else None,
             },
-            ensure_ascii=False,
         )
-        messages = [
-            Message(role="system", content=_SYSTEM_PROMPT),
-            Message(role="user", content=user_content),
-        ]
-        response = await self._llm.complete(messages, self._config)
-        try:
-            data = json.loads(response.content)
-            return _GeneratedNodeOutput(**data)
-        except Exception:  # noqa: BLE001
-            logger.warning("Code generation LLM response parsing failed", exc_info=True)
-            return _GeneratedNodeOutput()
+
+
+# ---------------------------------------------------------------------------
+# Prompt
+# ---------------------------------------------------------------------------
+
+
+def _node_prompt(
+    node: GenerationNode,
+    prompt: str,
+    repo_profile: RepoProfile,
+    intent_graph: IntentGraph,
+    context: ContextPack | None,
+    generated: dict[str, GeneratedFile],
+    by_node: dict[str, list[str]],
+    nodes: dict[str, GenerationNode],
+) -> str:
+    lines = [
+        "## Node",
+        f"id: {node.id}",
+        f"type: {node.node_type}",
+        f"target path: {node.target_path}",
+    ]
+    if node.dependencies:
+        lines.append(
+            "depends on: "
+            + ", ".join(_describe_dependency(d, by_node, nodes) for d in node.dependencies)
+        )
+    if node.generation_prompt_hint:
+        lines.append(f"hint: {node.generation_prompt_hint}")
+
+    lines += ["", "## User request", prompt]
+    lines += [
+        "",
+        "## Design intent (extracted from the image)",
+        intent_graph.model_dump_json()[:_INTENT_CHARS],
+    ]
+    lines += ["", "## Repository", repo_profile.model_dump_json()[:_PROFILE_CHARS]]
+
+    if context is not None and context.chunks:
+        lines += ["", "## Repository files (read-only context)"]
+        for chunk in context.chunks:
+            lines += [
+                f"--- {chunk.path} (lines {chunk.start_line}-{chunk.end_line}) ---",
+                chunk.content,
+            ]
+
+    if generated:
+        needed = {path for dep in node.dependencies for path in by_node.get(dep, [])}
+        lines += ["", "## Already generated in this run"]
+        for path in needed:
+            lines += [
+                f"--- {path} (full content: this node depends on it) ---",
+                generated[path].content,
+            ]
+        others = [p for p in generated if p not in needed]
+        if others:
+            lines.append("Other generated files: " + ", ".join(others))
+    return "\n".join(lines)
+
+
+def _describe_dependency(
+    node_id: str, by_node: dict[str, list[str]], nodes: dict[str, GenerationNode]
+) -> str:
+    paths = by_node.get(node_id) or [nodes[node_id].target_path if node_id in nodes else "?"]
+    return f"{node_id} ({', '.join(paths)})"
+
+
+# ---------------------------------------------------------------------------
+# Answer parsing
+# ---------------------------------------------------------------------------
+
+
+def _usable_files(answer: str, node_id: str, repo_root: Path | None) -> list[GeneratedFile]:
+    produced: list[GeneratedFile] = []
+    for raw_path, content in _read_answer(answer):
+        path = _clean_path(raw_path)
+        if path is None or not content.strip():
+            logger.warning("Node %s: skipped file %r from the model answer", node_id, raw_path)
+            continue
+        existing = _existing(repo_root, path)
+        produced.append(
+            GeneratedFile(
+                path=path,
+                content=content,
+                language=language_of(path),
+                source_node_id=node_id,
+                is_new=existing is None,
+                original_content=existing,
+            )
+        )
+    return produced
+
+
+def _read_answer(answer: str) -> list[tuple[str, str]]:
+    blocks = parse_file_blocks(answer)
+    if blocks:
+        return blocks
+    try:
+        data: Any = parse_llm_json(answer)
+    except Exception:  # noqa: BLE001
+        return []
+    entries: Any = data.get("files") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        return []
+    pairs: list[tuple[str, str]] = []
+    for entry in entries:  # pyright: ignore[reportUnknownVariableType]
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str):  # pyright: ignore[reportUnknownMemberType]
+            pairs.append((entry["path"], str(entry.get("content", ""))))  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+    return pairs
+
+
+def _clean_path(raw: str) -> str | None:
+    try:
+        path = normalize_repo_relative_path(raw.strip())
+    except UnsafeRepositoryPathError:
+        return None
+    if is_secret_path(path) or is_protected_path(path):
+        return None
+    return path
+
+
+def _existing(repo_root: Path | None, path: str) -> str | None:
+    if repo_root is None:
+        return None
+    target = repo_root / path
+    try:
+        return target.read_text(encoding="utf-8")[:_ORIGINAL_CHARS] if target.is_file() else None
+    except (OSError, UnicodeDecodeError):
+        return None

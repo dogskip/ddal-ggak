@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ddk.graph.context import ServiceContainer
+from ddk.graph.context import ServiceContainer, primary_model_from
 from ddk.services.semantic_intent_extractor import SemanticIntentExtractor
 
 
@@ -20,7 +20,10 @@ async def intent_extract_node(state: dict[str, Any], **kwargs: Any) -> dict[str,
             "terminal_state": "manual-review-required",
             "error_message": "No LLM adapter in ServiceContainer",
         }
-    extractor = SemanticIntentExtractor(llm=container.llm)
+    extractor = SemanticIntentExtractor(
+        llm=container.llm,
+        model=primary_model_from(container),
+    )
     case_input = state.get("case_input")
     if case_input is None:
         return {

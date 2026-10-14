@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ddk.graph.context import ServiceContainer
+from ddk.graph.context import ServiceContainer, primary_model_from
 from ddk.services.generation_planner import GenerationPlanner
 
 
@@ -21,7 +21,7 @@ async def plan_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
             "terminal_state": "manual-review-required",
             "error_message": "No LLM adapter in ServiceContainer",
         }
-    planner = GenerationPlanner(llm=llm)
+    planner = GenerationPlanner(llm=llm, model=primary_model_from(container))
     intent_graph = state.get("intent_graph")
     repo_profile = state.get("repo_profile")
     case_input = state.get("case_input")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ddk.graph.context import ServiceContainer
+from ddk.graph.context import ServiceContainer, light_model_from
 from ddk.services.repo_convention_scanner import RepoConventionScanner
 
 
@@ -16,7 +16,7 @@ async def repo_scan_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]
     """
     container: ServiceContainer | None = kwargs.get("context")
     llm = container.llm if container else None
-    scanner = RepoConventionScanner(llm=llm)
+    scanner = RepoConventionScanner(llm=llm, model=light_model_from(container))
     case_input = state.get("case_input")
     if case_input is None:
         return {

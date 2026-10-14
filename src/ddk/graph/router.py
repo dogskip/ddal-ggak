@@ -6,11 +6,7 @@ from typing import Any, Literal, cast
 
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
 from ddk.models.visual import VisualRegressionReport
-
-
-def _failure_signature(failures: list[FailureRecord]) -> int:
-    """Return a stable signature for the current failure set."""
-    return hash(frozenset((failure.taxonomy_id, failure.file_path or "") for failure in failures))
+from ddk.services.failure_signature import failure_signature
 
 
 def route_after_validate(
@@ -26,8 +22,9 @@ def route_after_validate(
         "fix_available" → failures exist, budget > 0, no oscillation → autofix
         "exhausted"     → budget=0 OR oscillation detected → END (manual-review)
 
-    CRITICAL: Oscillation detection uses hash(frozenset((f.taxonomy_id, f.file_path or "")))
-    NOT hash(frozenset(f.id for f in failures)) — UUIDs are regenerated each run!
+    CRITICAL: Oscillation detection uses failure_signature(), which ignores the per-run
+    UUIDs (``failure.id``) but still tells apart different errors in the same file, so
+    fixing one of several errors counts as progress, not as oscillation.
     """
     report = cast(RuntimeValidationReport | None, state.get("runtime_validation_report"))
     vis_report = cast(
@@ -56,12 +53,25 @@ def route_after_validate(
     if state.get("terminal_state") == "manual-review-required":
         return "exhausted"
 
-    # Oscillation: same failure pattern seen before (hash put there by previous autofix_node)
-    # CORRECT: use (taxonomy_id, file_path) — NOT failure.id (UUID)
+    # Oscillation: same failure set seen before (signature put there by previous autofix_node)
     failures: list[FailureRecord] = report.failures if report is not None else []
-    cur_hash = _failure_signature(failures)
+    cur_hash = failure_signature(failures)
     seen = cast(list[int], state.get("failure_hash_history", []))
     if cur_hash in seen:
         return "exhausted"
 
     return "fix_available"
+
+
+def route_after_autofix(state: dict[str, Any]) -> Literal["validate", "certify"]:
+    """Re-validate after a patch; go straight to certification when a human must take over."""
+    if state.get("terminal_state") == "manual-review-required":
+        return "certify"
+    return "validate"
+
+
+def route_after_stage(state: dict[str, Any]) -> Literal["continue", "certify"]:
+    """Go on to the next stage, or straight to certification once a stage needs a human."""
+    if state.get("terminal_state") == "manual-review-required":
+        return "certify"
+    return "continue"

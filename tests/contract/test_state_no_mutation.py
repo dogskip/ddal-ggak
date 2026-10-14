@@ -53,3 +53,19 @@ class TestListFieldImmutability:
         s2 = initial_state(ci)
         for field in self.LIST_FIELDS:
             assert s1[field] is not s2[field]
+
+
+class TestRetryBudget:
+    def test_default_budget_is_three(self, tmp_path: Path) -> None:
+        img = tmp_path / "d.png"
+        img.write_bytes(b"\x89PNG")
+        ci = CaseInput(case_id="C-001", image_paths=[img], prompt="t", repo_path=tmp_path)
+
+        assert initial_state(ci)["retry_budget_remaining"] == 3
+
+    def test_budget_is_configurable(self, tmp_path: Path) -> None:
+        img = tmp_path / "d.png"
+        img.write_bytes(b"\x89PNG")
+        ci = CaseInput(case_id="C-001", image_paths=[img], prompt="t", repo_path=tmp_path)
+
+        assert initial_state(ci, retry_budget=7)["retry_budget_remaining"] == 7

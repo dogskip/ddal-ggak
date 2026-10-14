@@ -5,6 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from ..adapters.llm.base import LLMAdapter, LLMCallConfig, Message
+from ..models.config import DEFAULT_PRIMARY_MODEL
 from .interviewer import InterviewResult
 from .templates import TEMPLATES
 
@@ -34,7 +35,7 @@ class DesignGenerator:
     def __init__(
         self,
         llm: LLMAdapter,
-        model: str = "claude-3-5-sonnet-20241022",
+        model: str = DEFAULT_PRIMARY_MODEL,
         concurrency: int = 3,
     ) -> None:
         self._llm = llm
@@ -92,7 +93,7 @@ class DesignGenerator:
         ]
         resp = await self._llm.complete(
             messages,
-            LLMCallConfig(model=self._model, temperature=0.0, max_tokens=4096),
+            LLMCallConfig(model=self._model, temperature=0.0, max_tokens=8192),
         )
         ext = ".yaml" if key == "04-api-spec" else ".md"
         return GeneratedDocument(

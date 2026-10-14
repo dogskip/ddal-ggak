@@ -50,11 +50,12 @@ class GraphState(TypedDict):
     reproducibility_seed: int | None
 
 
-def initial_state(case_input: CaseInput) -> GraphState:
+def initial_state(case_input: CaseInput, *, retry_budget: int = 3) -> GraphState:
     """Return a complete GraphState with all None/empty defaults.
 
     Args:
         case_input: Validated user input for this pipeline run.
+        retry_budget: How many auto-fix attempts the run may use.
 
     Returns:
         GraphState dict ready for LangGraph invocation.
@@ -73,7 +74,7 @@ def initial_state(case_input: CaseInput) -> GraphState:
         scorecard=None,
         release_decision=None,
         evidence_pack=None,
-        retry_budget_remaining=3,
+        retry_budget_remaining=retry_budget,
         current_node="start",
         terminal_state=None,
         error_message=None,

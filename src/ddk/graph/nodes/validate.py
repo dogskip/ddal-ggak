@@ -47,4 +47,12 @@ async def validate_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     if vis_report is not None:
         result["visual_regression_report"] = vis_report
 
+    # A missing tool cannot be repaired by regenerating code. Failures that code can fix still
+    # go to auto-fix first; the issue ends the run once nothing else is left.
+    if report.environment_issues and not report.failures:
+        result["terminal_state"] = "manual-review-required"
+        result["error_message"] = "Validation could not run: " + "; ".join(
+            report.environment_issues
+        )
+
     return result

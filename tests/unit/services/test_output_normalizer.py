@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ddk.adapters.llm.base import LLMCallConfig
+from ddk.models.config import DEFAULT_LIGHT_MODEL
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.normalization import NormalizationReport
 from ddk.models.repo import RepoProfile
@@ -107,6 +108,16 @@ def repo_profile() -> RepoProfile:
 
 
 class TestOutputNormalizer:
+    async def test_configured_light_model_is_used(
+        self,
+        fake_llm: FakeLLMAdapter,
+        artifacts_with_files: GeneratedArtifactSet,
+        repo_profile: RepoProfile,
+    ) -> None:
+        normalizer = OutputNormalizer(llm=fake_llm, model="custom-light-model")
+        await normalizer.normalize(artifacts_with_files, repo_profile)
+        assert fake_llm.call_log[0]["config"].model == "custom-light-model"
+
     async def test_normalize_returns_tuple(
         self,
         normalizer: OutputNormalizer,
@@ -173,12 +184,12 @@ class TestOutputNormalizer:
         artifacts_with_files: GeneratedArtifactSet,
         repo_profile: RepoProfile,
     ) -> None:
-        """OutputNormalizer uses model=claude-3-haiku-20240307."""
+        """OutputNormalizer uses the supported light model default."""
         normalizer = OutputNormalizer(llm=fake_llm)
         await normalizer.normalize(artifacts_with_files, repo_profile)
         assert len(fake_llm.call_log) == 1
         config: LLMCallConfig = fake_llm.call_log[0]["config"]
-        assert config.model == "claude-3-haiku-20240307"
+        assert config.model == DEFAULT_LIGHT_MODEL
 
     async def test_temperature_is_zero(
         self,

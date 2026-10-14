@@ -8,9 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from ddk.models.evidence import EvidencePack
+from ddk.models.generation import GeneratedArtifactSet
 from ddk.models.input import CaseInput
 from ddk.models.release import ReleaseDecision
 from ddk.models.scorecard import Scorecard
+from ddk.security.repo_paths import resolve_within_repository
 
 
 class CaseArtifactStore:
@@ -48,6 +50,8 @@ class CaseArtifactStore:
             [attempt.model_dump(mode="json") for attempt in state.get("fix_attempts", [])],
         )
         self._write_json("llm-call-records.json", list(state.get("llm_call_records", [])))
+        if "llm_calls" in state:
+            self._write_json("llm-calls.json", list(state["llm_calls"]))
         self._write_json("status.json", self.build_status_summary(state))
         self._persist_input_images(case_input)
         self._persist_generated_files(state)
@@ -88,6 +92,12 @@ class CaseArtifactStore:
             (self.reports_dir / "release-decision.json").read_text(encoding="utf-8")
         )
 
+    def load_generated_artifacts(self) -> GeneratedArtifactSet:
+        """Load the generated files of a case."""
+        return GeneratedArtifactSet.model_validate_json(
+            (self.reports_dir / "generated-artifacts.json").read_text(encoding="utf-8")
+        )
+
     def load_evidence_pack(self) -> EvidencePack:
         """Load the persisted evidence pack for a case."""
         return EvidencePack.model_validate_json(
@@ -107,7 +117,7 @@ class CaseArtifactStore:
 
         generated_dir = self.artifacts_dir / "generated"
         for generated_file in generated_artifacts.files:
-            output_path = generated_dir / generated_file.path
+            output_path = resolve_within_repository(generated_dir, generated_file.path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(generated_file.content, encoding="utf-8")
 

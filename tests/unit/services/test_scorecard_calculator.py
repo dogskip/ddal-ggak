@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from ddk.models.fix import FixAttempt
 from ddk.models.normalization import NormalizationReport
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
@@ -88,3 +90,26 @@ def test_calculate_failure_case_reduces_score() -> None:
 
     assert scorecard.overall < 0.60
     assert scorecard.grade in {"D", "F"}
+
+
+def test_required_visual_evidence_cannot_receive_grade_a_when_missing() -> None:
+    scorecard = ScorecardCalculator().calculate(
+        {
+            "case_id": "C-visual",
+            "case_input": SimpleNamespace(image_paths=["reference.png"]),
+            "runtime_validation_report": RuntimeValidationReport(
+                case_id="C-visual",
+                build_success=True,
+                type_check_success=True,
+                lint_success=True,
+                failures=[],
+            ),
+            "visual_regression_report": None,
+            "fix_attempts": [],
+            "retry_budget_remaining": 3,
+            "terminal_state": None,
+        }
+    )
+
+    assert scorecard.precision == 0.0
+    assert scorecard.grade != "A"

@@ -9,16 +9,15 @@ already in history and return "exhausted".
 from __future__ import annotations
 
 import inspect
+import logging
 from typing import Any, cast
 
 from ddk.models.fix import FixAttempt
 from ddk.models.generation import GeneratedArtifactSet
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
+from ddk.services.failure_signature import failure_signature
 
-
-def _failure_signature(failures: list[FailureRecord]) -> int:
-    """Return a stable signature for the current failure set."""
-    return hash(frozenset((failure.taxonomy_id, failure.file_path or "") for failure in failures))
+logger = logging.getLogger(__name__)
 
 
 async def autofix_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
@@ -51,9 +50,8 @@ async def autofix_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     report: RuntimeValidationReport | None = _report_raw
     failures: list[FailureRecord] = report.failures if report is not None else []
 
-    # Record current failure hash BEFORE applying fix.
-    # Uses stable (taxonomy_id, file_path) — NOT failure.id (UUID, regenerated each run).
-    cur_hash = _failure_signature(failures)
+    # Record current failure signature BEFORE applying fix (failure.id is regenerated each run).
+    cur_hash = failure_signature(failures)
     _hist_raw = state.get("failure_hash_history", [])
     if not isinstance(_hist_raw, list):
         raise TypeError(f"autofix_node: failure_hash_history must be list, got {type(_hist_raw)!r}")
@@ -90,20 +88,30 @@ async def autofix_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         artifacts=artifacts,
         case_id=case_id,
         attempt_number=attempt_n,
+        visual=state.get("visual_regression_report"),
     )
     rollback_controller = getattr(container, "rollback_controller", None)
     checkpoint_creator = getattr(rollback_controller, "create_checkpoint", None)
     if checkpoint_creator is not None and inspect.iscoroutinefunction(checkpoint_creator):
-        checkpoint_ref = await checkpoint_creator(
-            case_id=case_id,
-            attempt_number=attempt_n,
-        )
-        fix_attempt = fix_attempt.model_copy(update={"checkpoint_ref": checkpoint_ref})
+        try:
+            checkpoint_ref = await checkpoint_creator(case_id=case_id, attempt_number=attempt_n)
+        except (ValueError, OSError) as exc:
+            # No git history (plain folder, fresh repository) must not stop the repair loop.
+            logger.debug("No checkpoint for attempt %d: %s", attempt_n, exc)
+        else:
+            fix_attempt = fix_attempt.model_copy(update={"checkpoint_ref": checkpoint_ref})
 
-    return {
+    result: dict[str, Any] = {
         "generated_artifacts": patched_artifacts,
         "fix_attempts": [*existing_attempts, fix_attempt],
         "retry_budget_remaining": state.get("retry_budget_remaining", 3) - 1,
         "failure_hash_history": updated_history,  # hash recorded here, not in validate_node
         "current_node": "autofix",
     }
+    if not fix_attempt.success:
+        # Nothing changed, so validating again would only repeat the same failures.
+        result["terminal_state"] = "manual-review-required"
+        result["error_message"] = (
+            f"Auto-fix could not change the code: {fix_attempt.patch_description}"
+        )
+    return result

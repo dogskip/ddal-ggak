@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ddk.graph.context import ServiceContainer
+from ddk.graph.context import ServiceContainer, light_model_from
 from ddk.services.output_normalizer import OutputNormalizer
 
 
@@ -33,7 +33,7 @@ async def normalize_node(state: dict[str, Any], **kwargs: Any) -> dict[str, Any]
             "terminal_state": "manual-review-required",
             "error_message": "repo_profile is None — repo_scan node must run first",
         }
-    normalizer = OutputNormalizer(llm=llm)
+    normalizer = OutputNormalizer(llm=llm, model=light_model_from(container))
     report, patched = await normalizer.normalize(
         artifacts=generated_artifacts,
         repo_profile=repo_profile,

@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ddk.adapters.llm.base import LLMCallConfig
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.generation import GeneratedArtifactSet, GenerationNode, GenerationPlan
 from ddk.models.input import CaseInput
 from ddk.models.intent import (
@@ -168,6 +169,19 @@ def generator(fake_llm: FakeLLMAdapter) -> CodeGenerator:
 
 
 class TestCodeGenerator:
+    async def test_configured_model_is_used_for_generation(
+        self,
+        fake_llm: FakeLLMAdapter,
+    ) -> None:
+        generator = CodeGenerator(llm=fake_llm, model="custom-primary-model")
+        await generator.generate_all(
+            plan=_make_one_node_plan(),
+            repo_profile=_make_repo_profile(),
+            intent_graph=_make_intent_graph(),
+            prompt="Create a Button component",
+        )
+        assert fake_llm.call_log[0]["config"].model == "custom-primary-model"
+
     async def test_generate_all_returns_artifact_set(self, generator: CodeGenerator) -> None:
         """generate_all() returns GeneratedArtifactSet with correct case_id."""
         plan = _make_one_node_plan()
@@ -234,7 +248,7 @@ class TestCodeGenerator:
         assert "node-001" in result.generation_trace[0]
 
     async def test_model_is_claude_sonnet(self, fake_llm: FakeLLMAdapter) -> None:
-        """CodeGenerator uses model=claude-3-5-sonnet-20241022."""
+        """CodeGenerator uses the supported primary model default."""
         generator = CodeGenerator(llm=fake_llm)
         plan = _make_one_node_plan()
         await generator.generate_all(
@@ -245,7 +259,7 @@ class TestCodeGenerator:
         )
         assert len(fake_llm.call_log) == 1
         config: LLMCallConfig = fake_llm.call_log[0]["config"]
-        assert config.model == "claude-3-5-sonnet-20241022"
+        assert config.model == DEFAULT_PRIMARY_MODEL
 
     async def test_temperature_is_zero(self, fake_llm: FakeLLMAdapter) -> None:
         """CodeGenerator uses temperature=0.0 for determinism."""

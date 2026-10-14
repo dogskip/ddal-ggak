@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "baseline_name": "gsd-baseline",
+  "status": "uncalibrated-template",
+  "calibrated": false,
+  "upstream_repository": "https://github.com/open-gsd/gsd-core",
+  "upstream_ref": "next",
+  "upstream_commit": "c07734216ff223649e43c14d448511c75f74695a",
+  "upstream_verified_at": "2026-07-27",
+  "captured_at": null,
+  "method": "TODO — capture GSD workflow outcomes on the P0 reference corpus per docs/design/26-benchmark-calibration-ops.md and docs/design/17-benchmark-baseline.md",
+  "categories": [],
+  "note": "Placeholder baseline against the current GSD Core lineage. The archived gsd-build/get-shit-done repository is not the active baseline. Superiority remains gated off until calibrated==true with a measured, commit-pinned comparative artifact."
+}

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.design_system import DesignSystem
 from ddk.models.input import CaseInput
 from ddk.models.repo import RepoProfile
@@ -157,7 +158,7 @@ class TestDesignSystemInferencer:
         fake_llm = FakeLLMAdapter(responses={"analyze": mock_design_system_json})
         inferencer = DesignSystemInferencer(llm=fake_llm)
         await inferencer.infer(case_input, repo_profile)
-        assert fake_llm.call_log[0]["config"].model == "claude-3-5-sonnet-20241022"
+        assert fake_llm.call_log[0]["config"].model == DEFAULT_PRIMARY_MODEL
 
     async def test_system_prompt_key_is_analyze(self) -> None:
         first_word = _SYSTEM_PROMPT.split()[0].lower()

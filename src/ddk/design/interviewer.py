@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import cast
 
 from ..adapters.llm.base import LLMAdapter, LLMCallConfig, Message
+from ..models.config import DEFAULT_PRIMARY_MODEL
 
 _SYSTEM = """당신은 세계 최고의 소프트웨어 요구사항 엔지니어입니다.
 사용자의 막연한 아이디어를 구체적인 소프트웨어 요구사항으로 발전시키는 인터뷰를 진행합니다.
@@ -55,7 +56,7 @@ class InterviewResult:
 class DesignInterviewer:
     """LLM 기반 Design Studio 인터뷰어."""
 
-    def __init__(self, llm: LLMAdapter, model: str = "claude-3-5-sonnet-20241022") -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_PRIMARY_MODEL) -> None:
         self._llm = llm
         self._model = model
 
@@ -90,7 +91,7 @@ class DesignInterviewer:
         for _ in range(max_turns):
             resp = await self._llm.complete(
                 conversation,
-                LLMCallConfig(model=self._model, temperature=0.0, max_tokens=512),
+                LLMCallConfig(model=self._model, temperature=0.0, max_tokens=1024, effort="low"),
             )
             parsed = _parse_interview_response(resp.content)
             extracted = parsed.get("extracted")

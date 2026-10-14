@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from ddk.models.evidence import EvidencePack
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.input import CaseInput
@@ -106,3 +108,38 @@ def test_loaders_roundtrip_persisted_certification_models(tmp_path: Path) -> Non
     assert store.load_scorecard().grade == "A"
     assert store.load_release_decision().decision == "ready"
     assert store.load_evidence_pack().terminal_state == "ready"
+
+
+def test_generated_file_persistence_rejects_path_escape_after_validation_bypass(
+    tmp_path: Path,
+) -> None:
+    store = CaseArtifactStore(tmp_path / "case")
+    unsafe_file = GeneratedFile.model_construct(
+        path="../../../escaped.ts",
+        content="export const escaped = true;",
+        source_node_id="unsafe",
+    )
+    artifacts = GeneratedArtifactSet.model_construct(case_id="C-unsafe", files=[unsafe_file])
+
+    with pytest.raises(ValueError, match="unsafe repository-relative path"):
+        store._persist_generated_files({"generated_artifacts": artifacts})
+
+    assert not (tmp_path / "escaped.ts").exists()
+
+
+def test_persist_writes_the_llm_call_log(tmp_path: Path) -> None:
+    case_dir = tmp_path / ".ddk" / "cases" / "C-002"
+    image_path = tmp_path / "design.png"
+    image_path.write_bytes(b"\x89PNG\r\n\x1a\n")
+    case_input = CaseInput(
+        case_id="C-002", image_paths=[image_path], prompt="x", repo_path=tmp_path
+    )
+    calls = [{"sequence": 1, "purpose": "autofix", "cost_usd": 0.01}]
+
+    store = CaseArtifactStore(case_dir)
+    store.persist(case_input, {"case_id": "C-002", "fix_attempts": [], "llm_calls": calls})
+
+    import json  # noqa: PLC0415
+
+    saved = json.loads((case_dir / "reports" / "llm-calls.json").read_text(encoding="utf-8"))
+    assert saved == calls

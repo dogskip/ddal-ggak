@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
+from ddk.models.config import DEFAULT_LIGHT_MODEL
 from ddk.models.repo import (
     DesignTokens,
     FileLayoutRules,
@@ -18,8 +19,13 @@ from ddk.models.repo import (
 class RepoConventionScanner:
     """Static-first repo analysis. LLM (haiku) supplements only when static is insufficient."""
 
-    def __init__(self, llm: LLMAdapter | None = None) -> None:
+    def __init__(
+        self,
+        llm: LLMAdapter | None = None,
+        model: str = DEFAULT_LIGHT_MODEL,
+    ) -> None:
         self._llm = llm
+        self._model = model
 
     async def scan(self, repo_path: Path) -> RepoProfile:
         """Analyze repo conventions. Static parsing first, LLM only if needed (D-07)."""
@@ -197,9 +203,10 @@ class RepoConventionScanner:
             Message(role="user", content=user_msg),
         ]
         config = LLMCallConfig(
-            model="claude-3-haiku-20240307",
+            model=self._model,
             temperature=0.0,
-            max_tokens=512,
+            max_tokens=1024,
+            effort="low",
         )
         response = await self._llm.complete(messages, config)
         try:

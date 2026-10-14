@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0",
+  "disclaimer": "Curated internal clause-to-artifact map for tracking design-package completeness. This is NOT certification, conformance, or proof that requirements are met. `mapped` means only that every declared artifact resolves on disk. Standard text is interpreted at a high level; licensed normative text remains authoritative.",
+  "clauses": [
+    {
+      "standard": "ISO/IEC/IEEE 42010:2022",
+      "clause": "5.3 — Stakeholders & concerns",
+      "title": "Identify stakeholders and their architecture-relevant concerns",
+      "requirement": "An architecture description shall identify the system stakeholders and their concerns.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/04-system-design.md"},
+        {"kind": "doc", "path": "docs/design/02-prd.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC/IEEE 42010:2022",
+      "clause": "5.4 — Architecture viewpoints",
+      "title": "Frame concerns via architecture viewpoints",
+      "requirement": "An architecture description shall include the architecture viewpoints used to frame the concerns.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/04-system-design.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC/IEEE 42010:2022",
+      "clause": "5.5 — Architecture views",
+      "title": "Architecture views governed by viewpoints",
+      "requirement": "An architecture description shall include one or more architecture views.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/04-system-design.md"},
+        {"kind": "doc", "path": "docs/design/13-project-structure.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC/IEEE 42010:2022",
+      "clause": "5.6 — Architecture decisions & rationale",
+      "title": "Record architecture decisions and their rationale",
+      "requirement": "An architecture description shall record architecture decisions and the rationale for them.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/05-adr-set.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC/IEEE 42010:2022",
+      "clause": "5.7 — Correspondences & consistency",
+      "title": "Correspondence rules and consistency across the description",
+      "requirement": "An architecture description shall define correspondences and be checked for consistency.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/08-consistency-review.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC 25010:2023",
+      "clause": "Functional suitability",
+      "title": "Functional completeness, correctness, appropriateness",
+      "requirement": "Product quality model — degree to which functions meet stated and implied needs.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/02-prd.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC 25010:2023",
+      "clause": "Performance efficiency",
+      "title": "Time behaviour, resource utilization, capacity",
+      "requirement": "Performance relative to the amount of resources used under stated conditions.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/03-constraints-nfr.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC 25010:2023",
+      "clause": "Compatibility",
+      "title": "Co-existence and interoperability",
+      "requirement": "Degree to which the product can exchange information and operate alongside other products.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/compatibility-interoperability.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC 25010:2023",
+      "clause": "Reliability",
+      "title": "Maturity, availability, fault tolerance, recoverability",
+      "requirement": "Degree to which the system performs specified functions under specified conditions.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/03-constraints-nfr.md"},
+        {"kind": "doc", "path": "docs/design/07-verification-release.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC 25010:2023",
+      "clause": "Security",
+      "title": "Confidentiality, integrity, accountability",
+      "requirement": "Degree to which the product protects information and data.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/33-security-privacy-governance.md"},
+        {"kind": "code", "path": "src/ddk/security/redact.py"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC 25010:2023",
+      "clause": "Maintainability",
+      "title": "Modularity, reusability, modifiability, testability",
+      "requirement": "Degree of effectiveness with which the product can be modified.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/06-tech-spec.md"},
+        {"kind": "doc", "path": "docs/design/13-project-structure.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC/IEEE 12207:2017",
+      "clause": "6.4.9 — Verification process",
+      "title": "Confirm specified requirements are fulfilled",
+      "requirement": "Provide objective evidence that the system fulfils its specified requirements.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/07-verification-release.md"}
+      ]
+    },
+    {
+      "standard": "ISO/IEC/IEEE 12207:2017",
+      "clause": "6.3.5 — Configuration management",
+      "title": "Manage configuration items, baselines, reproducibility",
+      "requirement": "Establish and maintain integrity of work products via configuration control.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/18-reproducibility.md"},
+        {"kind": "doc", "path": "docs/design/25-rollback-recovery-sop.md"}
+      ]
+    },
+    {
+      "standard": "NIST AI RMF 1.0",
+      "clause": "Govern & Map — AI risk management",
+      "title": "Govern and map AI risks across the lifecycle",
+      "requirement": "Establish governance and map context/risks for the AI system.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/33-security-privacy-governance.md"},
+        {"kind": "doc", "path": "docs/design/27-identity-positioning.md"}
+      ]
+    },
+    {
+      "standard": "NIST AI RMF 1.0",
+      "clause": "Measure — AI system impact assessment",
+      "title": "Assess and document AI system impacts",
+      "requirement": "Conduct and record an AI system impact assessment.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/27-identity-positioning.md"},
+        {"kind": "doc", "path": "docs/design/ai-impact-assessment.md"}
+      ]
+    },
+    {
+      "standard": "NIST AI RMF 1.0",
+      "clause": "Manage — Incident response & monitoring",
+      "title": "Post-deployment monitoring and AI incident response",
+      "requirement": "Define incident response and ongoing monitoring for the deployed AI system.",
+      "artifacts": [
+        {"kind": "doc", "path": "docs/design/ai-incident-response.md"}
+      ]
+    }
+  ]
+}

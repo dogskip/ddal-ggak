@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import base64
 import hashlib
 import json
 from typing import Any
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, LLMResponse, Message
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.input import CaseInput
 from ddk.models.intent import IntentGraph
+from ddk.services.images import encode_design_image
 
 # System prompt from docs/design/16-prompt-design.md §1
 _SYSTEM_PROMPT = """You are an expert UI analyst. Your job is to analyze UI
@@ -52,24 +53,17 @@ Do not include any explanation outside the JSON.
 - If an element is unclear, lower its confidence and add a description to `unresolved_items`.
 - Maximum 50 components per image. If more are present, group minor ones."""
 
-_MEDIA_TYPES: dict[str, str] = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".webp": "image/webp",
-    ".gif": "image/gif",
-}
-
 
 class SemanticIntentExtractor:
     """Extracts IntentGraph from UI screenshots via Claude vision (sonnet)."""
 
-    def __init__(self, llm: LLMAdapter) -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_PRIMARY_MODEL) -> None:
         self._llm = llm
         self._config = LLMCallConfig(
-            model="claude-3-5-sonnet-20241022",
+            model=model,
             temperature=0.0,
-            max_tokens=4096,
+            max_tokens=8192,
+            effort="medium",
         )
 
     async def extract(self, case_input: CaseInput) -> IntentGraph:
@@ -82,12 +76,8 @@ class SemanticIntentExtractor:
             Validated IntentGraph with layout, components, interactions.
         """
         image_path = case_input.image_paths[0]
-        image_bytes = image_path.read_bytes()
-        image_b64 = base64.standard_b64encode(image_bytes).decode()
-        image_hash = hashlib.sha256(image_bytes).hexdigest()[:16]
-
-        suffix = image_path.suffix.lower()
-        media_type = _MEDIA_TYPES.get(suffix, "image/png")
+        image_hash = hashlib.sha256(image_path.read_bytes()).hexdigest()[:16]
+        image_b64, media_type = encode_design_image(image_path)
 
         user_content = (
             f"Analyze this UI image and extract the IntentGraph.\n\n"

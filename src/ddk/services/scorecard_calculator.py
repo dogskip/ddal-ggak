@@ -9,6 +9,8 @@ from ddk.models.normalization import NormalizationReport
 from ddk.models.scorecard import Scorecard
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
 from ddk.models.visual import VisualRegressionReport
+from ddk.services.visual_policy import visual_required as _visual_required
+from ddk.services.visual_policy import visual_waived
 
 
 def _clamp(value: float) -> float:
@@ -28,9 +30,16 @@ class ScorecardCalculator:
         visual = cast(VisualRegressionReport | None, state.get("visual_regression_report"))
         normalization = cast(NormalizationReport | None, state.get("normalization_report"))
         fix_attempts = cast(list[FixAttempt], state.get("fix_attempts", []))
+        case_input = state.get("case_input")
+        visual_required = _visual_required(case_input)
 
         failures = runtime.failures if runtime is not None else []
-        precision = self._precision(runtime, visual, failures)
+        precision = self._precision(
+            runtime,
+            visual,
+            failures,
+            visual_required=visual_required,
+        )
         maintainability = self._maintainability(normalization, fix_attempts)
         automation = self._automation(state, failures)
         scalability = self._scalability(runtime, visual, fix_attempts, failures)
@@ -48,7 +57,11 @@ class ScorecardCalculator:
                 "failure_count": str(len(failures)),
                 "fix_attempts": str(len(fix_attempts)),
                 "terminal_state": str(state.get("terminal_state")),
-                **({"visual_skipped": "true"} if visual is None else {}),
+                **(
+                    {"visual_skipped": "waived" if visual_waived(case_input) else "true"}
+                    if visual is None
+                    else {}
+                ),
             },
         )
 
@@ -57,8 +70,12 @@ class ScorecardCalculator:
         runtime: RuntimeValidationReport | None,
         visual: VisualRegressionReport | None,
         failures: list[FailureRecord],
+        *,
+        visual_required: bool,
     ) -> float:
         if runtime is None:
+            return _clamp(0.0)
+        if visual_required and visual is None:
             return _clamp(0.0)
         score = 1.0
 

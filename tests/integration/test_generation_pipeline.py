@@ -25,6 +25,7 @@ from ddk.graph.context import ServiceContainer
 from ddk.graph.state import initial_state
 from ddk.models.input import CaseInput
 from ddk.models.validation import RuntimeValidationReport
+from ddk.models.visual import VisualRegressionReport
 from tests.fakes import FakeLLMAdapter, FakePlaywrightAdapter, InMemoryFilesystem
 from tests.fakes.fake_sandbox import TempDirSandbox
 
@@ -120,15 +121,23 @@ class _PassingRuntimeValidator:
         self,
         state: dict[str, object],
         **_: object,
-    ) -> tuple[RuntimeValidationReport, None]:
+    ) -> tuple[RuntimeValidationReport, VisualRegressionReport]:
+        case_id = str(state["case_id"])
         return (
             RuntimeValidationReport(
-                case_id=str(state["case_id"]),
+                case_id=case_id,
                 build_success=True,
                 type_check_success=True,
                 lint_success=True,
             ),
-            None,
+            VisualRegressionReport(
+                case_id=case_id,
+                reference_path="reference.png",
+                generated_path="generated.png",
+                ssim_score=1.0,
+                threshold=0.92,
+                pass_result=True,
+            ),
         )
 
 

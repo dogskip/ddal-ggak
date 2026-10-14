@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from ddk.adapters.llm.base import LLMCallConfig
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.generation import GenerationPlan
 from ddk.models.input import CaseInput
 from ddk.models.intent import (
@@ -136,7 +137,7 @@ class TestGenerationPlanner:
         assert result.estimated_node_count == len(result.nodes)
 
     async def test_model_is_sonnet(self, fake_llm: FakeLLMAdapter) -> None:
-        """GenerationPlanner uses claude-3-5-sonnet-20241022 model."""
+        """GenerationPlanner uses the supported primary model default."""
         planner = GenerationPlanner(llm=fake_llm)
         await planner.plan(
             case_id="case-001",
@@ -146,7 +147,7 @@ class TestGenerationPlanner:
         )
         assert len(fake_llm.call_log) == 1
         config: LLMCallConfig = fake_llm.call_log[0]["config"]
-        assert config.model == "claude-3-5-sonnet-20241022"
+        assert config.model == DEFAULT_PRIMARY_MODEL
 
     async def test_temperature_zero(self, fake_llm: FakeLLMAdapter) -> None:
         """temperature=0 ensures determinism."""

@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, LLMResponse, Message
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.generation import GenerationPlan
 from ddk.models.intent import IntentGraph
 from ddk.models.repo import RepoProfile
@@ -41,12 +42,13 @@ Output a complete GenerationPlan JSON with execution_order sorted topologically.
 class GenerationPlanner:
     """Creates topologically ordered GenerationPlan for code generation (INGEST-06)."""
 
-    def __init__(self, llm: LLMAdapter) -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_PRIMARY_MODEL) -> None:
         self._llm = llm
         self._config = LLMCallConfig(
-            model="claude-3-5-sonnet-20241022",
+            model=model,
             temperature=0.0,
-            max_tokens=3072,
+            max_tokens=6144,
+            effort="medium",
         )
 
     async def plan(

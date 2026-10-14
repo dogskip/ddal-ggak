@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "source_of_truth": "docs/design/28-gsd-superset-matrix.md",
+  "note": "Machine-readable mirror of the GSD capability map. Evidence paths are repo-relative and resolved at verify time. Resolution yields mapped/partial/pending only; filesystem existence is not behavioral proof and cannot independently authorize parity, superset, or superiority claims.",
+  "families": [
+    {
+      "id": "workspace-init",
+      "name": "프로젝트 초기화 / 워크스페이스",
+      "gsd_baseline": "init, project bootstrap",
+      "ddk_target": "동일 + case workspace / artifact schema",
+      "classification": "inherit",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/workspace/manager.py", "description": "case workspace + artifact layout"},
+        {"kind": "test", "path": "tests/unit/test_workspace_manager.py", "description": "workspace unit tests"},
+        {"kind": "test", "path": "tests/integration/test_init_workspace.py", "description": "init integration"}
+      ]
+    },
+    {
+      "id": "requirements-roadmap",
+      "name": "요구사항 수집 / 로드맵",
+      "gsd_baseline": "roadmap, phase planning",
+      "ddk_target": "동일 + interview-driven requirements elicitation",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/design/interviewer.py", "description": "interview-driven elicitation"},
+        {"kind": "code", "path": "src/ddk/models/design_requirement.py", "description": "requirement model"},
+        {"kind": "test", "path": "tests/unit/test_design.py", "description": "design studio tests"}
+      ]
+    },
+    {
+      "id": "phase-exec-verify",
+      "name": "phase 실행 / 검증",
+      "gsd_baseline": "execution / verification",
+      "ddk_target": "동일 + closed-loop certify",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/pipeline_runner.py", "description": "closed-loop runner"},
+        {"kind": "code", "path": "src/ddk/services/release_gate.py", "description": "release decision gate"},
+        {"kind": "test", "path": "tests/unit/services/test_release_gate.py", "description": "release gate tests"},
+        {"kind": "test", "path": "tests/integration/test_generation_pipeline.py", "description": "pipeline integration"}
+      ]
+    },
+    {
+      "id": "debug-regression",
+      "name": "디버깅 / 회귀 수정",
+      "gsd_baseline": "debug workflows",
+      "ddk_target": "동일 + bounded deterministic auto-fix",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/auto_fix_planner.py", "description": "bounded auto-fix planner"},
+        {"kind": "code", "path": "src/ddk/services/failure_classifier.py", "description": "failure taxonomy"},
+        {"kind": "test", "path": "tests/unit/phase4/test_auto_fix_planner.py", "description": "auto-fix tests"},
+        {"kind": "test", "path": "tests/unit/phase4/test_failure_classifier.py", "description": "classifier tests"}
+      ]
+    },
+    {
+      "id": "code-review-quality-gate",
+      "name": "코드 리뷰 / 품질 게이트",
+      "gsd_baseline": "review/test culture",
+      "ddk_target": "동일 + architect-grade design quality gate",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/scorecard_calculator.py", "description": "quality scorecard"},
+        {"kind": "code", "path": "src/ddk/models/design_quality.py", "description": "design quality model"},
+        {"kind": "test", "path": "tests/unit/services/test_scorecard_calculator.py", "description": "scorecard tests"}
+      ]
+    },
+    {
+      "id": "ui-visual-flow",
+      "name": "UI 설계 / 시각 흐름",
+      "gsd_baseline": "UI phase support",
+      "ddk_target": "screenshot-driven intent + visual regression",
+      "classification": "new",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/adapters/screenshot_diff_local.py", "description": "SSIM visual diff"},
+        {"kind": "code", "path": "src/ddk/models/visual.py", "description": "visual regression model"},
+        {"kind": "test", "path": "tests/unit/phase4/test_ssim_algorithm.py", "description": "SSIM algorithm tests"},
+        {"kind": "test", "path": "tests/unit/adapters/test_screenshot_diff_local.py", "description": "diff adapter tests"}
+      ]
+    },
+    {
+      "id": "standards-design-docs",
+      "name": "국제표준 설계문서 생성",
+      "gsd_baseline": "부분 / 간접",
+      "ddk_target": "standards-compliant design package",
+      "classification": "new",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/design/generator.py", "description": "design package generator"},
+        {"kind": "code", "path": "src/ddk/design/templates.py", "description": "standards templates"},
+        {"kind": "doc", "path": "docs/design/06-tech-spec.md", "description": "tech spec artifact"},
+        {"kind": "test", "path": "tests/unit/test_design.py", "description": "design generation tests"}
+      ]
+    },
+    {
+      "id": "standards-compliance-audit",
+      "name": "standards compliance audit",
+      "gsd_baseline": "명시적 matrix 없음",
+      "ddk_target": "clause-to-artifact mapping + audit gate",
+      "classification": "new",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/compliance_auditor.py", "description": "clause-to-artifact auditor"},
+        {"kind": "code", "path": "src/ddk/models/compliance.py", "description": "compliance domain models"},
+        {"kind": "benchmark", "path": "benchmarks/standards-catalog.json", "description": "curated clause catalog"},
+        {"kind": "test", "path": "tests/unit/services/test_compliance_auditor.py", "description": "auditor tests"}
+      ]
+    },
+    {
+      "id": "runtime-validation",
+      "name": "runtime validation",
+      "gsd_baseline": "strong workflow validation",
+      "ddk_target": "sandboxed build/type/lint/runtime + console capture",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/runtime_validator.py", "description": "runtime validator"},
+        {"kind": "code", "path": "src/ddk/adapters/subprocess_build_runner.py", "description": "sandboxed build runner"},
+        {"kind": "test", "path": "tests/unit/phase4/test_runtime_validator.py", "description": "validator tests"},
+        {"kind": "test", "path": "tests/unit/adapters/test_subprocess_build_runner.py", "description": "build runner tests"}
+      ]
+    },
+    {
+      "id": "rollback-reproducibility",
+      "name": "rollback / reproducibility",
+      "gsd_baseline": "일부 recovery patterns",
+      "ddk_target": "checkpoint, rollback SOP, LLM metadata",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/rollback_controller.py", "description": "checkpoint + rollback"},
+        {"kind": "code", "path": "src/ddk/models/llm.py", "description": "LLMCallRecord reproducibility metadata"},
+        {"kind": "test", "path": "tests/unit/phase4/test_rollback_controller.py", "description": "rollback tests"}
+      ]
+    },
+    {
+      "id": "multi-tool-adapters",
+      "name": "multi-tool adapters",
+      "gsd_baseline": "풍부함",
+      "ddk_target": "동일 + canonical ddk / MCP 기반 통합",
+      "classification": "inherit",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/installer.py", "description": "multi-tool installer"},
+        {"kind": "code", "path": "src/ddk/server.py", "description": "MCP server"},
+        {"kind": "test", "path": "tests/unit/test_installer.py", "description": "installer tests"},
+        {"kind": "test", "path": "tests/unit/test_server.py", "description": "MCP server tests"}
+      ]
+    },
+    {
+      "id": "benchmark-superiority-discipline",
+      "name": "benchmark / superiority discipline",
+      "gsd_baseline": "baseline 존재",
+      "ddk_target": "parity matrix + category-bound proof + calibration ops",
+      "classification": "elevate",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/services/proof_ledger.py", "description": "claim gate + verifier"},
+        {"kind": "code", "path": "src/ddk/models/proof.py", "description": "proof domain models"},
+        {"kind": "benchmark", "path": "benchmarks/capability-matrix.json", "description": "machine-readable matrix"},
+        {"kind": "test", "path": "tests/unit/services/test_proof_ledger.py", "description": "proof ledger tests"}
+      ]
+    },
+    {
+      "id": "operator-model",
+      "name": "operator model / release authority",
+      "gsd_baseline": "implicit",
+      "ddk_target": "explicit human operator model",
+      "classification": "new",
+      "evidence": [
+        {"kind": "doc", "path": "docs/design/32-human-operator-model.md", "description": "operator SOP design"},
+        {"kind": "code", "path": "src/ddk/services/operator_authority.py", "description": "scoped authority + SoD + approval ledger"},
+        {"kind": "code", "path": "src/ddk/models/operator.py", "description": "operator domain models"},
+        {"kind": "test", "path": "tests/unit/services/test_operator_authority.py", "description": "authority tests"}
+      ]
+    },
+    {
+      "id": "security-privacy-governance",
+      "name": "security / privacy governance",
+      "gsd_baseline": "security-conscious workflows",
+      "ddk_target": "data classification, redaction, retention, provider policy",
+      "classification": "new",
+      "evidence": [
+        {"kind": "code", "path": "src/ddk/security/redact.py", "description": "secret redaction"},
+        {"kind": "code", "path": "src/ddk/adapters/sandbox/policy.py", "description": "sandbox policy"},
+        {"kind": "test", "path": "tests/unit/test_security_redact.py", "description": "redaction tests"},
+        {"kind": "test", "path": "tests/unit/test_sandbox_policy.py", "description": "sandbox policy tests"}
+      ]
+    }
+  ]
+}

@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import base64
 import json
 from typing import Any
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, LLMResponse, Message
+from ddk.models.config import DEFAULT_PRIMARY_MODEL
 from ddk.models.design_system import DesignSystem
 from ddk.models.input import CaseInput
 from ddk.models.repo import DesignTokens, RepoProfile
+from ddk.services.images import encode_design_image
 
 # System prompt — starts with "Analyze" (key="analyze") to avoid FakeLLMAdapter
 # collision with SemanticIntentExtractor (key="you")
@@ -50,24 +51,17 @@ Examples: ["Button", "Input", "Card", "Badge", "Avatar", "Icon", "Spinner"]
 - Do NOT hallucinate token values not visible in the screenshots.
 - Maximum 50 tokens total across all categories."""
 
-_MEDIA_TYPES: dict[str, str] = {
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".webp": "image/webp",
-    ".gif": "image/gif",
-}
-
 
 class DesignSystemInferencer:
     """Infers DesignSystem tokens from screenshots and repo analysis (sonnet)."""
 
-    def __init__(self, llm: LLMAdapter) -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_PRIMARY_MODEL) -> None:
         self._llm = llm
         self._config = LLMCallConfig(
-            model="claude-3-5-sonnet-20241022",
+            model=model,
             temperature=0.0,
-            max_tokens=4096,
+            max_tokens=8192,
+            effort="medium",
         )
 
     async def infer(self, case_input: CaseInput, repo_profile: RepoProfile) -> DesignSystem:
@@ -81,13 +75,7 @@ class DesignSystemInferencer:
             Validated DesignSystem with inferred tokens and primitive components.
         """
         # Build images list from case_input
-        images: list[tuple[str, str]] = []
-        for image_path in case_input.image_paths:
-            image_bytes = image_path.read_bytes()
-            image_b64 = base64.standard_b64encode(image_bytes).decode()
-            suffix = image_path.suffix.lower()
-            media_type = _MEDIA_TYPES.get(suffix, "image/png")
-            images.append((image_b64, media_type))
+        images = [encode_design_image(image_path) for image_path in case_input.image_paths]
 
         user_content = (
             f"Analyze these UI screenshots and extract the design system tokens.\n\n"

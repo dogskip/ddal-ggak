@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from ddk.graph.router import route_after_validate
+from ddk.graph.router import route_after_autofix, route_after_stage, route_after_validate
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
 from ddk.models.visual import VisualRegressionReport
+from ddk.services.failure_signature import failure_signature
 
 
 def make_state(
@@ -90,7 +91,7 @@ def test_route_fix_available_when_failures_and_budget() -> None:
 
 
 def test_route_exhausted_on_oscillation() -> None:
-    """CRITICAL: oscillation uses (taxonomy_id, file_path) hash, not UUID."""
+    """CRITICAL: oscillation uses the stable failure signature, not the per-run UUID."""
     failures = [
         FailureRecord(
             id="NEW-UUID-1",
@@ -100,7 +101,7 @@ def test_route_exhausted_on_oscillation() -> None:
             file_path="src/App.tsx",
         )
     ]
-    expected_hash = hash(frozenset((f.taxonomy_id, f.file_path or "") for f in failures))
+    expected_hash = failure_signature(failures)
     report = RuntimeValidationReport(
         case_id="tc",
         build_success=False,
@@ -113,7 +114,7 @@ def test_route_exhausted_on_oscillation() -> None:
 
 
 def test_route_hash_uses_taxonomy_id_not_uuid() -> None:
-    """Two FailureRecords with SAME taxonomy+file but DIFFERENT UUIDs → same hash → oscillation."""
+    """Two FailureRecords that differ only in UUID → same signature → oscillation."""
     f1 = FailureRecord(
         id=str(uuid.uuid4()),
         taxonomy_id="FT-TYPE-001",
@@ -128,9 +129,9 @@ def test_route_hash_uses_taxonomy_id_not_uuid() -> None:
         message="err",
         file_path="src/Foo.tsx",
     )
-    h1 = hash(frozenset((f.taxonomy_id, f.file_path or "") for f in [f1]))
-    h2 = hash(frozenset((f.taxonomy_id, f.file_path or "") for f in [f2]))
-    assert h1 == h2, "Hash must be based on taxonomy_id+file_path, not UUID"
+    h1 = failure_signature([f1])
+    h2 = failure_signature([f2])
+    assert h1 == h2, "Signature must not depend on the per-run UUID"
     report = RuntimeValidationReport(
         case_id="tc",
         build_success=False,
@@ -140,3 +141,49 @@ def test_route_hash_uses_taxonomy_id_not_uuid() -> None:
     )
     state = make_state(report=report, budget=2, hash_history=[h1])
     assert route_after_validate(state) == "exhausted"
+
+
+def test_route_keeps_fixing_while_errors_in_one_file_shrink() -> None:
+    """3 errors → 1 fixed → 2 left in the same file is progress, not oscillation.
+
+    The old (taxonomy_id, file_path) signature saw both states as identical and gave up.
+    """
+
+    def failure(n: int) -> FailureRecord:
+        return FailureRecord(
+            id=str(uuid.uuid4()),
+            taxonomy_id="FT-TYPE-001",
+            severity="major",
+            message=f"error {n}",
+            file_path="src/App.tsx",
+        )
+
+    before = [failure(1), failure(2), failure(3)]
+    after = [failure(2), failure(3)]
+    report = RuntimeValidationReport(
+        case_id="tc",
+        build_success=False,
+        type_check_success=False,
+        lint_success=True,
+        failures=after,
+    )
+    state = make_state(report=report, budget=2, hash_history=[failure_signature(before)])
+
+    assert route_after_validate(state) == "fix_available"
+
+
+def test_after_autofix_revalidates_by_default() -> None:
+    assert route_after_autofix({"terminal_state": None}) == "validate"
+
+
+def test_after_autofix_skips_validation_when_a_human_must_take_over() -> None:
+    assert route_after_autofix({"terminal_state": "manual-review-required"}) == "certify"
+
+
+def test_after_stage_continues_by_default() -> None:
+    assert route_after_stage({"terminal_state": None}) == "continue"
+    assert route_after_stage({}) == "continue"
+
+
+def test_after_stage_stops_the_run_when_a_stage_needs_a_human() -> None:
+    assert route_after_stage({"terminal_state": "manual-review-required"}) == "certify"

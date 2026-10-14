@@ -12,6 +12,7 @@ from ddk.adapters.llm.base import LLMAdapter
 from ddk.adapters.playwright_browser import PlaywrightAdapter
 from ddk.adapters.sandbox.base import SandboxAdapter
 from ddk.adapters.screenshot_diff import ScreenshotDiffAdapter
+from ddk.models.config import DEFAULT_LIGHT_MODEL, DEFAULT_PRIMARY_MODEL
 
 if TYPE_CHECKING:
     from ddk.services.auto_fix_planner import AutoFixPlanner
@@ -51,6 +52,8 @@ class ServiceContainer:
     build_runner: BuildRunner
     browser: PlaywrightAdapter
     screenshot_diff: ScreenshotDiffAdapter
+    primary_model: str = DEFAULT_PRIMARY_MODEL
+    light_model: str = DEFAULT_LIGHT_MODEL
 
     # Phase 2 services (optional — populated when pipeline runs)
     intake_processor: IntakeProcessor | None = None
@@ -65,3 +68,13 @@ class ServiceContainer:
     auto_fix_planner: AutoFixPlanner | None = None
     failure_classifier: FailureClassifier | None = None
     rollback_controller: RollbackController | None = None
+
+
+def primary_model_from(container: object | None) -> str:
+    value = getattr(container, "primary_model", None)
+    return value if isinstance(value, str) else DEFAULT_PRIMARY_MODEL
+
+
+def light_model_from(container: object | None) -> str:
+    value = getattr(container, "light_model", None)
+    return value if isinstance(value, str) else DEFAULT_LIGHT_MODEL

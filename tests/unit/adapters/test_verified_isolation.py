@@ -23,6 +23,149 @@ APP_IMAGE = "sha256:" + "a" * 64
 CHECKER_IMAGE = "sha256:" + "b" * 64
 
 
+async def test_verified_operation_executes_only_inside_owned_containers(tmp_path, local_socket):
+    runner = DockerFixture()
+    isolation = LocalDockerIsolation(
+        runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"}
+    )
+    observed = []
+
+    async def operation(session):
+        observed.append(await session.app(("node", "-e", "console.log('app')"), timeout_s=1))
+        observed.append(await session.checker(("python3", "-I", "worker.py"), timeout_s=1))
+        return BuildResult(True, "finished", "", 0)
+
+    result = await isolation.execute(request(tmp_path), b"", operation=operation)
+    assert result.completed and result.policy_verified and result.cleanup_complete
+    assert result.stdout == "finished"
+    calls = [cmd[cmd.index("--host") + 2 :] for cmd, _ in runner.calls]
+    assert ["exec", "--interactive", "--", "c" * 64, "node", "-e", "console.log('app')"] in calls
+    assert ["exec", "--interactive", "--", "d" * 64, "python3", "-I", "worker.py"] in calls
+    assert len(observed) == 2 and not runner.containers
+
+
+async def test_verified_operation_is_not_invoked_before_policy_verification(tmp_path, local_socket):
+    runner = DockerFixture()
+    runner.tamper = ("Privileged", True)
+    isolation = LocalDockerIsolation(
+        runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"}
+    )
+    invoked = []
+
+    async def operation(session):
+        invoked.append(session)
+        return BuildResult(True, "", "", 0)
+
+    result = await isolation.execute(request(tmp_path), b"", operation=operation)
+    assert not result.completed and result.cleanup_complete
+    assert not invoked and not runner.containers
+
+
+async def test_operation_cancel_with_child_work_still_removes_both_owned_tasks(
+    tmp_path, local_socket
+):
+    runner = DockerFixture()
+    isolation = LocalDockerIsolation(
+        runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"}
+    )
+
+    async def operation(session):
+        await session.app(("node", "spawn-child.js"), timeout_s=1)
+        raise asyncio.CancelledError
+
+    with pytest.raises(asyncio.CancelledError) as caught:
+        await isolation.execute(request(tmp_path), b"", operation=operation)
+    assert not runner.containers
+    assert any('"cleanup_complete": true' in note for note in caught.value.__notes__)
+
+
+def test_chromium_can_enter_its_empty_directory_without_container_capabilities():
+    import ddk.adapters.verified_isolation as isolation
+
+    profile = json.loads(isolation._PROFILE.read_bytes())
+    assert any(
+        "chroot" in entry["names"]
+        and entry["action"] == "SCMP_ACT_ALLOW"
+        and not entry.get("includes")
+        for entry in profile["syscalls"]
+    )
+
+
+def test_plan_forces_complete_logs_and_disables_image_health_commands(tmp_path, local_socket):
+    isolation = LocalDockerIsolation(environ={"DOCKER_HOST": f"unix://{local_socket}"})
+    plan = isolation.plan(request(tmp_path))
+    for command in (plan.app_create, plan.checker_create):
+        assert "--no-healthcheck" in command
+        assert command[command.index("--log-driver") + 1] == "none"
+        assert "--log-opt" not in command
+
+
+async def test_docker_29_lowercase_missing_object_confirms_cleanup(tmp_path, local_socket):
+    runner = DockerFixture()
+    original = runner.run
+
+    async def run(*args, **kwargs):
+        result = await original(*args, **kwargs)
+        result.stderr = result.stderr.replace("No such object", "error: no such object")
+        return result
+
+    runner.run = run
+    isolation = LocalDockerIsolation(
+        runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"}
+    )
+    result = await isolation.execute(request(tmp_path), b"{}")
+    assert result.completed and result.cleanup_complete
+
+
+async def test_preview_output_is_collected_and_overflow_blocks_operation(tmp_path, local_socket):
+    runner = DockerFixture()
+    original = runner.run
+
+    async def run(command, *args, **kwargs):
+        if "--attach" in command:
+            return BuildResult(False, "partial preview", "docker_output_limit", 125)
+        return await original(command, *args, **kwargs)
+
+    runner.run = run
+    isolation = LocalDockerIsolation(
+        runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"}
+    )
+
+    async def operation(session):
+        await asyncio.sleep(0)
+        return BuildResult(True, "finished", "", 0)
+
+    result = await isolation.execute(request(tmp_path), b"", operation=operation)
+    assert not result.completed and result.cleanup_complete
+    assert result.app_stdout == "partial preview"
+    assert not result.app_output_complete
+
+
+async def test_requested_cleanup_budget_is_validated_and_applied(
+    tmp_path, local_socket, monkeypatch
+):
+
+    runner = DockerFixture()
+    isolation = LocalDockerIsolation(
+        runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"}
+    )
+    original = request(tmp_path)
+    invalid = replace(original, cleanup_timeout_ms=0)
+    with pytest.raises(ValueError, match="cleanup"):
+        isolation.plan(invalid)
+    short = replace(original, cleanup_timeout_ms=20)
+    observed = []
+    cleanup = isolation._cleanup
+
+    async def capture(plan, control, names, identities, **kwargs):
+        observed.append(plan.request.cleanup_timeout_ms)
+        return await cleanup(plan, control, names, identities, **kwargs)
+
+    monkeypatch.setattr(isolation, "_cleanup", capture)
+    result = await isolation.execute(short, b"{}")
+    assert observed == [20] and result.cleanup_complete
+
+
 @pytest.fixture
 def local_socket(tmp_path: Path):
     with tempfile.TemporaryDirectory(dir="/tmp", prefix="ddk-socket-") as directory:
@@ -135,6 +278,7 @@ class DockerFixture:
                 "Binds": None,
                 "VolumesFrom": None,
                 "Tmpfs": {"/tmp": "rw,noexec,nosuid,nodev,size=67108864,mode=1777"},
+                "LogConfig": {"Type": "none", "Config": {}},
             }
             if self.tamper is not None and role == "checker":
                 host[self.tamper[0]] = self.tamper[1]
@@ -149,7 +293,11 @@ class DockerFixture:
                 "Name": "/" + name,
                 "Created": "2026-10-14T00:00:00Z",
                 "Image": image,
-                "Config": {"User": args[args.index("--user") + 1], "Labels": labels},
+                "Config": {
+                    "User": args[args.index("--user") + 1],
+                    "Labels": labels,
+                    "Healthcheck": {"Test": ["NONE"]},
+                },
                 "HostConfig": host,
                 "Mounts": mounts,
                 "State": {"Running": False, "Pid": 0},
@@ -166,10 +314,15 @@ class DockerFixture:
                 return BuildResult(False, "", "No such object", 1)
             data = [record]
         elif operation == "start":
-            self.containers[args[-1]]["State"] = {
+            name = next(
+                name for name, value in self.containers.items() if args[-1] in {name, value["Id"]}
+            )
+            self.containers[name]["State"] = {
                 "Running": True,
-                "Pid": 100 if args[-1].endswith("app") else 200,
+                "Pid": 100 if name.endswith("app") else 200,
             }
+            if "--attach" in args:
+                return BuildResult(True, "preview output", "", 0)
         elif operation == "exec":
             name = next(
                 name

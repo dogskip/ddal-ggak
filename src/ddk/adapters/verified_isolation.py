@@ -11,7 +11,9 @@ Chromium: https://playwright.dev/python/docs/docker
 Profile base: moby/profiles@6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef
 Namespace allowance: microsoft/playwright@ae935a43d9e376e4759548f6b3c6905c7b282333
 The bundled profile retains current socket-family restrictions, denies socketcall,
-and adds only Playwright's clone/setns/unshare allowance to the Docker default.
+and allows Playwright namespaces plus Chromium's empty-directory chroot. Kernel
+capability checks still apply; container capabilities remain empty.
+Chromium: https://chromium.googlesource.com/chromium/src/sandbox/+/refs/heads/main/linux/services/credentials.cc
 """
 
 from __future__ import annotations
@@ -27,7 +29,7 @@ import shutil
 import stat
 import tempfile
 import time
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Protocol, cast
@@ -44,10 +46,38 @@ _PIDS = 256
 _INPUT_LIMIT = 2 * 1024**2
 _LABEL = "io.ddk.isolation.owner"
 _PROFILE = Path(__file__).resolve().parents[1] / "assets/verified-change/chromium-seccomp.json"
-_PROFILE_SHA256 = "4ff366b84d0d0d63dcc0f226696ad6c09dee37fd380dc0bcd184e2ef96f45efd"
+SECCOMP_SHA256 = "eff094b4486cc71022412e6ff3ea1b49637f24d9b2c61c2a472c57834132e35f"
 _IMAGE = re.compile(r"sha256:[a-f0-9]{64}")
 _ID = re.compile(r"[a-f0-9]{64}")
 _TMPFS = "rw,noexec,nosuid,nodev,size=67108864,mode=1777"
+_LOG_CONFIG: dict[str, object] = {"Type": "none", "Config": {}}
+POLICY_SHA256 = hashlib.sha256(
+    json.dumps(
+        {
+            "format": "verified-isolation/1",
+            "seccomp_sha256": SECCOMP_SHA256,
+            "memory_bytes": _MEMORY,
+            "shm_bytes": _SHM,
+            "pids": _PIDS,
+            "cpus": 1,
+            "tmpfs": _TMPFS,
+            "logging": _LOG_CONFIG,
+            "init": True,
+            "read_only": True,
+            "capabilities": [],
+            "no_new_privileges": True,
+            "healthcheck": False,
+            "app_network": "none",
+            "checker_network": "app",
+            "ipc": "private",
+            "pid": "private",
+            "app_mounts": {"workspace": "rw"},
+            "checker_mounts": {"criteria": "ro", "results": "rw"},
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode()
+).hexdigest()
 
 _NODE_PROBE = r"""const f=require('fs'),net=require('net');
 const text=p=>f.readFileSync(p,'utf8').trim();
@@ -125,6 +155,7 @@ class IsolationAvailability:
     endpoint: DockerEndpoint | None = None
     boundary: str | None = None
     code: Literal["isolation_unavailable"] | None = "isolation_unavailable"
+    runtime_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -140,6 +171,7 @@ class IsolationRequest:
     uid: int = field(default_factory=os.getuid)
     gid: int = field(default_factory=os.getgid)
     timeout_s: int = 300
+    cleanup_timeout_ms: int = 10_000
 
 
 @dataclass(frozen=True)
@@ -166,6 +198,49 @@ class IsolationResult:
     stderr: str = ""
     returncode: int | None = None
     evidence: dict[str, object] = field(default_factory=dict[str, object])
+    app_stdout: str = ""
+    app_stderr: str = ""
+    app_output_complete: bool = True
+
+
+class IsolationSession:
+    """Commands bound to verified container IDs and the enclosing deadline."""
+
+    def __init__(
+        self,
+        invoke: Callable[[str, tuple[str, ...], float, bytes | None], Awaitable[BuildResult]],
+    ) -> None:
+        self._invoke = invoke
+        self.active = True
+
+    async def _run(
+        self, role: str, argv: tuple[str, ...], timeout_s: float, stdin: bytes | None
+    ) -> BuildResult:
+        if not self.active:
+            raise IsolationUnavailableError("isolation_session_closed")
+        if (
+            not argv
+            or any(
+                not isinstance(arg, str) or not arg or "\x00" in arg
+                for arg in cast(tuple[object, ...], argv)
+            )
+            or not math.isfinite(timeout_s)
+            or timeout_s <= 0
+            or stdin is not None
+            and len(stdin) > _INPUT_LIMIT
+        ):
+            raise IsolationUnavailableError("invalid_isolated_command")
+        return await self._invoke(role, argv, timeout_s, stdin)
+
+    async def app(
+        self, argv: tuple[str, ...], *, timeout_s: float, stdin: bytes | None = None
+    ) -> BuildResult:
+        return await self._run("app", argv, timeout_s, stdin)
+
+    async def checker(
+        self, argv: tuple[str, ...], *, timeout_s: float, stdin: bytes | None = None
+    ) -> BuildResult:
+        return await self._run("checker", argv, timeout_s, stdin)
 
 
 class DockerRunner(Protocol):
@@ -347,7 +422,13 @@ class LocalDockerIsolation:
             ):
                 raise IsolationUnavailableError("daemon_policy_unavailable")
             boundary = "linux-user" if platform.system() == "Linux" else "linux-vm"
-            return IsolationAvailability(True, endpoint=endpoint, boundary=boundary, code=None)
+            return IsolationAvailability(
+                True,
+                endpoint=endpoint,
+                boundary=boundary,
+                code=None,
+                runtime_version=str(data.get("ServerVersion", "")),
+            )
         except (OSError, ValueError) as exc:
             return IsolationAvailability(False, str(exc))
 
@@ -355,6 +436,11 @@ class LocalDockerIsolation:
         endpoint = resolve_endpoint(self._environ, self._config)
         if request.uid <= 0 or request.gid <= 0 or not 0 < request.timeout_s <= 1800:
             raise IsolationUnavailableError("invalid_isolation_limits_or_user")
+        if (
+            type(request.cleanup_timeout_ms) is not int
+            or not 1 <= request.cleanup_timeout_ms <= 10_000
+        ):
+            raise IsolationUnavailableError("invalid_cleanup_limit")
         if not all(_IMAGE.fullmatch(value) for value in [request.app_image, request.checker_image]):
             raise IsolationUnavailableError("immutable_local_image_required")
         for value in [cast(object, request.app_command), cast(object, request.checker_command)]:
@@ -392,7 +478,7 @@ class LocalDockerIsolation:
         if len({path.resolve() for path in paths}) != len(paths):
             raise IsolationUnavailableError("overlapping_mounts")
         payload = read_regular(_PROFILE, _INPUT_LIMIT)
-        if hashlib.sha256(payload).hexdigest() != _PROFILE_SHA256:
+        if hashlib.sha256(payload).hexdigest() != SECCOMP_SHA256:
             raise IsolationUnavailableError("checker_seccomp_changed")
         owner = str(uuid4())
         app_name, checker_name = f"ddk-{owner}-app", f"ddk-{owner}-checker"
@@ -401,6 +487,9 @@ class LocalDockerIsolation:
             "--pull",
             "never",
             "--init",
+            "--no-healthcheck",
+            "--log-driver",
+            "none",
             "--read-only",
             "--cap-drop",
             "ALL",
@@ -475,7 +564,7 @@ class LocalDockerIsolation:
             checker_name,
             tuple(app),
             tuple(checker),
-            _PROFILE_SHA256,
+            SECCOMP_SHA256,
         )
 
     def _verify_record(
@@ -497,6 +586,7 @@ class LocalDockerIsolation:
             or labels.get(_LABEL) != plan.owner
             or labels.get("io.ddk.isolation.role") != role
             or config.get("User") != f"{request.uid}:{request.gid}"
+            or _object(config.get("Healthcheck")).get("Test") != ["NONE"]
             or record.get("Image") != expected_image
             or host.get("Privileged") is not False
             or host.get("ReadonlyRootfs") is not True
@@ -517,6 +607,7 @@ class LocalDockerIsolation:
                 for key in ["PortBindings", "Devices", "Binds", "VolumesFrom"]
             )
             or host.get("Tmpfs") != {"/tmp": _TMPFS}
+            or host.get("LogConfig") != _LOG_CONFIG
         ):
             raise IsolationUnavailableError("container_policy_mismatch")
         options = host.get("SecurityOpt")
@@ -557,7 +648,13 @@ class LocalDockerIsolation:
         ):
             raise IsolationUnavailableError("container_mounts_mismatch")
 
-    async def execute(self, request: IsolationRequest, checker_input: bytes) -> IsolationResult:
+    async def execute(
+        self,
+        request: IsolationRequest,
+        checker_input: bytes,
+        *,
+        operation: Callable[[IsolationSession], Awaitable[BuildResult]] | None = None,
+    ) -> IsolationResult:
         if type(request.timeout_s) is not int or not 0 < request.timeout_s <= 1800:
             return IsolationResult(reason="invalid_isolation_deadline")
         deadline = time.monotonic_ns() + request.timeout_s * 1_000_000_000
@@ -574,6 +671,10 @@ class LocalDockerIsolation:
         identities: dict[str, tuple[object, object]] = {}
         verified = False
         answer: BuildResult | None = None
+        failed_answer: BuildResult | None = None
+        app_output: BuildResult | None = None
+        output_complete = False
+        log_task: asyncio.Task[BuildResult] | None = None
         reason = ""
         cancelled: asyncio.CancelledError | None = None
         evidence: dict[str, object] = {
@@ -584,17 +685,20 @@ class LocalDockerIsolation:
             "context": plan.endpoint.context,
             "boundary": availability.boundary,
             "seccomp_sha256": plan.seccomp_sha256,
+            "policy_sha256": POLICY_SHA256,
         }
         cleanup = True
         with tempfile.TemporaryDirectory(prefix="ddk-isolation-") as folder:
             control = Path(folder)
 
             async def call(args: list[str], stdin: bytes | None = None) -> BuildResult:
+                nonlocal failed_answer
                 remaining = (deadline - time.monotonic_ns()) / 1e9
                 if remaining <= 0:
                     raise IsolationUnavailableError("isolation_deadline")
                 result = await self._call(plan.endpoint, control, args, remaining, stdin)
                 if not result.success:
+                    failed_answer = result
                     raise IsolationUnavailableError("docker_operation_failed")
                 return result
 
@@ -617,7 +721,26 @@ class LocalDockerIsolation:
                     self._verify_record(plan, record, role, evidence.get("app_id"))
                     identities[name] = (record.get("Id"), record.get("Created"))
                     evidence[role + "_id"] = record["Id"]
-                    await call(["start", name])
+                    if role == "app" and operation is not None:
+                        log_task = asyncio.create_task(
+                            self._call(
+                                plan.endpoint,
+                                control,
+                                ["start", "--attach", str(record["Id"])],
+                                (deadline - time.monotonic_ns()) / 1e9,
+                            )
+                        )
+                        while True:
+                            running = _one((await call(["inspect", name])).stdout)
+                            if log_task.done() and not log_task.result().success:
+                                raise IsolationUnavailableError("app_output_unavailable")
+                            if _object(running.get("State")).get("Running") is True:
+                                break
+                            if log_task.done():
+                                raise IsolationUnavailableError("app_start_failed")
+                            await asyncio.sleep(0.02)
+                    else:
+                        await call(["start", name])
                 app = _object(
                     _decode((await call(["exec", plan.app_name, "node", "-e", _NODE_PROBE])).stdout)
                 )
@@ -688,22 +811,63 @@ class LocalDockerIsolation:
                 remaining = (deadline - time.monotonic_ns()) / 1e9
                 if remaining <= 0:
                     raise IsolationUnavailableError("isolation_deadline")
-                answer = await self._call(
-                    plan.endpoint,
-                    control,
-                    ["exec", "--interactive", plan.checker_name, *request.checker_command],
-                    remaining,
-                    checker_input,
-                )
+                if operation is None:
+                    answer = await self._call(
+                        plan.endpoint,
+                        control,
+                        ["exec", "--interactive", plan.checker_name, *request.checker_command],
+                        remaining,
+                        checker_input,
+                    )
+                else:
+
+                    async def invoke(
+                        role: str, argv: tuple[str, ...], timeout_s: float, stdin: bytes | None
+                    ) -> BuildResult:
+                        return await self._call(
+                            plan.endpoint,
+                            control,
+                            ["exec", "--interactive", "--", str(evidence[role + "_id"]), *argv],
+                            min(timeout_s, (deadline - time.monotonic_ns()) / 1e9),
+                            stdin,
+                        )
+
+                    session = IsolationSession(invoke)
+
+                    async def perform() -> BuildResult:
+                        return await operation(session)
+
+                    operation_task = asyncio.create_task(perform())
+                    try:
+                        assert log_task is not None
+                        done, _ = await asyncio.wait(
+                            {operation_task, log_task},
+                            timeout=remaining,
+                            return_when=asyncio.FIRST_COMPLETED,
+                        )
+                        if log_task in done and not log_task.result().success:
+                            raise IsolationUnavailableError("app_output_unavailable")
+                        answer = await asyncio.wait_for(
+                            operation_task, max(0, (deadline - time.monotonic_ns()) / 1e9)
+                        )
+                    finally:
+                        session.active = False
+                        if not operation_task.done():
+                            operation_task.cancel()
+                        await asyncio.gather(operation_task, return_exceptions=True)
                 if answer.returncode in {124, 125, 126, 127}:
                     raise IsolationUnavailableError("checker_execution_unavailable")
             except asyncio.CancelledError as exc:
                 cancelled = exc
-            except (OSError, ValueError) as exc:
+            except (OSError, ValueError, RuntimeError) as exc:
                 reason = str(exc)
             finally:
+                attached_stop_owned = log_task is not None and not log_task.done()
+                cleanup_deadline = time.monotonic_ns() + request.cleanup_timeout_ms * 1_000_000
                 cleanup_task = asyncio.create_task(
-                    self._cleanup(plan, control, attempted, identities)
+                    self._cleanup(
+                        plan, control, attempted, identities, deadline_ns=cleanup_deadline
+                    )
                 )
                 interrupted = False
                 while not cleanup_task.done():
@@ -712,9 +876,36 @@ class LocalDockerIsolation:
                     except asyncio.CancelledError:
                         interrupted = True
                 cleanup = cleanup_task.result()
+                if log_task is not None:
+
+                    async def collect_output() -> BuildResult | None:
+                        try:
+                            return await asyncio.wait_for(
+                                log_task, max(0, (cleanup_deadline - time.monotonic_ns()) / 1e9)
+                            )
+                        except (OSError, ValueError, TimeoutError, asyncio.CancelledError):
+                            return None
+
+                    output_task = asyncio.create_task(collect_output())
+                    while not output_task.done():
+                        try:
+                            await asyncio.shield(output_task)
+                        except asyncio.CancelledError:
+                            interrupted = True
+                    app_output = output_task.result()
+                    output_complete = app_output is not None and (
+                        app_output.success
+                        or cleanup
+                        and attached_stop_owned
+                        and app_output.returncode in {137, 143}
+                    )
+                    if not output_complete:
+                        reason = reason or "app_output_unavailable"
+                    cleanup = cleanup and time.monotonic_ns() <= cleanup_deadline
                 if interrupted and cancelled is None:
                     cancelled = asyncio.CancelledError()
         completed = verified and answer is not None and cleanup and cancelled is None and not reason
+        answer = answer or failed_answer
         result = IsolationResult(
             completed,
             verified,
@@ -725,6 +916,9 @@ class LocalDockerIsolation:
             stderr=answer.stderr if answer else "",
             returncode=answer.returncode if answer else None,
             evidence=evidence,
+            app_stdout=app_output.stdout if app_output else "",
+            app_stderr=app_output.stderr if app_output else "",
+            app_output_complete=operation is None or output_complete,
         )
         if cancelled is not None:
             cancelled.add_note(
@@ -746,8 +940,10 @@ class LocalDockerIsolation:
         control: Path,
         names: list[str],
         identities: dict[str, tuple[object, object]],
+        *,
+        deadline_ns: int | None = None,
     ) -> bool:
-        deadline = time.monotonic_ns() + 10_000_000_000
+        deadline = deadline_ns or time.monotonic_ns() + plan.request.cleanup_timeout_ms * 1_000_000
         complete = True
 
         async def call(args: list[str]) -> BuildResult:
@@ -757,7 +953,7 @@ class LocalDockerIsolation:
         for name in reversed(names):
             try:
                 inspected = await call(["inspect", name])
-                if not inspected.success and "No such" in inspected.stderr:
+                if not inspected.success and "no such" in inspected.stderr.lower():
                     continue
                 if not inspected.success:
                     complete = False
@@ -779,7 +975,10 @@ class LocalDockerIsolation:
                 removed = await call(["rm", "--force", identifier])
                 check = await call(["inspect", identifier])
                 complete = (
-                    complete and removed.success and not check.success and "No such" in check.stderr
+                    complete
+                    and removed.success
+                    and not check.success
+                    and "no such" in check.stderr.lower()
                 )
             except (OSError, ValueError):
                 complete = False

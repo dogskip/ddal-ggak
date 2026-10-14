@@ -13,6 +13,9 @@ Run `ddk doctor --dry-run --json` to inspect Python, Git, Docker, installed imag
 fonts and provider availability. It does not install dependencies or call a model. `warning` can mean
 an optional provider is absent or the working tree has changes; `blocked` means a required prerequisite
 is unavailable. Tool inspection includes concrete next actions. Prepare dependencies separately.
+Plain `ddk doctor`, `--dry-run` and `--json` share the same checks and verdict. Invalid settings
+block without exposing their values. Only explicit `--install-browser` requests installation;
+`--dry-run` suppresses it even when both flags are present. A blocked readiness check exits 2.
 
 Put reviewed behavior in `.ddk/verify.toml` (local), `ddk.toml`, or `[tool.ddk.verify]` in `pyproject.toml`,
 in that precedence order. This example uses a static project whose Git base has a heading and a working
@@ -72,6 +75,9 @@ customizations and execution tools and use a private empty working directory. Th
 unknown with the current CLI reply formats, so they stop without a ready verdict. Never treat a
 subscription or a local endpoint as proof of zero cost. API usage missing cache/charge evidence also stops.
 Supported CLI versions must recognize the restrictive options; unsupported versions fail closed.
+`ddk change repair` and MCP `ddk_repair` use the same provider/price selection. Standalone repair
+can omit `--price` while the built-in Anthropic quote is valid. Other providers require their own
+quote; unsupported provider/endpoint combinations never silently fall back. Replay constructs no provider.
 
 A proposal is either a full-file replacement or exact, sequential search/replace patches:
 
@@ -89,6 +95,8 @@ restored to the Git base and repairs of newly added files. Managed application c
 modes, backs up existing files and journals creates/updates/deletions. Concurrent or external edits
 cause a conflict or explicit unknown recovery state and are preserved. Local storage and quiescence
 confirmations are required. `--apply` uses the existing owned apply/recovery service.
+Post-verification source changes and application conflicts make the workflow `blocked` and exit 1,
+while preserving the completed verification record's `ready` verdict.
 
 ## Native reports and policy
 
@@ -121,6 +129,9 @@ cleanup receipt. Cross-origin requests and WebSockets are blocked. Chromium runs
 sandbox enabled, fixed time, locale, timezone and viewport. Browser failures never become passing
 observations. Fixed browser flows support `expect-ax-tree`, `expect-ax-role` and
 `expect-no-console-error`; snapshots and failure cleanup retain AX evidence alongside RGB/SSIM data.
+An extra blank page is a violation even without a network request. Missing selectors keep the
+failure verdict and attempt current-page PNG/AX/DOM evidence within a separate two-second limit.
+In-flight requests around capture must finish within the probe deadline; delayed HTTP failures cannot become ready.
 
 `--reference path.png` creates a pixel diff. To register a reference, use
 `--case CASE_UUID --check CHECK_ID --update-reference references/page.png` (alias `--update-baseline`).

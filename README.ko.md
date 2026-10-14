@@ -137,7 +137,7 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk status`, `ddk certify` | 저장된 case 상태와 판정 조회 |
 | `ddk init`, `ddk up`, `ddk probe` | 해시 없는 준비, Git 변경 검사·수정, 실제 화면 자료 수집 |
 | `ddk change init/reindex/verify/repair/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
-| `ddk doctor` | Python, uv, API 키, Node.js, git, Chromium 점검 (`--install-browser` 로 Chromium 내려받기) |
+| `ddk doctor` | Python·Git·Docker·Chromium·글꼴·제공자 점검. `--json` 구조화 출력, `--dry-run` 설치 제외 |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
 | `ddk install --all` | Claude Code, Cursor, Codex, Gemini CLI 등에 `/ddk:design` 과 MCP 서버 등록 |
 | `ddk proof`, `ddk audit` | 디스크의 증거로 기능 주장과 표준 적용 범위 점검 |

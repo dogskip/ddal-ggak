@@ -22,6 +22,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Standalone `change repair`, `up` and MCP repair share provider/price selection, lazy provider
+  construction and explicit overrides. A valid dated Anthropic quote no longer needs a manual file.
+- **Breaking CLI change:** plain `doctor` and its JSON/dry-run forms share observed readiness,
+  safe settings diagnostics and blocked exit 2 (previously 1 for the legacy plain command).
+  Explicit browser installation remains available; dry-run suppresses it.
+- Post-verification source changes and application conflicts block the overall command even when
+  its saved verification verdict is ready. Probe records extra blank-page denial, awaits pending
+  responses and retains bounded page diagnostics after a missing-selector failure.
 - **Breaking CLI change:** `ddk init PATH` is now `ddk workspace-init PATH`.
   `ddk init --request ...` compiles an immutable verification case.
 - [One-command guide](docs/ONECLICK.md), Korean guide and catalog fields document actual limits;

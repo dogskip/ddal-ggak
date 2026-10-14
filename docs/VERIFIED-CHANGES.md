@@ -118,15 +118,17 @@ ddk change repair --source-run-id SOURCE_RUN_UUID \
 ```
 
 `--confirm-provider` authorizes transmission of scoped, redacted source and bounded failed-check
-excerpts to Anthropic, and API charges. A new execution needs `ANTHROPIC_API_KEY` or
-`DDK_ANTHROPIC_API_KEY`. Trusted-local cases also require `--trusted-local`; isolated cases cannot
+excerpts to the selected provider, and charges. Default Anthropic execution needs `ANTHROPIC_API_KEY`
+or `DDK_ANTHROPIC_API_KEY`. Other provider/endpoint selection follows the [one-command guide](ONECLICK.md).
+Trusted-local cases also require `--trusted-local`; isolated cases cannot
 be downgraded. Screenshots and arbitrary repository files are not sent as model context.
 
-`--price` is an explicit caller-verified JSON object, not an automatic price estimate:
+Omitting `--price` uses the dated built-in Anthropic quote while valid. Other providers and expired
+defaults require an explicit caller-verified price JSON, without an automatic estimate:
 
 | Required fields | Meaning |
 | --- | --- |
-| `provider`, `model` | `anthropic` and an explicit supported model from `known_model_names()` |
+| `provider`, `model` | Selected provider and explicit model; Anthropic models are restricted to `known_model_names()` |
 | `input_micro_usd_per_million`, `output_micro_usd_per_million` | Verified maximum linear prices in millionths of a US dollar per million tokens |
 | `extra_max_micro_usd` | Verified maximum additional charge per attempt in millionths of a US dollar |
 | `source_url`, `verified_at` | Pricing source HTTPS URL and verification timestamp ending in `Z` |

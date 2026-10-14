@@ -82,20 +82,22 @@
 보호 파일 대응을 명시하며, 후보는 저장된 해시와 일치해야 합니다. 원래 승인한 변경 경로·요구 관계만
 수정할 수 있습니다. 추가 경로·삭제·권한·시험·의존성 변경은 허용하지 않습니다.
 
-주요 입력은 `--source-run-id`, `--baseline`, `--candidate`, `--price`, `--input-token-limit`,
+주요 입력은 `--source-run-id`, `--baseline`, `--candidate`, `--provider`, `--input-token-limit`,
 `--output-token-limit`, `--confirm-provider`, `--run-id`입니다. 기록 위치는 `--repo`로 지정하며
 보호 파일 대응이 있으면 `--project-inputs`를 함께 사용합니다.
 
-`--confirm-provider`는 승인 경로의 비밀 정보를 제외한 내용과 실패 검사 발췌를 Anthropic으로 전송하고
-API 비용이 발생하는 데 동의하는 선택입니다. 새 실행에는 `ANTHROPIC_API_KEY` 또는
-`DDK_ANTHROPIC_API_KEY`가 필요합니다. trusted-local case는 `--trusted-local`도 명시해야 하며
+`--confirm-provider`는 승인 경로의 비밀 정보를 제외한 내용과 실패 검사 발췌를 선택한 제공자에
+전송하고 비용 발생에 동의하는 선택입니다. 기본 Anthropic은 `ANTHROPIC_API_KEY` 또는
+`DDK_ANTHROPIC_API_KEY`가 필요합니다. 다른 제공자와 주소 선택은 [통합 안내](ONECLICK.ko.md)를
+따릅니다. trusted-local case는 `--trusted-local`도 명시해야 하며
 isolated의 보장 수준을 낮출 수 없습니다. 화면 자료나 임의 저장소 파일은 모델 문맥에 포함하지 않습니다.
 
-가격 JSON에는 아래 필드가 모두 필요하며 자동 단가 추정으로 대체하지 않습니다.
+`--price`를 생략하면 유효 기간 안의 기본 Anthropic 가격을 case에 연결합니다. 다른 제공자나
+기본 가격 만료 시 가격 JSON이 필요합니다. 가격 JSON에는 아래 필드가 모두 필요하며 단가를 추정하지 않습니다.
 
 | 필드 | 의미 |
 | --- | --- |
-| `provider`, `model` | `anthropic`과 `known_model_names()`가 제공하는 명시적 모델명 |
+| `provider`, `model` | 선택한 제공자와 명시적인 모델명. Anthropic은 `known_model_names()`로 제한 |
 | `input_micro_usd_per_million`, `output_micro_usd_per_million` | 토큰 백만 개당 최대 단가. 금액 단위는 미국 달러의 백만분의 일 |
 | `extra_max_micro_usd` | 호출 하나의 검증한 추가 비용 최대값. 같은 금액 단위 사용 |
 | `source_url`, `verified_at` | 가격의 HTTPS 근거와 `Z`로 끝나는 확인 시각 |

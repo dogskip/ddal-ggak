@@ -15,7 +15,7 @@
 
 ## SSoT 정체성 문장
 
-> **딸깍은 GSD 전체 기능을 포함·고도화하고, architect-grade 국제표준 설계문서 생성부터 구현·검증·자동수정·인증까지를 하나의 closed-loop로 수행하는 Design-to-Delivery OS다.**
+> **딸깍은 GSD의 검증 중심 워크플로 계보를 지향하며, 설계문서 생성부터 구현·검증·자동수정·릴리즈 판단까지를 하나의 closed-loop로 연결하는 Design-to-Delivery 도구다.**
 
 ## 정체성의 세 축
 
@@ -118,7 +118,7 @@
 | standards overclaim | 국제표준 준수 주장이 선언에 머물 수 있다 | clause mapping + quality gate 강제 |
 | operator burden | manual review/approval 지점이 많아질 수 있다 | 역할과 승인권 정의 |
 | governance sprawl | 문서가 많아지며 권위/최신성 혼란이 생길 수 있다 | status/stale 관리 |
-| implementation gap | 현재는 설계뿐이고 작동 증거가 없다 | P0 prototype + benchmark + evidence pack 우선 |
+| behavioral-proof gap | 구현·테스트 매핑은 있으나 GSD 동등성 행동 receipt가 없다 | commit-pinned corpus + freshness 검증 우선 |
 
 ## 검증 경로(Validation Path)
 
@@ -143,10 +143,10 @@
 ### Gate 조건
 
 1. **Identity Claim** — `27-identity-positioning.md` 존재 + `02-prd.md` 와 충돌 없음
-2. **Parity Claim** — `28-gsd-superset-matrix.md` row 존재 + 구현/test evidence 존재 + gate green
+2. **Parity Claim** — `28-gsd-superset-matrix.md` row + 구현/test mapping + 현재 커밋에 묶인 행동 검증 receipt + gate green
 3. **Superiority Claim** — parity claim 선행 + `benchmarks/gsd-baseline.json` 존재 + threshold `calibrated` + comparative artifact 존재 + category boundary 명시
 4. **Release Claim** — `07-verification-release.md` release blocker 없음 + `ReleaseDecision.status == ready` + required artifacts complete
-5. **Standards Claim** — artifact에 대한 표준 매핑 존재 + 해당 산출물 `pass` 또는 승인된 `flag`
+5. **Standards Claim** — artifact mapping만으로는 불가; 해당 요구의 행동 검증과 권한 있는 검토 결과가 별도로 필요
 
 ### Proof Streams
 
@@ -165,13 +165,17 @@
 
 | Level | 의미 |
 | --- | --- |
-| `P-0` | 설계만 존재, 구현/실측 없음 |
-| `P-1` | P0 slice 구현, 일부 gate green |
-| `P-2` | release-critical gate green, parity family 일부 증명 |
+| `P-0` | artifact mapping만 있고 behavior proof receipt 없음 |
+| `P-1` | 현재 커밋에 대한 일부 행동 receipt와 parity gate green |
+| `P-2` | release-critical gate 및 핵심 parity family 행동 증명 |
 | `P-3` | calibrated benchmark / standards / security governance 포함 |
 | `P-4` | 반복 가능한 parity/superiority/release claim 체계 확립 |
 
-현재 문서 상태는 **P-0 to early P-1 준비 수준** 이다.
+Claim Gate는 더 이상 문서 규칙이 아니라 **실행 가능한 코드**다 (`ddk proof`,
+`ddk.services.proof_ledger`, `benchmarks/capability-matrix.json`). evidence를
+디스크에서 resolve해 mapping을 계산하고 claim을 허용/거부한다. 머신 검증 결과 현재는
+artifact mapping만 있으므로 maturity **P-0**이며, parity·superset·superiority는 모두
+**DENIED**다. 파일 존재는 행동 증명으로 승격되지 않는다.
 
 ### 금지 규칙
 

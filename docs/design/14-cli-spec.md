@@ -11,11 +11,9 @@
 ddk [GLOBAL_OPTIONS] <command> [COMMAND_OPTIONS]
 
 Global Options:
-  --case-dir PATH        .ddk/ 런타임 디렉토리 (기본값: {cwd}/.ddk)
   --log-level TEXT       DEBUG | INFO | WARNING | ERROR (기본값: INFO)
   --no-color             색상 비활성화
   --json-output          모든 출력을 JSON으로 (CI/CD용)
-  --dry-run              실제 파일 변경 없이 계획만 출력
   --version              버전 출력 후 종료
   --help                 도움말
 ```
@@ -28,13 +26,12 @@ Global Options:
 |--------|------|--------|
 | `DDK_LLM_PROVIDER` | LLM 프로바이더 | `anthropic` |
 | `DDK_ANTHROPIC_API_KEY` | Anthropic API 키 | (필수) |
-| `DDK_OPENAI_API_KEY` | OpenAI API 키 (fallback) | (선택) |
-| `DDK_LLM_MODEL` | 기본 모델 오버라이드 | `claude-3-5-sonnet-20241022` |
+| `DDK_OPENAI_API_KEY` | 예약값; OpenAI runtime adapter 미구현 | (미사용) |
+| `DDK_LLM_MODEL` | 기본 모델 오버라이드 | `claude-sonnet-5-5` |
 | `DDK_COST_CAP_USD` | 케이스당 비용 상한 | `2.0` |
 | `DDK_SANDBOX_MODE` | `worktree` \| `docker` | `worktree` |
 | `DDK_PLAYWRIGHT_BROWSER` | `chromium` \| `firefox` \| `webkit` | `chromium` |
 | `DDK_LOG_LEVEL` | 로그 레벨 | `INFO` |
-| `DDK_CASE_DIR` | 케이스 디렉토리 오버라이드 | `{cwd}/.ddk` |
 
 ---
 
@@ -564,8 +561,8 @@ ddk init
   "schema_version": "1.0",
   "llm": {
     "provider": "anthropic",
-    "model": "claude-3-5-sonnet-20241022",
-    "light_model": "claude-3-haiku-20240307",
+    "model": "claude-sonnet-5-5",
+    "light_model": "claude-haiku-5-5",
     "cost_cap_usd": 2.0
   },
   "sandbox": {
@@ -576,7 +573,7 @@ ddk init
     "browser": "chromium",
     "viewport": "1280x800",
     "ssim_threshold": 0.92,
-    "pixel_diff_threshold": 0.05
+    "max_mismatch_ratio": 0.03
   },
   "reproducibility": {
     "mode": "best_effort",

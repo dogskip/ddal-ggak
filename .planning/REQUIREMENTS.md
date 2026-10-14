@@ -12,13 +12,13 @@ Requirements for Milestone v1.0 (Delivery Pipeline MVP). Each maps to roadmap ph
 - [x] **INFRA-01**: 프로젝트 스캐폴딩 — pyproject.toml (uv), src 레이아웃, pytest/Ruff/Pyright 설정, CI 기본 구성
 - [x] **INFRA-02**: Pydantic v2 데이터 모델 구현 — 40+ 모델 (CaseInput, RepoProfile, IntentGraph, GenerationPlan, GeneratedArtifactSet, NormalizationReport, RuntimeValidationReport, VisualRegressionReport, FixAttempt, Scorecard, ReleaseDecision, EvidencePack 등) — 12-data-models.md 기반
 - [x] **INFRA-03**: 어댑터 Protocol 정의 — LLMAdapter, FilesystemAdapter, GitAdapter, BrowserAdapter, BuildRunnerAdapter, SubprocessAdapter 인터페이스
-- [ ] **INFRA-04**: ServiceContainer + LangGraph context_schema DI 패턴 — 모든 노드가 서비스를 주입받는 런타임 컨텍스트 구성
-- [ ] **INFRA-05**: 테스트 인프라 — FakeLLMAdapter, TempDirSandbox, FakePlaywrightAdapter, FakeSubprocessRunner 등 8개 fake + chaos fixtures (malformed JSON, rate limit, extra fields)
+- [x] **INFRA-04**: ServiceContainer + LangGraph context_schema DI 패턴 — 모든 노드가 서비스를 주입받는 런타임 컨텍스트 구성
+- [x] **INFRA-05**: 테스트 인프라 — FakeLLMAdapter, TempDirSandbox, FakePlaywrightAdapter, FakeSubprocessRunner 등 8개 fake + chaos fixtures (malformed JSON, rate limit, extra fields)
 - [ ] **INFRA-06**: 구조화 로그 — structlog + RedactingFormatter + JSON 출력, 12개 필수 로그 이벤트 (04-system-design.md § 구조화 로그 명세)
 
 ### Ingestion & Analysis
 
-- [ ] **INGEST-01**: Workspace Bootstrap (DDK-REQ-001) — 케이스 워크스페이스 초기화, .ddk/ 디렉토리 구조, 스키마 버전 관리
+- [x] **INGEST-01**: Workspace Bootstrap (DDK-REQ-001) — 케이스 워크스페이스 초기화, .ddk/ 디렉토리 구조, 스키마 버전 관리
 - [x] **INGEST-02**: Multimodal Intake (DDK-REQ-002) — 이미지/프롬프트/레퍼런스 텍스트를 CaseInput으로 검증·구조화
 - [x] **INGEST-03**: Repo Convention Scan (DDK-REQ-003) — RepoConventionScanner 서비스, 프레임워크/네이밍/스타일/디자인 시스템/파일 레이아웃 추출 → RepoProfile
 - [x] **INGEST-04**: Semantic Intent Model (DDK-REQ-004) — SemanticIntentExtractor, 레이아웃/인터랙션/콘텐츠 인텐트를 confidence graph로 추출 → IntentGraph
@@ -34,10 +34,10 @@ Requirements for Milestone v1.0 (Delivery Pipeline MVP). Each maps to roadmap ph
 ### Validation & Self-Healing
 
 - [ ] **VALID-01**: Sandboxed Runtime Validation (DDK-REQ-009) — git worktree 샌드박스에서 빌드/타입체크/린트/런타임 스모크 실행 → RuntimeValidationReport
-- [ ] **VALID-02**: Console & Runtime Error Capture (DDK-REQ-010) — Playwright 기반 브라우저 콘솔, 런타임 예외, 실패 요청을 상관 ID로 수집
-- [ ] **VALID-03**: Visual Regression Runner (DDK-REQ-011) — 레퍼런스 vs 생성 스크린샷 SSIM 비교, diff score/mismatch 영역 출력 → VisualRegressionReport
-- [ ] **VALID-04**: Bounded Auto-fix Loop (DDK-REQ-012) — AutoFixPlanner + 9개 수리 규칙, 실패 클래스별 패치 생성, 최대 3회 재시도, 진동 감지
-- [ ] **VALID-05**: Failure Taxonomy (DDK-REQ-013) — FailureClassifier, 빌드/타입/런타임/비주얼/데이터바인딩/비동기 실패를 안정 taxonomy ID로 분류
+- [x] **VALID-02**: Console & Runtime Error Capture (DDK-REQ-010) — Playwright 기반 브라우저 콘솔, 런타임 예외, 실패 요청을 상관 ID로 수집
+- [x] **VALID-03**: Visual Regression Runner (DDK-REQ-011) — 레퍼런스 vs 생성 스크린샷 SSIM 비교, diff score/mismatch 영역 출력 → VisualRegressionReport
+- [x] **VALID-04**: Bounded Auto-fix Loop (DDK-REQ-012) — AutoFixPlanner + 9개 수리 규칙, 실패 클래스별 패치 생성, 최대 3회 재시도, 진동 감지
+- [x] **VALID-05**: Failure Taxonomy (DDK-REQ-013) — FailureClassifier, 빌드/타입/런타임/비주얼/데이터바인딩/비동기 실패를 안정 taxonomy ID로 분류
 - [x] **VALID-06**: Sandboxed Execution Policy (DDK-REQ-016) — ENV_WHITELIST 허용목록, FORBIDDEN_READ_PATHS, 프로세스 격리 규칙 적용
 - [ ] **VALID-07**: Auto-fix Rollback & Checkpoint (DDK-REQ-019) — RollbackController, git 체크포인트 (refs/ddk/fix/{case_id}/attempt-{n}), 실패 시 자동 롤백
 
@@ -45,11 +45,43 @@ Requirements for Milestone v1.0 (Delivery Pipeline MVP). Each maps to roadmap ph
 
 - [ ] **CERT-01**: Evidence Pack Builder (DDK-REQ-014) — EvidencePackBuilder, 각 단계 아티팩트/로그/리포트 번들, 리플레이 가능 → EvidencePack
 - [ ] **CERT-02**: Comparative Benchmark & Scorecard (DDK-REQ-017) — BenchmarkScorecardService, precision/maintainability/automation/scalability 점수 출력 → Scorecard
-- [ ] **CERT-03**: Release Decision / Perfection Gate (DDK-REQ-018) — ReleaseDecisionService, critical/blocker/scorecard 집계 → ReleaseDecision (ready/blocked/manual-review)
+- [x] **CERT-03**: Release Decision / Perfection Gate (DDK-REQ-018) — ReleaseDecisionService, critical/blocker/scorecard 집계 → ReleaseDecision (ready/blocked/manual-review)
 - [x] **CERT-04**: Reproducibility & LLM Call Metadata (DDK-REQ-020) — LLMCallRecord, 모델/provider/temperature/seed/스키마 버전 기록, context pack hash
 - [ ] **CERT-05**: Preflight Doctor & Guided Setup (DDK-REQ-021) — PrefightDoctor, 환경 전제조건 사전 점검 (빌드 도구, LLM 키, Playwright, 샌드박스), 교정 힌트 출력
-- [ ] **CERT-06**: LangGraph 오케스트레이션 통합 (DDK-REQ-015 나머지) — build_ddk_graph(), GraphState 전이, _node_wrapper, conditional edges, 상태 추적
+- [x] **CERT-06**: LangGraph 오케스트레이션 통합 (DDK-REQ-015 나머지) — build_ddk_graph(), GraphState 전이, _node_wrapper, conditional edges, 상태 추적
 - [ ] **CERT-07**: ddk CLI 엔트리포인트 + E2E 통합 — Typer 기반 ddk run/preflight/status/rollback/certify 커맨드, 전체 파이프라인 E2E 테스트
+
+## v1.1 Hardening Requirements
+
+### Trustworthy Runtime & Assurance
+
+- [x] **HARD-01**: Generated Path Containment — LLM 생성 경로와 evidence 경로는
+  portable repo-relative path만 허용하고 absolute/parent traversal/UNC/symlink escape를 거부한다.
+- [x] **HARD-02**: Current Model Policy — 지원 중인 Claude 모델을 기본값으로 사용하고
+  primary/light 설정이 모든 LLM 호출 지점에 DI로 전달된다.
+- [x] **HARD-03**: Honest Proof State — artifact 존재는 `mapped`, 행동 검증이 있는 경우만
+  `proved`이며 `mapped`만으로 parity/superset claim을 허용하지 않는다.
+- [x] **HARD-04**: Honest Standards Mapping — clause-to-artifact 결과는
+  `mapped/partial/gap`으로 표현하고 인증 또는 준수 완료로 오인시키지 않는다.
+- [x] **HARD-05**: Planning Freshness — 현재 source/research 기준과 검증 결과가
+  `.planning` 상태 및 public documentation에 일치한다.
+
+## v1.2 Self-checking Loop Requirements
+
+### Product loop (Phase 7)
+
+- [x] **LOOP-01**: Real-browser Visual Gate — 실제 헤드리스 Chromium 으로 스크린샷, 콘솔 오류, 실패한
+  요청을 수집하고 회색조 블록 SSIM(≥ 0.92)과 크게 다른 면적(≤ 3%)으로 판정한다. 브라우저, 미리보기
+  서버(Vite, Next.js, Astro), 증거가 없으면 `blocked` 이고 `--no-visual` 로만 면제된다.
+- [x] **LOOP-02**: Evidence-gated Repair — 자동 수정 규칙 R-01, R-06(결정적), R-09(파일별 모델 호출),
+  R-10(시각, 코드 진단이 사라진 뒤에만). 회차 예산, 같은 실패 서명 반복, 변경 없음에서 멈추고 회차마다
+  git 점검점을 생성한다.
+- [x] **LOOP-03**: Keyless Demo — `ddk demo` 는 녹화된 모델 응답을 재생하고 npm ci, 빌드, tsc, eslint,
+  Chromium, 비교는 실제로 실행해 첫 시안 불일치 → 수정 → `ready` 를 보인다.
+- [x] **LOOP-04**: First-run Experience — 브라우저를 실제 실행으로 탐지하고(`probe`), `ddk doctor
+  --install-browser` 와 데모의 내려받기 제안을 제공하며, `ddk run` 은 작업 폴더를 만들기 전에 실패한다.
+- [x] **LOOP-05**: Shippable Package & Docs — wheel 검사(`scripts/check_wheel.py`), CI(package, e2e),
+  `release.yml`, README·사용자 안내서 영어/한국어, 공개 준비서(게시하지 않음).
 
 ## v2 Requirements
 
@@ -77,7 +109,7 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 - **GSD 워크플로우 계승** — v1.0은 Delivery Pipeline에 집중
 - **실시간 스트리밍 UI** — 경쟁사 anti-feature (v0/bolt.new), CLI 도구에 불필요
 - **멀티페이지 앱 생성** — 단일 컴포넌트/페이지에 집중
-- **자체 호스팅 LLM** — 클라우드 API (Anthropic/OpenAI)만 지원
+- **자체 호스팅 LLM 및 OpenAI runtime** — 현재 실행 경로는 Anthropic만 지원
 
 ## Traceability
 
@@ -86,10 +118,10 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
-| INFRA-04 | Phase 1 | Pending |
-| INFRA-05 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Complete |
+| INFRA-05 | Phase 1 | Complete |
 | INFRA-06 | Phase 1 | Pending |
-| INGEST-01 | Phase 1 | Pending |
+| INGEST-01 | Phase 1 | Complete |
 | INGEST-02 | Phase 2 | Complete |
 | INGEST-03 | Phase 2 | Complete |
 | INGEST-04 | Phase 2 | Complete |
@@ -98,21 +130,26 @@ Deferred to Milestone v3.0 (Multi-tool Adapter).
 | CODEGEN-01 | Phase 3 | Complete |
 | CODEGEN-02 | Phase 3 | Complete |
 | CODEGEN-03 | Phase 2 | Complete |
-| VALID-01 | Phase 4 | Pending |
-| VALID-02 | Phase 4 | Pending |
-| VALID-03 | Phase 4 | Pending |
-| VALID-04 | Phase 4 | Pending |
-| VALID-05 | Phase 4 | Pending |
+| VALID-01 | Phase 4 | Partial — build/type/lint/smoke run in a temp copy; git worktree isolation not implemented |
+| VALID-02 | Phase 4, 7 | Complete — real Chromium collects console, page errors, failed requests (`adapters/chromium_browser.py`) |
+| VALID-03 | Phase 4, 7 | Complete — block SSIM + mismatch share in `ddk run`; real-browser E2E passes |
+| VALID-04 | Phase 4 | Complete |
+| VALID-05 | Phase 4 | Complete |
 | VALID-06 | Phase 1 | Complete |
-| VALID-07 | Phase 4 | Pending |
-| CERT-01 | Phase 5 | Pending |
-| CERT-02 | Phase 5 | Pending |
-| CERT-03 | Phase 5 | Pending |
+| VALID-07 | Phase 4 | Partial — checkpoint ref per attempt and manual `ddk rollback`; automatic rollback on failure not implemented |
+| CERT-01 | Phase 5 | Partial — reference pack exists; replay proof pending |
+| CERT-02 | Phase 5 | Partial — local scorecard exists; comparative benchmark pending |
+| CERT-03 | Phase 5 | Complete |
 | CERT-04 | Phase 1 | Complete |
-| CERT-05 | Phase 1 | Pending |
-| CERT-06 | Phase 5 | Pending |
-| CERT-07 | Phase 5 | Pending |
+| CERT-05 | Phase 1 | Partial — browser checked by a real launch; sandbox readiness not checked |
+| CERT-06 | Phase 5 | Complete |
+| CERT-07 | Phase 5, 7 | Partial — CLI and real-browser E2E with a recorded model reply exist; live provider E2E pending |
+| LOOP-01 | Phase 7 | Complete |
+| LOOP-02 | Phase 7 | Complete |
+| LOOP-03 | Phase 7 | Complete |
+| LOOP-04 | Phase 7 | Complete |
+| LOOP-05 | Phase 7 | Complete — new CI jobs and `release.yml` not yet run on GitHub Actions |
 
 ---
 
-*Last updated: 2025-07-27*
+*Last updated: 2026-10-14*

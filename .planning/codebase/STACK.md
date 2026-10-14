@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Analysis Date:** 2025-03-29
+**Analysis Date:** 2026-07-27
 
 ## Languages
 
@@ -22,32 +22,32 @@
 ## Frameworks
 
 **Core Application:**
-- LangGraph 1.1.3 - Agentic workflow orchestration
+- LangGraph 1.2.9 - Agentic workflow orchestration
   - State graph construction at `src/ddk/graph/builder.py`
   - Node-based pipeline execution (intake → design → generate → validate → certify)
-  - Checkpointing via `langgraph-checkpoint` 4.0.1
-  - Prebuilt components via `langgraph-prebuilt` 1.0.8
+  - Checkpointing via `langgraph-checkpoint` 4.1.1
+  - Prebuilt components via `langgraph-prebuilt` 1.1.0
 
 **CLI:**
-- Typer 0.24.1 - CLI framework (async-friendly)
-  - Entry point: `src/ddk/cli.py`
+- Typer 0.27.0 - CLI framework (async-friendly)
+  - Entry point: `src/ddk/cli/` (package), also `python -m ddk`
   - Registered as `ddk` command in `pyproject.toml` scripts
 
 **MCP Server:**
-- MCP (Model Context Protocol) 1.26.0 - FastMCP-based server
+- MCP (Model Context Protocol) 1.28.1 - FastMCP-based server
   - Server implementation: `src/ddk/server.py`
   - Stdio transport for IDE integration (Claude, OpenCode, Gemini)
   - Exposes tools: `design_new()`, `preflight()`, `ddk_version()`
 
 **LLM Integration:**
-- Anthropic SDK 0.86.0 - Claude API client
+- Anthropic SDK 0.120.0 - Claude API client
   - Async support (AsyncAnthropic)
-  - Claude 3.5 Sonnet / Haiku models supported
+  - Default routing: Claude Sonnet 4.6 / Haiku 4.5
   - Adapter: `src/ddk/adapters/llm/claude.py`
 
 **Data Validation:**
-- Pydantic 2.12.5 - Schema validation and serialization
-  - Configuration management via `pydantic-settings` 2.13.1
+- Pydantic 2.13.4 - Schema validation and serialization
+  - Configuration management via `pydantic-settings` 2.14.2
   - BaseSettings pattern at `src/ddk/models/config.py`
 
 **Logging:**
@@ -56,41 +56,41 @@
   - JSON and text formatters available
 
 **Testing:**
-- pytest 8.0+ - Test runner
+- pytest 9.1.1 - Test runner
 - pytest-asyncio 0.23+ - Async test support
 - pytest-cov 5.0+ - Coverage reporting
 - pytest-mock 3.14+ - Mock/patch utilities
 - pytest-playwright 0.5+ - Playwright integration testing
 
 **Code Quality:**
-- Ruff 0.5+ - Linter (E, F, I, N, UP, B, C4, SIM rules)
-- Pyright 1.1.380+ - Type checker (strict mode)
+- Ruff 0.16.0 - Linter (E, F, I, N, UP, B, C4, SIM rules)
+- Pyright 1.1.411 - Type checker (strict mode)
 - ESC (formatter configured but not explicitly referenced)
 
 ## Key Dependencies
 
 **Critical:**
-- `anthropic` 0.86.0 - LLM provider; blocks if `DDK_ANTHROPIC_API_KEY` unset
-- `langgraph` 1.1.3 - Workflow engine; core to design pipeline
-- `mcp` 1.26.0 - IDE integration protocol; enables Claude/OpenCode/Gemini integrations
+- `anthropic` 0.120.0 - LLM provider; blocks if `DDK_ANTHROPIC_API_KEY` unset
+- `langgraph` 1.2.9 - Workflow engine; core to design pipeline
+- `mcp` 1.28.1 - IDE integration protocol
 
 **Infrastructure & Protocol:**
-- `gitpython` 3.1.46 - Git repository read operations (worktree management via subprocess per D-04)
-- `playwright` 1.58.0 - Browser automation for screenshot diffing and visual validation
-- `pillow` 12.1.1 - Image processing for screenshot comparison (SSIM-based diffing)
+- `gitpython` 3.1.57 - Git repository read operations (worktree management via subprocess per D-04)
+- `playwright` 1.61.0 - Optional browser test dependency; production adapter not wired
+- `pillow` 12.3.0 - Image processing for screenshot comparison (SSIM-based diffing)
 
 **HTTP & Networking:**
 - `httpx` - HTTP client (dep of anthropic SDK)
-- `anyio` 4.13.0 - Async I/O abstraction layer
+- `anyio` 4.14.2 - Async I/O abstraction layer
 
 **Utilities:**
-- `typer` 0.24.1 - CLI argument parsing
-- `rich` 14.3.3 - Terminal output formatting and progress indicators
+- `typer` 0.27.0 - CLI argument parsing
+- `rich` 13.9.4 - Terminal output formatting and progress indicators
 - `structlog` 25.5.0 - Structured logging with secret redaction
 
 **Type Support:**
-- `pydantic` 2.12.5 - Data validation
-- `pydantic-settings` 2.13.1 - Environment-based configuration
+- `pydantic` 2.13.4 - Data validation
+- `pydantic-settings` 2.14.2 - Environment-based configuration
 - `typing-extensions` - Backward-compatible type hints
 
 ## Configuration
@@ -103,11 +103,11 @@
 **Key Environment Variables:**
 - `DDK_ANTHROPIC_API_KEY` - Anthropic API key (required for LLM operations)
 - `DDK_OPENAI_API_KEY` - OpenAI API key (optional, future support)
-- `DDK_LLM_PROVIDER` - LLM provider selection ("anthropic" | "openai" | "fake")
-- `DDK_LLM_MODEL` - Default LLM model (default: "claude-3-5-sonnet-20241022")
-- `DDK_LIGHT_MODEL` - Lightweight model for simple tasks
+- `DDK_LLM_PROVIDER` - Runtime provider (`anthropic`; other enum values are reserved)
+- `DDK_LLM_MODEL` - Default LLM model (default: `claude-sonnet-4-6`)
+- `DDK_LIGHT_MODEL` - Lightweight model (default: `claude-haiku-4-5-20251001`)
 - `DDK_COST_CAP_USD` - Cost limit per operation (default: 2.0)
-- `DDK_SANDBOX_MODE` - Sandbox type ("worktree" | "tempdir")
+- `DDK_SANDBOX_MODE` - Implemented sandbox type (`tempdir`; other values fail preflight)
 - `DDK_SANDBOX_TIMEOUT_SECONDS` - Command execution timeout (default: 300)
 - `DDK_PLAYWRIGHT_BROWSER` - Browser type ("chromium" | "firefox" | "webkit")
 - `DDK_LOG_LEVEL` - Log level (default: "INFO")
@@ -149,4 +149,4 @@
 
 ---
 
-*Stack analysis: [2025-03-29]*
+*Stack analysis: [2026-07-27]*

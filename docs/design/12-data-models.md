@@ -522,7 +522,7 @@ class LLMCallRecord(DDKBaseModel):
     call_id: str                       # "{node_name}-{timestamp}"
     schema_version: str = "1.0"
     node_name: str                     # LangGraph 노드 이름
-    model: str                         # "claude-3-5-sonnet-20241022"
+    model: str                         # "claude-sonnet-5-5"
     provider: str                      # "anthropic" | "openai"
     provider_model_id: str | None = None   # provider가 반환한 정확한 revision/header 값
     prompt_version: str | None = None      # "auto_fix@1.1" 형태
@@ -898,8 +898,8 @@ class DdalggakConfig(BaseSettings):
     llm_provider: LLMProvider = LLMProvider.ANTHROPIC
     anthropic_api_key: str = ""
     openai_api_key: str = ""
-    llm_default_model: str = "claude-3-5-sonnet-20241022"
-    llm_cheap_model: str = "claude-3-haiku-20240307"
+    llm_default_model: str = "claude-sonnet-5-5"
+    llm_cheap_model: str = "claude-haiku-5-5"
     llm_fallback_model: str = "gpt-4o-2024-11-20"
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     llm_max_tokens: int = Field(default=4096, ge=256, le=200_000)

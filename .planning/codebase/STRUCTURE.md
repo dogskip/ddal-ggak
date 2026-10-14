@@ -9,7 +9,10 @@ project-root/
 ├── src/
 │   └── ddk/                          # Main package
 │       ├── __init__.py               # Package entrypoint, version
-│       ├── cli.py                    # CLI commands (ddk preflight, ddk build-cert)
+│       ├── __main__.py               # `python -m ddk`
+│       ├── cli/                      # CLI commands, one module per group (run, demo, doctor, report, …)
+│       ├── i18n/                     # Korean source strings + English table
+│       ├── demo/                     # `ddk demo`: recorded model reply, bundled Vite project
 │       ├── server.py                 # MCP server (design_new tool)
 │       ├── installer.py              # Setup/installation helpers
 │       │
@@ -265,10 +268,11 @@ async def node_name(state: dict, **kwargs) -> dict:
 
 ### Entry Points
 
-**CLI:** `src/ddk/cli.py`
-- `ddk preflight` → PreflightDoctor
+**CLI:** `src/ddk/cli/`
+- `ddk doctor` / `ddk preflight` → PreflightDoctor
 - `ddk design new <IDEA>` → DesignGenerator
-- `ddk build-cert <CASE_JSON>` → PipelineRunner
+- `ddk run <image>` → PipelineRunner
+- `ddk demo` → `demo/runner.py`
 
 **Server:** `src/ddk/server.py`
 - MCP server exposing `design_new()` tool
@@ -412,8 +416,8 @@ async def run_case(self, case_input: CaseInput) -> dict[str, Any]:
    - Add service to ServiceContainer if needed
    - Update PipelineRunner to instantiate
 
-6. **Add CLI** (if user-facing) → `src/ddk/cli.py`
-   - New @app.command() or subcommand
+6. **Add CLI** (if user-facing) → a module under `src/ddk/cli/` (register it in `cli/app.py`)
+   - New @app.command() or subcommand; wrap user-facing text in `t()` and add its English entry
    - Call PipelineRunner or service directly
 
 7. **Write tests** → `tests/test_{domain}/*.py`
@@ -590,7 +594,7 @@ graph/
   └── nodes/
       └── depends on: services, graph/{state,context}
 
-cli.py, server.py
+cli/, server.py
   ├── depends on: services, graph, models
 
 tests/

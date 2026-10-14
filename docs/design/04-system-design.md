@@ -661,7 +661,7 @@ GSD의 강점은 범용 orchestration과 process discipline이다. `딸깍`이 �
  "case_id": "case-abc123", "node": "intent_extract", "duration_ms": 4333}
 
 {"timestamp": "2025-07-22T10:00:05.460Z", "level": "DEBUG", "event": "llm_call",
- "case_id": "case-abc123", "provider": "anthropic", "model": "claude-3-5-sonnet-20241022",
+ "case_id": "case-abc123", "provider": "anthropic", "model": "claude-sonnet-5-5",
  "input_tokens": 1842, "output_tokens": 612, "cost_usd": 0.0089}
 
 {"timestamp": "2025-07-22T10:00:12.001Z", "level": "WARNING", "event": "fix_attempt",

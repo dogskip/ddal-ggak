@@ -21,7 +21,7 @@
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 4096
 ```
@@ -178,7 +178,7 @@ repo 파일 구조를 분석하여 `RepoProfile` JSON을 반환한다.
 
 ### 모델 설정
 ```python
-model = "claude-3-haiku-20240307"  # 저렴한 모델 사용
+model = "claude-haiku-5-5"  # 경량 모델 사용
 temperature = 0.0
 max_tokens = 2048
 ```
@@ -252,7 +252,7 @@ def build_repo_scan_message(
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 3072
 ```
@@ -333,7 +333,7 @@ Output the complete GenerationPlan JSON.""",
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 4096
 ```
@@ -459,7 +459,7 @@ Generate the complete {node.target_path} file content now.""",
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 2048
 ```
@@ -576,7 +576,7 @@ Output the fix plan JSON.""",
 
 ### 모델 설정
 ```python
-model = "claude-3-haiku-20240307"  # 저렴한 모델 사용 (규칙 기반 수정)
+model = "claude-haiku-5-5"  # 경량 모델 사용 (규칙 기반 수정)
 temperature = 0.0
 max_tokens = 2048
 ```
@@ -609,7 +609,7 @@ Do NOT fix TypeScript errors (that's for auto-fix).
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 2048
 ```
@@ -760,7 +760,7 @@ IEEE 830(SRS), ISO 42010(Architecture), OpenAPI 3.1(API) 등 표준별 구조를
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 8192
 ```
@@ -917,7 +917,7 @@ def build_design_doc_message(
 
 ### 모델 설정
 ```python
-model = "claude-3-5-sonnet-20241022"
+model = "claude-sonnet-5-5"
 temperature = 0.0
 max_tokens = 4096
 ```

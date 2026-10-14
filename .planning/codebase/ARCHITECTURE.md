@@ -319,20 +319,23 @@ async def node_name(state: dict, **kwargs) -> dict:
 
 ### CLI Entry Point
 
-**Location:** `src/ddk/cli.py`
+**Location:** `src/ddk/cli/` (package, also started by `python -m ddk` through `src/ddk/__main__.py`)
 
 **Triggers:**
-- `ddk preflight` — check environment (Python, API key, dependencies)
+- `ddk run <image>` — run the full 10-node graph on a design image; `status`, `certify`, `report`,
+  `apply`, `rollback` read or act on the saved case
+- `ddk demo` — the same loop with a recorded model reply and no API key
+- `ddk doctor` / `ddk preflight` — check the environment (`doctor --install-browser` downloads Chromium)
 - `ddk design new <IDEA>` — run design studio (separate from delivery pipeline)
-- `ddk build-cert <CASE_JSON>` — run full 10-node pipeline on case input
+- `ddk proof`, `ddk audit`, `ddk init`, `ddk serve`, `ddk install`, `ddk version`
 
 **Responsibilities:**
-1. Parse CLI args
-2. Load DdalggakConfig from env
-3. Instantiate concrete adapters (ClaudeAdapter, TempDirSandbox, LocalGit, etc.)
+1. Parse CLI args (`cli/app.py`, one module per command group)
+2. Load DdalggakConfig from env (`cli/common.py`)
+3. Instantiate concrete adapters (ClaudeAdapter, TempDirSandbox, ChromiumBrowserAdapter, LocalGit, etc.) in `cli/runtime.py`
 4. Create RuntimeServices and PipelineRunner
 5. Invoke PipelineRunner.run_case(case_input)
-6. Return result or error
+6. Return result or error; user-facing text goes through `ddk.i18n.t()`
 
 ### Server Entry Point
 

@@ -1,12 +1,20 @@
 # LLM Provider 결정 및 어댑터 인터페이스
 
+> **Current implementation (2026-10-14):** Anthropic만 실행 지원한다.
+> OpenAI adapter와 provider fallback chain은 아래의 확장 설계이며 아직 구현되지 않았다.
+
 ## ADR-020 — Primary LLM Provider: Anthropic Claude
 
 ### 결정
 
-- **Primary:** `claude-3-5-sonnet-20241022` (Anthropic)
-- **Fallback:** `gpt-4o-2024-11-20` (OpenAI)
-- **경량:** `claude-3-haiku-20240307` (비용 민감 단순 작업)
+- **Primary:** `claude-sonnet-5-5` (Anthropic)
+- **Fallback:** 미구현 확장점(OpenAI 설정 enum만 예약)
+- **경량:** `claude-haiku-5-5` (비용 민감 단순 작업)
+
+Claude 5 계열은 기본값이 아닌 `temperature`·`top_p`·`top_k`를 받지 않고, 일부 모델은
+`tool_choice`로 도구 호출을 강제하는 요청도 거절한다. 어댑터가 모델별 규칙을 알고 요청을
+조정하므로(아래 "모델별 요청 규칙") 최신 세대를 기본값으로 둔다. 이전 세대
+(`claude-sonnet-4-6`, `claude-haiku-4-5-20251001` 등)도 같은 환경변수로 지정할 수 있다.
 
 ### 근거
 
@@ -17,19 +25,16 @@
 | 한국어 품질 | ✅ 우수 | ✅ 우수 |
 | JSON 출력 강제 | ✅ `tool_use` 방식 | ✅ `response_format` |
 | 가격/성능 | ✅ Sonnet 가성비 | 비슷 |
-| SDK Python | ✅ `anthropic>=0.40` | ✅ `openai>=1.40` |
+| SDK Python | ✅ `anthropic>=0.120` | 미설치/미구현 |
 
 ### 환경변수
 
 ```bash
-DDK_LLM_PROVIDER=anthropic          # anthropic | openai (default: anthropic)
+DDK_LLM_PROVIDER=anthropic          # 현재 anthropic만 실행 지원
 DDK_ANTHROPIC_API_KEY=sk-ant-...
-DDK_OPENAI_API_KEY=sk-...           # fallback용
-DDK_LLM_DEFAULT_MODEL=claude-3-5-sonnet-20241022
-DDK_LLM_CHEAP_MODEL=claude-3-haiku-20240307
-DDK_LLM_TEMPERATURE=0.0             # default: 0.0 (deterministic 우선)
-DDK_LLM_MAX_TOKENS=4096             # per-call cap
-DDK_LLM_COST_CAP_USD=2.0           # per-case cost cap
+DDK_LLM_MODEL=claude-sonnet-5-5
+DDK_LIGHT_MODEL=claude-haiku-5-5
+DDK_COST_CAP_USD=2.0                # per-case cost cap
 ```
 
 ---
@@ -38,14 +43,35 @@ DDK_LLM_COST_CAP_USD=2.0           # per-case cost cap
 
 | LangGraph 노드 | 모델 | 이유 |
 |----------------|------|------|
-| `intent_extract` | `claude-3-5-sonnet` | vision + JSON 출력, 정확도 우선 |
-| `repo_scan` | `claude-3-haiku` | 단순 패턴 분석, 비용 절감 |
-| `generate` | `claude-3-5-sonnet` | 긴 코드 생성, 품질 우선 |
-| `normalize` | `claude-3-haiku` | diff 적용, 단순 규칙 |
-| `auto_fix` attempt 1 | `claude-3-5-sonnet` | 창의적 수정 필요 |
-| `auto_fix` attempt 2 | `claude-3-5-sonnet` | 동일 |
-| `auto_fix` attempt 3 | `claude-3-5-sonnet` | 동일 |
-| `design` (design studio) | `claude-3-5-sonnet` | 문서 생성 품질 우선 |
+| `intent_extract` | `claude-sonnet-5-5` | vision + JSON 출력, 정확도 우선 |
+| `repo_scan` | `claude-haiku-5-5` | 단순 패턴 분석, 비용 절감 |
+| `generate` | `claude-sonnet-5-5` | 긴 코드 생성, 품질 우선 |
+| `normalize` | `claude-haiku-5-5` | diff 적용, 단순 규칙 |
+| `auto_fix` R-01~R-08 | LLM 없음 | 결정론적 규칙 |
+| `auto_fix` R-09 | `claude-haiku-5-5` | 제한된 파일 재생성 |
+| `design` (design studio) | `claude-sonnet-5-5` | 문서 생성 품질 우선 |
+
+---
+
+## 모델별 요청 규칙
+
+규칙과 단가는 `src/ddk/adapters/llm/model_traits.py` 한 곳에 있다(공식 문서 2026-10-14 기준).
+표에 없는 모델에는 모든 모델이 받는 설정만 보내고, 가장 비싼 단가로 비용을 계산한다.
+
+| 항목 | Claude 5 계열 | 이전 세대 (`sonnet-4-6`, `haiku-4-5` 등) |
+|------|---------------|------------------------------------------|
+| `temperature` | 보내지 않는다. 기본값이 아닌 값은 400 오류 | `LLMCallConfig.temperature` 전달 (Opus 4.7·4.8은 제외) |
+| 구조화 출력 | `fable-5-1`·`opus-5-5`·`sonnet-5-5`는 도구 호출 강제를 거절한다. `tool_choice: auto`에 호출 지시문을 붙이고, 도구 대신 JSON 본문으로 답해도 받아들인다. `haiku-5-5`는 강제 가능 | 도구 호출 강제 |
+| `effort` | `LLMCallConfig.effort`가 있으면 `output_config.effort`로 전달 | 지원 모델(`sonnet-4-6`, `opus-4-5` 이상)만 전달, 나머지는 생략 |
+| `max_tokens` | 생각(thinking)에 쓴 토큰도 포함되므로 답변 크기에 여유분을 더한다. `low` 2,048 · `medium` 8,192 · `high` 16,384 · `xhigh` 32,768 · `max` 65,536 (상한 128,000) | 요청한 값 그대로 |
+| 응답 읽기 | `text` 블록만 이어 붙인다. 생각 블록은 건너뛴다 | 동일 |
+| 종료 사유 | `refusal`은 오류. `max_tokens`·`model_context_window_exceeded`는 잘림으로 표시하고, 구조화 출력이 잘리면 오류 | 동일 |
+| 호출 방식 | 스트리밍으로 받는다. 긴 답변이 읽기 제한 시간에 걸리지 않는다 | 동일 |
+| 단가 | `haiku-5-5`는 프롬프트가 100,000 토큰을 넘으면 입력 0.50 · 출력 2.50 달러(100만 토큰당)로 오른다 | 고정 |
+
+`LLMCallRecord.temperature`는 요청한 값이며 Claude 5 계열에는 전달되지 않는다. 같은 입력의
+재생은 `RecordingLLMAdapter`/`ReplayLLMAdapter`의 녹화본으로 보장한다
+([18-reproducibility.md](18-reproducibility.md)).
 
 ---
 
@@ -94,10 +120,11 @@ class LLMResponse:
 @dataclass
 class LLMCallConfig:
     model: str
-    temperature: float = 0.0
-    max_tokens: int = 4096
+    temperature: float = 0.0  # 샘플링 설정을 받지 않는 모델에서는 무시된다
+    max_tokens: int = 4096  # 답변 크기. 생각하는 모델에는 여유분이 더해진다
     seed: int | None = None
     schema_version: str = "1.0"
+    effort: Literal["low", "medium", "high", "xhigh", "max"] | None = None  # None: 모델 기본값
 
 
 class LLMAdapter(Protocol):
@@ -146,22 +173,24 @@ class AnthropicAdapter:
         config: LLMCallConfig,
         output_schema: type,
     ) -> LLMResponse:
-        # tool_use 방식으로 JSON 출력 강제
-        # schema는 output_schema.model_json_schema()로 변환
-        tools = [{
-            "name": "structured_output",
-            "description": "Output structured data",
-            "input_schema": output_schema.model_json_schema(),
-        }]
-        response = await self._client.messages.create(
-            model=config.model,
-            max_tokens=config.max_tokens,
-            temperature=config.temperature,
-            messages=self._convert_messages(messages),
-            tools=tools,
-            tool_choice={"type": "tool", "name": "structured_output"},
-        )
-        # tool_use content block 파싱
+        # tool_use 방식으로 JSON 출력 유도. schema는 output_schema.model_json_schema()
+        traits = model_traits(config.model)  # model_traits.py: 모델별 요청 규칙·단가
+        request = {
+            "model": config.model,
+            "max_tokens": output_budget(config.model, config.max_tokens, config.effort),
+            "messages": self._convert_messages(messages),
+            "tools": [{"name": output_schema.__name__, "input_schema": schema}],
+        }
+        if traits.sampling:  # Claude 5 계열은 temperature를 받지 않는다
+            request["temperature"] = config.temperature
+        if traits.effort and config.effort:
+            request["output_config"] = {"effort": config.effort}
+        if traits.forced_tool:
+            request["tool_choice"] = {"type": "tool", "name": output_schema.__name__}
+        else:  # 강제를 거절하는 모델: auto + "이 도구를 호출하라"는 지시문을 system에 덧붙인다
+            request["tool_choice"] = {"type": "auto"}
+        # 스트리밍으로 끝까지 받은 뒤 tool_use 블록을 읽고, 없으면 본문 JSON을 읽고,
+        # 둘 다 없거나 중간에 잘렸으면 LLMResponseError
         ...
 
     @staticmethod
@@ -174,7 +203,7 @@ class AnthropicAdapter:
 
 ---
 
-## OpenAI Adapter 구현 계약
+## OpenAI Adapter 확장 계약 (미구현)
 
 ```python
 # src/ddk/adapters/llm/openai.py
@@ -268,16 +297,13 @@ class LLMCallRecorder:
 ```python
 # src/ddk/adapters/llm/cost_tracker.py
 
-COST_PER_1K_INPUT_TOKENS = {
-    "claude-3-5-sonnet-20241022": 0.003,
-    "claude-3-haiku-20240307": 0.00025,
-    "gpt-4o-2024-11-20": 0.0025,
-}
-COST_PER_1K_OUTPUT_TOKENS = {
-    "claude-3-5-sonnet-20241022": 0.015,
-    "claude-3-haiku-20240307": 0.00125,
-    "gpt-4o-2024-11-20": 0.01,
-}
+# 단가(USD / 100만 토큰, 입력 / 출력)는 model_traits.py의 estimate_cost()가 계산한다.
+#   claude-fable-5-1    10 / 50
+#   claude-opus-5-5      4 / 20
+#   claude-sonnet-5-5    2 / 10
+#   claude-haiku-5-5     0.10 / 0.50   (프롬프트 100,000 토큰 초과 시 0.50 / 2.50)
+#   claude-sonnet-4-6    3 / 15        claude-haiku-4-5  1 / 5
+# 목록에 없는 모델은 가장 비싼 단가(10 / 50)로 계산한다. 상한이 과소 집계되면 안 되기 때문이다.
 
 class CostTracker:
     def __init__(self, cap_usd: float):
@@ -285,10 +311,7 @@ class CostTracker:
         self._total_usd = 0.0
 
     def record(self, model: str, input_tokens: int, output_tokens: int) -> float:
-        cost = (
-            COST_PER_1K_INPUT_TOKENS.get(model, 0.003) * input_tokens / 1000
-            + COST_PER_1K_OUTPUT_TOKENS.get(model, 0.015) * output_tokens / 1000
-        )
+        cost = estimate_cost(model, input_tokens, output_tokens)
         self._total_usd += cost
         if self._total_usd > self._cap_usd:
             raise CostCapExceededError(
@@ -348,7 +371,7 @@ class LLMRetryPolicy:
         return delay
 ```
 
-### Provider Fallback 전략
+### Provider Fallback 전략 (미구현)
 
 ```python
 # src/ddk/adapters/llm/fallback.py
@@ -465,7 +488,7 @@ async def safe_llm_call(state: GraphState, adapter: LLMAdapter, ...) -> dict:
         }
 ```
 
-### 적용 규칙
+### 목표 적용 규칙 (현재 미구현)
 
 1. **모든 LLM 호출**은 `LLMFallbackChain`을 통해 수행한다.
 2. `LLMRetryableError`만 재시도한다. 나머지는 즉시 전파한다.

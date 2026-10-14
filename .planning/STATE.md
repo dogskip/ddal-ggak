@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 5 verified — v1.0 delivery pipeline complete
-stopped_at: Completed Phase 5 certification-cli-e2e execution
-last_updated: "2026-03-29T22:40:00+09:00"
+status: Phase 7 verified — self-checking loop complete
+stopped_at: Phase 7 validation recorded (07-VALIDATION.md)
+last_updated: "2026-10-14T04:54:20+09:00"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 22
-  completed_plans: 22
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 24
+  completed_plans: 24
 ---
 
 # Project State
@@ -19,17 +19,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Evidence-gated delivery — 증거 없이는 어떤 코드도 "완성"으로 인정하지 않는다.
-**Current focus:** v1.0 verified complete — all gates green
+**Current focus:** v1.2 self-checking loop verified; remaining gaps are listed in 07-VALIDATION.md
 
 ## Current Position
 
-Phase: 05 (certification-cli-e2e) — VERIFIED ✅ | Milestone v1.0 — COMPLETE ✅
+Phase: 07 (self-checking-loop) — VERIFIED ✅ (residual risk recorded)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 24
 - Average duration: —
 - Total execution time: 0 hours
 
@@ -86,13 +86,15 @@ Recent decisions affecting current work:
 - [Phase 02]: D-07 enforced: LLM haiku only when framework=other (static-first repo scan)
 - [Phase 02]: FakeLLMAdapter key collision prevention: 'you' (SemanticIntentExtractor) vs 'analyze' (DesignSystemInferencer)
 - [Phase 02]: enrich_profile() uses model_copy(update=...) for immutable RepoProfile updates — no Pydantic mutation
-- [Phase 02]: GenerationPlanner uses claude-3-5-sonnet-20241022 with temperature=0 (D-06)
+- [Phase 02]: Historical D-06 model choice was superseded in Phase 06 by config-injected
+  `claude-sonnet-4-6`.
 - [Phase 02]: ContextPackBuilder sort_key=(priority_rank,relation_rank,ceil(lines/50),normalized_path) per 24-context-pack-determinism.md §3.2
 - [Phase 02]: Use Optional[RunnableConfig] in node_wrapper (not RunnableConfig | None) for LangGraph KWARGS_CONFIG_KEYS compatibility
 - [Phase 02]: node_wrapper bridges LangGraph config injection to node kwargs via CONFIG_KEY_RUNTIME context extraction
 - [Phase 03]: Additive-only model extension: all new fields have defaults, zero breaking changes
 - [Phase 03]: float() cast in compute_drift_score: sum([]) returns int 0 — explicit cast ensures float return type contract
-- [Phase 03]: System prompt 'Generate' → FakeLLM key=generate; node-by-node LLM calls; model=claude-3-5-sonnet-20241022 temperature=0.0
+- [Phase 03]: System prompt 'Generate' → FakeLLM key=generate; node-by-node LLM calls.
+  The historical Claude 3.5 default was superseded in Phase 06.
 - [Phase 03]: LLM-based (haiku) normalization — NOT rule-based AST, per 16-prompt-design.md §6
 - [Phase 03]: D-08 Phase 3 completion: 7-node graph replacing plan→END with plan→generate→normalize→END
 - [Phase 04]: GraphState public contract is now 22 fields including failure_hash_history
@@ -100,19 +102,45 @@ Recent decisions affecting current work:
 - [Phase 04]: Playwright/SSIM integration tests remain opt-in with pytest marker; default regression uses -m 'not playwright'
 - [Post-v1.0]: Visual regression path aligned to Pillow-only LocalScreenshotDiffAdapter; `scikit-image` removed from runtime dependencies and Chromium-backed Playwright integration validated
 - [Post-v1.0]: MCP server tool surface (`design_new`, `preflight`, `ddk_version`), installer registration, slash-command templates, and `ddk serve/install` CLI flows are now regression-covered
+- [Phase 06]: Untrusted generated/evidence paths use one repo-relative containment boundary;
+  absolute, parent traversal, Windows drive/UNC, and symlink traversal are rejected.
+- [Phase 06]: Artifact existence means `mapped`, never behavioral `proved`; parity, superset,
+  and superiority remain denied until commit-bound verification receipts exist.
+- [Phase 06]: Image-input releases fail closed when visual evidence is absent.
+- [Phase 06]: Anthropic is the only implemented runtime provider; OpenAI/fake enum values are reserved.
+- [Phase 07]: The visual gate uses Pillow only (grayscale 8×8 block SSIM + mismatch share); missing
+  browser, preview server or evidence is `blocked`, waived only by `--no-visual`.
+- [Phase 07]: Browser lookup order is `DDK_CHROMIUM_PATH`, Playwright's headless shell, then an installed
+  Chrome/Chromium/Edge; availability is decided by a real launch (`probe`), not by a file check.
+- [Phase 07]: `ddk demo` replays a recorded model reply and runs everything else for real.
+- [Phase 07]: Each repair attempt gets a git checkpoint ref; going back is the user's `ddk rollback`, never automatic.
+- [Phase 07]: The CLI speaks English unless `DDK_LANG` or the locale says Korean.
+- [Phase 07]: Launch material is documentation only (`docs/launch/`); nothing is posted or published.
 
 ### Pending Todos
 
-- None
+- Run `ddk run` with a live Anthropic key on at least three real designs and add the good and bad cases to the README
+- Push the repository, then check the `uvx --from git+…` line, the new CI jobs and the social preview image
+- Configure the PyPI trusted publisher and the `pypi` environment for `release.yml`
+- Expose the image-to-code loop through MCP (today only Design Studio tools exist)
+- Automatic rollback on failure, git worktree isolation, sandbox readiness in `ddk doctor`
+- Commit-bound behavioral receipts and calibrated comparative benchmark corpus
+- Replayable EvidencePack and durable operator approval ledger
 
 ### Blockers/Concerns
 
-- [Research]: SSIM threshold 0.92 is assumption — Phase 4에서 실증 캘리브레이션 필요
-- [Research]: OpenAI SDK v2 `beta.chat.completions.parse()` 경로 확인 필요 (Phase 2)
-- [Research]: $0.10/case 비용 예산이 타이트함 — Phase 2에서 실제 API 비용 검증 필요
+- Browser-backed tests ran for real on 2026-10-14 (7 passed); the model replies in them are recorded.
+- Live Anthropic API behavior/cost was not exercised because no external credential was used.
+- The new CI jobs (`package`, `e2e`) and `release.yml` were never run on GitHub Actions.
+- `LICENSE` names `bjchoi` as the holder by assumption.
+- `TempDirSandbox` filters subprocess environment and external symlinks but does not
+  provide host filesystem, network, or CPU/memory isolation for malicious package scripts.
+- Proof maturity is intentionally P-0: 14/14 mapped, 0/14 behavior-proved.
+- Standards output is a mapping audit only: 13/16 mapped, 1 partial, 2 gaps.
+- SSIM threshold 0.92 and comparative score thresholds remain uncalibrated.
 
 ## Session Continuity
 
-Last session: 2026-03-29T23:20:00+09:00
-Stopped at: Completed post-v1.0 hardening and absolute final gate
+Last session: 2026-10-14
+Stopped at: Phase 07 implementation and validation recorded; nothing committed or pushed
 Resume file: None

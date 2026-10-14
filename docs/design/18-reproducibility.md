@@ -11,6 +11,8 @@
 
 딸깍의 파이프라인은 1단계(intent extraction)부터 확률적이다:
 - `temperature=0`이어도 같은 이미지를 같은 프롬프트로 넣어도 LLM 응답이 미세하게 다를 수 있다.
+- Claude 5 계열은 `temperature`·`top_p`·`top_k`를 받지 않는다. 어댑터가 이 값을 보내지 않으므로
+  결정론은 설정이 아니라 녹화본(`RecordingLLMAdapter`/`ReplayLLMAdapter`)으로 확보한다.
 - Anthropic/OpenAI API는 모델 버전이 조용히 업데이트되기도 한다.
 - `seed` 파라미터가 있어도 100% 결정론적 보장은 없다.
 
@@ -69,7 +71,7 @@ class LLMCallConfig(DDKBaseModel):
 class LLMCallRecord(DDKBaseModel):
     call_id: str
     node_name: str
-    model: str                     # "claude-3-5-sonnet-20241022" (정확한 버전 포함)
+    model: str                     # "claude-sonnet-5-5" (정확한 모델 ID 포함)
     provider: str                  # "anthropic" | "openai"
     temperature: float             # 실제 사용된 값
     seed: int | None               # 실제 사용된 seed

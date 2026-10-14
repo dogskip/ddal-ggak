@@ -11,6 +11,36 @@
 - [x] **Phase 3: Code Generation & Normalization** - 생성 계획에서 코드 생성 후 레포 규칙에 맞게 정규화 — forward path 완성 (completed 2026-03-29)
 - [x] **Phase 4: Validation & Self-Healing** - 샌드박스 검증, 비주얼 리그레션, 실패 분류, 자동수정 루프 — 최고 위험/복잡도 Phase (completed 2026-03-29)
 - [x] **Phase 5: Certification, CLI & E2E** - 증거팩, 스코어카드, 릴리즈 판정, LangGraph 통합, CLI 진입점, E2E 테스트 (completed 2026-03-29)
+- [x] **Phase 6: Trustworthy Hardening** - 경로/비밀정보 경계, 현재 모델 정책,
+  정직한 assurance, 검증 신선도 (completed 2026-07-27)
+- [x] **Phase 7: Self-checking Loop** - 실제 브라우저 비교, 자동 수정 규칙, 키 없는 `ddk demo`,
+  증거 보고서, 문서와 배포 파일 (completed 2026-10-14)
+
+### 2026-07-27 acceptance audit
+
+위 Phase 1~5의 `completed`는 계획된 구현 wave 종료를 뜻한다. 현재 소스와 실행 결과를
+다시 대조하면 다음 acceptance gap은 남아 있다.
+
+- production runtime은 `TempDirSandbox` + `NullPlaywrightAdapter`이므로 git-worktree 격리,
+  콘솔/요청 수집, visual capture가 기본 `ddk run`에 연결되지 않았다.
+- EvidencePack은 참조 묶음이며 독립 replay가 아직 증명되지 않았다.
+- scorecard는 로컬 품질 점수이고 GSD와의 교정된 comparative benchmark가 아니다.
+- PreflightDoctor는 Playwright browser binary와 sandbox readiness까지 점검하지 않는다.
+- 실 Anthropic API와 Chromium을 결합한 full E2E receipt가 없다.
+- `TempDirSandbox`는 host filesystem/network/resource를 차단하는 OS security
+  boundary가 아니므로 악의적 package script 실행은 지원 범위 밖이다.
+
+이 항목은 `.planning/REQUIREMENTS.md`의 Pending/Partial 상태가 권위이며, 과거 Phase 완료
+표시로 덮어쓰지 않는다. 이미지 case의 visual evidence 누락은 release gate에서 `blocked`된다.
+
+### 2026-10-14 갱신 (Phase 7 이후)
+
+- 닫힘: 기본 `ddk run` 이 실제 헤드리스 Chromium(`ChromiumBrowserAdapter`, `cli/runtime.py`)으로
+  스크린샷, 콘솔 오류, 실패한 요청을 수집한다. `ddk doctor` 는 브라우저를 실제로 실행해 확인한다.
+- 일부 닫힘: 실제 npm·Chromium 을 거치는 종단 테스트가 있으나 모델 응답은 녹화본이다.
+  실제 Anthropic 응답으로는 실행하지 못했다.
+- 남음: git worktree 격리(현재는 임시 복사본), EvidencePack 의 독립 재생, 보정된 비교 benchmark,
+  샌드박스 준비 상태 점검, OS 수준 격리, 실패 시 자동 되돌리기(현재는 사용자가 `ddk rollback` 실행).
 
 ## Phase Details
 
@@ -110,10 +140,41 @@ Execution waves:
 - [x] Real Chromium Playwright gate coverage + Pillow-only visual diff alignment
 - [x] MCP server, installer, and slash-command regression coverage
 
+### Phase 6: Trustworthy Hardening
+**Goal**: 생성 파일 경계를 봉쇄하고, 현재 모델 정책과 정직한 assurance 의미론을 적용해
+실제 운영 가능한 v1.1 기준선을 만든다.
+**Depends on**: Phase 5
+**Requirements**: HARD-01, HARD-02, HARD-03, HARD-04, HARD-05
+**Success Criteria**:
+  1. parent traversal, absolute path, Windows drive/UNC, symlink parent를 통한 sandbox/repo 외부 쓰기가 거부된다.
+  2. 은퇴한 Claude 3.x 기본값이 제거되고 primary/light 설정이 모든 graph LLM 서비스에 전달된다.
+  3. 빈 artifact와 단순 파일 존재가 `proved`, `superset`, 표준 `satisfied`로 승격되지 않는다.
+  4. focused regression, 전체 non-Playwright 회귀, Ruff, strict Pyright, package build, dependency audit 결과가 기록된다.
+**Plans**: 1 consolidated hardening plan
+
+Plans:
+- [x] 06-PLAN.md — path trust boundary, current model policy, honest assurance, planning freshness
+
+### Phase 7: Self-checking Loop
+**Goal**: 디자인 이미지에서 만든 코드를 빌드하고 실제 브라우저로 디자인과 비교해 고친 뒤 증거와 함께
+판정하는 절차를 키 없이 시연하고(`ddk demo`), 실제 저장소에서 끝까지 동작시키며, 설치·문서·배포 파일을 갖춘다.
+**Depends on**: Phase 6
+**Requirements**: LOOP-01, LOOP-02, LOOP-03, LOOP-04, LOOP-05
+**Success Criteria**:
+  1. 키 없이 `ddk demo` 가 첫 시안의 불일치(SSIM 0.89)를 잡아 자동 수정 1회 뒤 `ready` 로 끝난다.
+  2. 실제 npm·Chromium 을 거치는 종단 테스트(`DDK_E2E=1 pytest -m playwright`)가 통과한다.
+  3. 브라우저, 미리보기 서버, 시각 증거가 없으면 `blocked` 이고 `--no-visual` 로만 면제된다.
+  4. wheel 에 데모 프로젝트와 슬래시 명령이 들어 있고, 깨끗한 환경에 설치해 `ddk demo` 가 동작한다.
+  5. 전체 자동 회귀, 엄격 타입 검사, 린트, 패키지 빌드, 의존성 감사가 통과한다.
+**Plans**: 1 consolidated plan
+
+Plans:
+- [x] 07-PLAN.md — real-browser comparison, repair rules, keyless demo, first run, evidence report, docs, CI and release files
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -122,3 +183,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Code Generation & Normalization | 4/4 | Complete   | 2026-03-29 |
 | 4. Validation & Self-Healing | 6/6 | Complete ✅ verified | 2026-03-29 |
 | 5. Certification, CLI & E2E | delivered | Complete ✅ verified | 2026-03-29 |
+| 6. Trustworthy Hardening | 1/1 | Complete ✅ verified | 2026-07-27 |
+| 7. Self-checking Loop | 1/1 | Complete ✅ verified (residual risk in 07-VALIDATION.md) | 2026-10-14 |

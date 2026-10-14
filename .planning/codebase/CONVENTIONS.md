@@ -200,10 +200,10 @@ From `src/ddk/services/code_generator.py`:
 class CodeGenerator:
     """Calls the LLM once per planned node and assembles a GeneratedArtifactSet."""
 
-    def __init__(self, llm: LLMAdapter) -> None:
+    def __init__(self, llm: LLMAdapter, model: str = DEFAULT_PRIMARY_MODEL) -> None:
         self._llm = llm
         self._config = LLMCallConfig(
-            model="claude-3-5-sonnet-20241022",
+            model=model,
             temperature=0.0,
             max_tokens=4096,
         )

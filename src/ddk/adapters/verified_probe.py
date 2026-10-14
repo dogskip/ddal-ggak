@@ -5,12 +5,14 @@ from __future__ import annotations
 import asyncio
 import copy
 import hashlib
+from collections.abc import Coroutine
 from datetime import datetime
 from pathlib import Path
+from typing import Any, TypeVar
 from urllib.parse import urlsplit
 from uuid import uuid4
 
-from playwright.async_api import async_playwright
+from playwright.async_api import Page, Request, Route, async_playwright
 
 from ddk.adapters.verified_browser import (
     BrowserObservation,
@@ -26,6 +28,8 @@ from ddk.services.source_snapshot import SnapshotFile, manifest_digest
 from ddk.services.verified_change_engine import record_time
 from ddk.services.verified_change_store import VerifiedChangeStore
 from ddk.services.verified_host import observe_environment
+
+_T = TypeVar("_T")
 
 
 async def capture_probe(
@@ -61,6 +65,14 @@ async def capture_probe(
     cleanup = False
     bounding = None
     reason = None
+    page: Page | None = None
+    active_routes = 0
+    operations: list[asyncio.Task[Any]] = []
+
+    async def owned(operation: Coroutine[Any, Any, _T]) -> _T:
+        task = asyncio.create_task(operation)
+        operations.append(task)
+        return await asyncio.shield(task)
 
     def save(name: str, kind: str, payload: bytes) -> None:
         if (
@@ -81,6 +93,29 @@ async def capture_probe(
             }
         )
 
+    async def collect_page(*, fallback: bool = False) -> None:
+        if page is None or page.is_closed():
+            return
+        timeout = 500 if fallback else timeout_ms
+        known = {a["path"] for a in artifacts}
+        if "probe.ax.json" not in known:
+            snapshot = await owned(page.locator("body").aria_snapshot(timeout=timeout))
+            save(
+                "probe.ax.json",
+                "ax_snapshot",
+                canonical_json(
+                    {"format": "playwright-aria/1", "snapshot": redact_string(snapshot)}
+                ),
+            )
+        if "probe.dom.html" not in known:
+            save("probe.dom.html", "dom", redact_string(await owned(page.content())).encode())
+        if fallback and "probe.png" not in known:
+            save(
+                "probe.png",
+                "screenshot",
+                await owned(page.screenshot(animations="disabled", caret="hide", timeout=timeout)),
+            )
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
@@ -91,52 +126,71 @@ async def capture_probe(
         context = None
         try:
             async with asyncio.timeout(timeout_ms / 1000):
-                context = await browser.new_context(
-                    viewport={"width": viewport[0], "height": viewport[1]},
-                    locale="en-US",
-                    timezone_id="UTC",
-                    reduced_motion="reduce",
-                    color_scheme="light",
-                    device_scale_factor=1,
-                    accept_downloads=False,
-                    service_workers="block",
+                context = await owned(
+                    browser.new_context(
+                        viewport={"width": viewport[0], "height": viewport[1]},
+                        locale="en-US",
+                        timezone_id="UTC",
+                        reduced_motion="reduce",
+                        color_scheme="light",
+                        device_scale_factor=1,
+                        accept_downloads=False,
+                        service_workers="block",
+                    )
                 )
-                page = await context.new_page()
+                page = await owned(context.new_page())
                 page.on("console", observation.console)
                 page.on("pageerror", lambda error: observation.record("page_error", str(error)))
-                page.on(
-                    "requestfailed",
-                    lambda request: observation.record(
-                        "request_failed", request.failure or "unknown"
-                    ),
-                )
-                context.on("page", lambda additional: additional.close())
+                page.on("request", lambda request: observation.pending.add(request))
+                page.on("requestfinished", observation.finished)
+
+                def failed(request: Request) -> None:
+                    observation.record("request_failed", request.failure or "unknown")
+                    observation.finished(request)
+
+                page.on("requestfailed", failed)
+
+                async def close_extra_page(additional: Page) -> None:
+                    observation.record("popup_blocked")
+                    await additional.close()
+
+                context.on("page", close_extra_page)
                 page.on("download", lambda _: observation.record("download_blocked"))
-                await context.route(
-                    "**/*", lambda route: gate_request(route, origin, page, observation)
+
+                async def gated(route: Route) -> None:
+                    nonlocal active_routes
+                    active_routes += 1
+                    try:
+                        assert page is not None
+                        await gate_request(route, origin, page, observation)
+                    finally:
+                        active_routes -= 1
+                        observation.changed.set()
+
+                async def drain_requests() -> None:
+                    while observation.pending or active_routes:
+                        observation.changed.clear()
+                        await observation.changed.wait()
+
+                await owned(context.route("**/*", gated))
+                await owned(
+                    context.route_web_socket("**", lambda socket: block_socket(socket, observation))
                 )
-                await context.route_web_socket(
-                    "**", lambda socket: block_socket(socket, observation)
-                )
-                await page.clock.set_fixed_time(datetime.fromisoformat(frozen_time))
-                await page.goto(url, wait_until="load", timeout=timeout_ms)
+                await owned(page.clock.set_fixed_time(datetime.fromisoformat(frozen_time)))
+                await owned(page.goto(url, wait_until="load", timeout=timeout_ms))
+                await drain_requests()
                 selected = page.locator(selector) if selector else None
                 if selected is not None:
-                    await selected.first.wait_for(state="visible", timeout=timeout_ms)
-                    bounding = await selected.first.bounding_box()
-                image = await (selected.first if selected else page).screenshot(
-                    animations="disabled", caret="hide", timeout=timeout_ms
+                    await owned(selected.first.wait_for(state="visible", timeout=timeout_ms))
+                    bounding = await owned(selected.first.bounding_box())
+                image = await owned(
+                    (selected.first if selected else page).screenshot(
+                        animations="disabled", caret="hide", timeout=timeout_ms
+                    )
                 )
                 save("probe.png", "screenshot", image)
-                snapshot = await page.locator("body").aria_snapshot(timeout=timeout_ms)
-                save(
-                    "probe.ax.json",
-                    "ax_snapshot",
-                    canonical_json(
-                        {"format": "playwright-aria/1", "snapshot": redact_string(snapshot)}
-                    ),
-                )
-                save("probe.dom.html", "dom", redact_string(await page.content()).encode())
+                await collect_page()
+                await drain_requests()
                 if reference is not None:
                     comparison = compare_rgb(
                         read_regular(reference, 20 * 1024**2),
@@ -150,13 +204,23 @@ async def capture_probe(
         except Exception as error:
             reason = type(error).__name__
             observation.record("probe_failed", reason)
+            try:
+                async with asyncio.timeout(2):
+                    await collect_page(fallback=True)
+            except Exception as diagnostic_error:
+                observation.record("probe_diagnostics_unavailable", type(diagnostic_error).__name__)
         finally:
             observation.closing = True
             try:
                 async with asyncio.timeout(10):
-                    if context is not None:
-                        await context.close()
-                    await browser.close()
+                    try:
+                        if context is not None:
+                            await context.close()
+                    finally:
+                        try:
+                            await browser.close()
+                        finally:
+                            await asyncio.gather(*operations, return_exceptions=True)
                 cleanup = True
             except Exception:
                 reason = "cleanup_failed"

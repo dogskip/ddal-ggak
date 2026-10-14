@@ -11,6 +11,7 @@ import json
 import platform
 import socket
 import threading
+import time
 from collections.abc import AsyncIterator, Iterator
 from importlib.metadata import version
 from pathlib import Path
@@ -116,6 +117,8 @@ document.querySelector('#fixed-date').textContent=new Date().toISOString()</scri
     class App(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             app_hits.append(self.path)
+            if self.path == "/slow-missing":
+                time.sleep(1)
             if self.path == "/drop":
                 self.connection.shutdown(socket.SHUT_RDWR)
                 self.connection.close()
@@ -130,7 +133,7 @@ document.querySelector('#fixed-date').textContent=new Date().toISOString()</scri
                 )
                 self.end_headers()
                 return
-            self.send_response(404 if self.path == "/missing" else 200)
+            self.send_response(404 if self.path in {"/missing", "/slow-missing"} else 200)
             self.send_header("Content-Type", "text/html")
             self.end_headers()
             body = home
@@ -146,6 +149,8 @@ document.querySelector('#fixed-date').textContent=new Date().toISOString()</scri
                     f"new WebSocket('{external_url.replace('http:', 'ws:')}/socket');"
                     f"window.open('{external_url}/popup');</script><h1>Network</h1>"
                 )
+            elif self.path == "/popup-only":
+                body = "<h1>Popup</h1><script>window.open('about:blank')</script>"
             elif self.path == "/worker":
                 body = (
                     "<h1>Worker</h1><script>navigator.serviceWorker.register('/sw.js')"
@@ -160,6 +165,8 @@ document.querySelector('#fixed-date').textContent=new Date().toISOString()</scri
                 body = "<h1>Requests</h1><script>fetch('/drop').catch(()=>{})</script>"
             elif self.path == "/http":
                 body = "<h1>HTTP</h1><script>fetch('/missing')</script>"
+            elif self.path == "/late-http":
+                body = "<h1>Pending</h1><script>fetch('/slow-missing')</script>"
             elif self.path == "/snapshot":
                 body = (
                     "<style>html,body{margin:0;width:100%;height:100%;"

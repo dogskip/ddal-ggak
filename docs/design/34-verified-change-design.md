@@ -6,6 +6,8 @@
 
 **이 문서는 앞으로 구현할 계약이다. 현재 제품이 아래 기능·보장·성능을 제공한다는 설명이 아니다.** 설계 문서의 검토 완료는 제품 출시, 표준 인증, 업계 우위 또는 스타 수의 보증이 아니다.
 
+2026-10-14 후속 구현: 기본 로컬 Docker 검사 작업을 연결한다. 기존 Environment 필드를 실제 실행과 대조하고, 앱 명령·화면 관찰을 분리하며, 검사 코드와 기준을 읽기 전용으로 제공한다. DB·필수 필드 변경은 없다. [후속 계획](../../.planning/phases/08-verified-change/11-ISOLATED-EXECUTION-PLAN.md)과 [후속 검토](../../.planning/phases/08-verified-change/12-ISOLATED-EXECUTION-REVIEW.md)는 이전 독립 심사 이후 변경의 범위와 제한을 명시한다.
+
 ## 1. 권위와 범위
 
 이번 사용자 요청과 [설계 전 분석](reviews/2026-10-14-analysis.md)의 VCR-01~20을 설계 입력으로 사용한다. 현재 동작의 사실은 코드·실행 결과·기존 사용 안내가 우선한다. 미래 변경의 범위와 책임은 이 문서, 필드·저장 계약은 [저장 설계](35-verified-change-storage.md)와 [JSON Schema](verified-change/contract.schema.json), 수용 기준은 [검증 설계](36-verified-change-verification.md)가 담당한다. 필드·열거값이 다르면 JSON Schema에 맞춰 문서를 수정하며, 의미·관계 제약은 저장 설계의 별도 규칙을 따른다.

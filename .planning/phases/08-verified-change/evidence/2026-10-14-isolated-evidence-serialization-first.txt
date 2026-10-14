@@ -1,0 +1,420 @@
+.....FFFF..                                                              [100%]
+=================================== FAILURES ===================================
+_________ test_real_isolated_rgb_comparison_uses_frozen_reference[red] _________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-434/test_real_isolated_rgb_compari0')
+isolated_settings = BrowserSettings(environment={'os_name': 'Linux', 'os_version': '7.2.9-orbstack-00391-g2b298d05fbd4', 'architecture': '... frozen_time='2026-10-14T00:00:00+00:00', executable_path=None, cleanup_timeout_ms=10000, max_artifact_bytes=209715200)
+color = 'red'
+
+    @pytest.mark.parametrize("color", ["red", "blue"])
+    async def test_real_isolated_rgb_comparison_uses_frozen_reference(
+        tmp_path, isolated_settings, color
+    ):
+        import time
+        from dataclasses import replace
+    
+        from ddk.services.source_snapshot import manifest_digest
+        from tests.e2e.test_verified_evaluator import SERVER, flow
+        from tests.unit.adapters.test_verified_browser import png, step
+        from tests.unit.adapters.test_verified_evaluator import request_for
+    
+        request, original, _ = request_for(
+            tmp_path, kind="visual", argv=[], env_changes=isolated_settings.environment
+        )
+        (original / "serve.cjs").write_bytes(SERVER)
+        (original / "package-lock.json").write_bytes(b"{}")
+        (original / "index.html").write_text(
+            "<!doctype html><link rel='icon' href='data:,'>"
+            + f"<style>html,body{{margin:0;width:100%;height:100%;background:{color}}}</style>"
+        )
+        snapshot = capture_source(original)
+        definition = fixed_file(
+            "criteria/check.json",
+            flow(
+                "check-command",
+                [
+                    step(
+                        "snapshot",
+                        reference_path="references/approved.png",
+                        rgb_tolerance=0,
+                        max_mismatch_ppm=0,
+                    )
+                ],
+            ),
+        )
+        reference = fixed_file("references/approved.png", png((255, 0, 0), (320, 200)))
+        plan = decode_json(request.frozen_inputs[0].content)
+        plan.update(
+            preview_argv=["node", "serve.cjs", "{port}"],
+            visual_references=[
+                {
+                    "path": reference.path,
+                    "viewport": {"width": 320, "height": 200},
+                    "environment_sha256": record_digest(isolated_settings.environment),
+                    "mask_sha256": None,
+                }
+            ],
+        )
+        frozen = (
+            fixed_file("criteria/execution.json", canonical_json(plan)),
+            definition,
+            fixed_file("environment/environment.json", canonical_json(isolated_settings.environment)),
+            reference,
+        )
+        check = dict(
+            request.checks[0],
+            definition_sha256=definition.sha256,
+            viewport={"width": 320, "height": 200},
+            timeout_ms=15000,
+        )
+        request = replace(
+            request,
+            checks=(check,),
+            snapshot=snapshot,
+            input_tree_sha256=snapshot.tree_sha256,
+            frozen_inputs=frozen,
+            evaluator_sha256=manifest_digest(frozen[:2]),
+            environment_sha256=manifest_digest(frozen[2:3]),
+            deadline_ns=time.monotonic_ns() + 30_000_000_000,
+        )
+        before = owned_containers()
+        outcome = await VerifiedEvaluator().evaluate(request)
+        assert outcome.results[0]["status"] == ("passed" if color == "red" else "failed"), outcome
+        assert outcome.assurance == "isolated" and outcome.cleanup_complete
+        assert any(row.kind == "screenshot" for row in outcome.artifacts)
+        assert capture_source(original).tree_sha256 == snapshot.tree_sha256
+        assert owned_containers() == before
+>       persist_outcome("visual-" + color, outcome)
+
+tests/e2e/test_verified_isolated.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_verified_isolated.py:365: in persist_outcome
+    canonical_json(
+src/ddk/models/verified_change.py:55: in canonical_json
+    _inspect(record)
+src/ddk/models/verified_change.py:37: in _inspect
+    _inspect(item, depth + 1)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = ({'artifact_ids': ['8199926705094e509859a2c2e849fd8a', 'a7841bf0ecd0469bae204fbada08a46f', 'f401c6a2e9b244c7a994816585... 'candidate-policy-0'], 'check_id': 'check-command', 'duration_ms': 1133, 'evidence_origin': 'trusted-observer', ...},)
+depth = 1
+
+    def _inspect(value: object, depth: int = 0) -> None:
+        if depth > MAX_RECORD_DEPTH:
+            raise ContractError("record_depth_limit")
+        if isinstance(value, dict):
+            for key, item in cast(dict[object, object], value).items():
+                if not isinstance(key, str):
+                    raise ContractError("non_string_json_key")
+                _inspect(key, depth + 1)
+                _inspect(item, depth + 1)
+        elif isinstance(value, list):
+            for item in cast(list[object], value):
+                _inspect(item, depth + 1)
+        elif isinstance(value, str):
+            try:
+                value.encode("utf-8", errors="strict")
+            except UnicodeError as error:
+                raise ContractError("invalid_utf8") from error
+        elif isinstance(value, float):
+            if not math.isfinite(value):
+                raise ContractError("non_finite_number")
+        elif value is not None and not isinstance(value, (int, bool)):
+>           raise ContractError("non_json_value")
+E           ddk.models.verified_change.ContractError: non_json_value
+
+src/ddk/models/verified_change.py:50: ContractError
+________ test_real_isolated_rgb_comparison_uses_frozen_reference[blue] _________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-434/test_real_isolated_rgb_compari1')
+isolated_settings = BrowserSettings(environment={'os_name': 'Linux', 'os_version': '7.2.9-orbstack-00391-g2b298d05fbd4', 'architecture': '... frozen_time='2026-10-14T00:00:00+00:00', executable_path=None, cleanup_timeout_ms=10000, max_artifact_bytes=209715200)
+color = 'blue'
+
+    @pytest.mark.parametrize("color", ["red", "blue"])
+    async def test_real_isolated_rgb_comparison_uses_frozen_reference(
+        tmp_path, isolated_settings, color
+    ):
+        import time
+        from dataclasses import replace
+    
+        from ddk.services.source_snapshot import manifest_digest
+        from tests.e2e.test_verified_evaluator import SERVER, flow
+        from tests.unit.adapters.test_verified_browser import png, step
+        from tests.unit.adapters.test_verified_evaluator import request_for
+    
+        request, original, _ = request_for(
+            tmp_path, kind="visual", argv=[], env_changes=isolated_settings.environment
+        )
+        (original / "serve.cjs").write_bytes(SERVER)
+        (original / "package-lock.json").write_bytes(b"{}")
+        (original / "index.html").write_text(
+            "<!doctype html><link rel='icon' href='data:,'>"
+            + f"<style>html,body{{margin:0;width:100%;height:100%;background:{color}}}</style>"
+        )
+        snapshot = capture_source(original)
+        definition = fixed_file(
+            "criteria/check.json",
+            flow(
+                "check-command",
+                [
+                    step(
+                        "snapshot",
+                        reference_path="references/approved.png",
+                        rgb_tolerance=0,
+                        max_mismatch_ppm=0,
+                    )
+                ],
+            ),
+        )
+        reference = fixed_file("references/approved.png", png((255, 0, 0), (320, 200)))
+        plan = decode_json(request.frozen_inputs[0].content)
+        plan.update(
+            preview_argv=["node", "serve.cjs", "{port}"],
+            visual_references=[
+                {
+                    "path": reference.path,
+                    "viewport": {"width": 320, "height": 200},
+                    "environment_sha256": record_digest(isolated_settings.environment),
+                    "mask_sha256": None,
+                }
+            ],
+        )
+        frozen = (
+            fixed_file("criteria/execution.json", canonical_json(plan)),
+            definition,
+            fixed_file("environment/environment.json", canonical_json(isolated_settings.environment)),
+            reference,
+        )
+        check = dict(
+            request.checks[0],
+            definition_sha256=definition.sha256,
+            viewport={"width": 320, "height": 200},
+            timeout_ms=15000,
+        )
+        request = replace(
+            request,
+            checks=(check,),
+            snapshot=snapshot,
+            input_tree_sha256=snapshot.tree_sha256,
+            frozen_inputs=frozen,
+            evaluator_sha256=manifest_digest(frozen[:2]),
+            environment_sha256=manifest_digest(frozen[2:3]),
+            deadline_ns=time.monotonic_ns() + 30_000_000_000,
+        )
+        before = owned_containers()
+        outcome = await VerifiedEvaluator().evaluate(request)
+        assert outcome.results[0]["status"] == ("passed" if color == "red" else "failed"), outcome
+        assert outcome.assurance == "isolated" and outcome.cleanup_complete
+        assert any(row.kind == "screenshot" for row in outcome.artifacts)
+        assert capture_source(original).tree_sha256 == snapshot.tree_sha256
+        assert owned_containers() == before
+>       persist_outcome("visual-" + color, outcome)
+
+tests/e2e/test_verified_isolated.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_verified_isolated.py:365: in persist_outcome
+    canonical_json(
+src/ddk/models/verified_change.py:55: in canonical_json
+    _inspect(record)
+src/ddk/models/verified_change.py:37: in _inspect
+    _inspect(item, depth + 1)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = ({'artifact_ids': ['2cd1d26de04645c99352da157aed7d2f', 'b5658671b1f84451810761c6c4a3cbcb', '1bf42337422049e4805c16e165..., 'candidate-policy-0'], 'check_id': 'check-command', 'duration_ms': 733, 'evidence_origin': 'trusted-observer', ...},)
+depth = 1
+
+    def _inspect(value: object, depth: int = 0) -> None:
+        if depth > MAX_RECORD_DEPTH:
+            raise ContractError("record_depth_limit")
+        if isinstance(value, dict):
+            for key, item in cast(dict[object, object], value).items():
+                if not isinstance(key, str):
+                    raise ContractError("non_string_json_key")
+                _inspect(key, depth + 1)
+                _inspect(item, depth + 1)
+        elif isinstance(value, list):
+            for item in cast(list[object], value):
+                _inspect(item, depth + 1)
+        elif isinstance(value, str):
+            try:
+                value.encode("utf-8", errors="strict")
+            except UnicodeError as error:
+                raise ContractError("invalid_utf8") from error
+        elif isinstance(value, float):
+            if not math.isfinite(value):
+                raise ContractError("non_finite_number")
+        elif value is not None and not isinstance(value, (int, bool)):
+>           raise ContractError("non_json_value")
+E           ddk.models.verified_change.ContractError: non_json_value
+
+src/ddk/models/verified_change.py:50: ContractError
+_________ test_real_isolated_command_guard_preserves_original[source] __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-434/test_real_isolated_command_gua0')
+isolated_settings = BrowserSettings(environment={'os_name': 'Linux', 'os_version': '7.2.9-orbstack-00391-g2b298d05fbd4', 'architecture': '... frozen_time='2026-10-14T00:00:00+00:00', executable_path=None, cleanup_timeout_ms=10000, max_artifact_bytes=209715200)
+guard = 'source'
+
+    @pytest.mark.parametrize("guard", ["source", "output"])
+    async def test_real_isolated_command_guard_preserves_original(tmp_path, isolated_settings, guard):
+        import time
+        from dataclasses import replace
+    
+        from tests.unit.adapters.test_verified_evaluator import request_for
+    
+        command = (
+            "require('fs').writeFileSync('index.html','changed')"
+            if guard == "source"
+            else "console.log('한'.repeat(20))"
+        )
+        request, original, _ = request_for(
+            tmp_path, argv=["node", "-e", command], env_changes=isolated_settings.environment
+        )
+        (original / "package-lock.json").write_bytes(b"{}")
+        snapshot = capture_source(original)
+        request = replace(
+            request,
+            snapshot=snapshot,
+            input_tree_sha256=snapshot.tree_sha256,
+            checks=(dict(request.checks[0], timeout_ms=15000),),
+            deadline_ns=time.monotonic_ns() + 30_000_000_000,
+            limits={**request.limits, "max_output_bytes": 32},
+        )
+        before = owned_containers()
+        outcome = await VerifiedEvaluator().evaluate(request)
+        assert outcome.results[0]["reason_code"] == (
+            "source_changed" if guard == "source" else "output_limit"
+        ), outcome
+        assert outcome.cleanup_complete
+        assert outcome.input_tree_sha256 == (None if guard == "source" else snapshot.tree_sha256)
+        if guard == "output":
+            assert outcome.output_bytes == 61
+        assert capture_source(original).tree_sha256 == snapshot.tree_sha256
+        assert owned_containers() == before
+>       persist_outcome("guard-" + guard, outcome)
+
+tests/e2e/test_verified_isolated.py:349: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_verified_isolated.py:365: in persist_outcome
+    canonical_json(
+src/ddk/models/verified_change.py:55: in canonical_json
+    _inspect(record)
+src/ddk/models/verified_change.py:37: in _inspect
+    _inspect(item, depth + 1)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = ({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': 0, ...},)
+depth = 1
+
+    def _inspect(value: object, depth: int = 0) -> None:
+        if depth > MAX_RECORD_DEPTH:
+            raise ContractError("record_depth_limit")
+        if isinstance(value, dict):
+            for key, item in cast(dict[object, object], value).items():
+                if not isinstance(key, str):
+                    raise ContractError("non_string_json_key")
+                _inspect(key, depth + 1)
+                _inspect(item, depth + 1)
+        elif isinstance(value, list):
+            for item in cast(list[object], value):
+                _inspect(item, depth + 1)
+        elif isinstance(value, str):
+            try:
+                value.encode("utf-8", errors="strict")
+            except UnicodeError as error:
+                raise ContractError("invalid_utf8") from error
+        elif isinstance(value, float):
+            if not math.isfinite(value):
+                raise ContractError("non_finite_number")
+        elif value is not None and not isinstance(value, (int, bool)):
+>           raise ContractError("non_json_value")
+E           ddk.models.verified_change.ContractError: non_json_value
+
+src/ddk/models/verified_change.py:50: ContractError
+_________ test_real_isolated_command_guard_preserves_original[output] __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-434/test_real_isolated_command_gua1')
+isolated_settings = BrowserSettings(environment={'os_name': 'Linux', 'os_version': '7.2.9-orbstack-00391-g2b298d05fbd4', 'architecture': '... frozen_time='2026-10-14T00:00:00+00:00', executable_path=None, cleanup_timeout_ms=10000, max_artifact_bytes=209715200)
+guard = 'output'
+
+    @pytest.mark.parametrize("guard", ["source", "output"])
+    async def test_real_isolated_command_guard_preserves_original(tmp_path, isolated_settings, guard):
+        import time
+        from dataclasses import replace
+    
+        from tests.unit.adapters.test_verified_evaluator import request_for
+    
+        command = (
+            "require('fs').writeFileSync('index.html','changed')"
+            if guard == "source"
+            else "console.log('한'.repeat(20))"
+        )
+        request, original, _ = request_for(
+            tmp_path, argv=["node", "-e", command], env_changes=isolated_settings.environment
+        )
+        (original / "package-lock.json").write_bytes(b"{}")
+        snapshot = capture_source(original)
+        request = replace(
+            request,
+            snapshot=snapshot,
+            input_tree_sha256=snapshot.tree_sha256,
+            checks=(dict(request.checks[0], timeout_ms=15000),),
+            deadline_ns=time.monotonic_ns() + 30_000_000_000,
+            limits={**request.limits, "max_output_bytes": 32},
+        )
+        before = owned_containers()
+        outcome = await VerifiedEvaluator().evaluate(request)
+        assert outcome.results[0]["reason_code"] == (
+            "source_changed" if guard == "source" else "output_limit"
+        ), outcome
+        assert outcome.cleanup_complete
+        assert outcome.input_tree_sha256 == (None if guard == "source" else snapshot.tree_sha256)
+        if guard == "output":
+            assert outcome.output_bytes == 61
+        assert capture_source(original).tree_sha256 == snapshot.tree_sha256
+        assert owned_containers() == before
+>       persist_outcome("guard-" + guard, outcome)
+
+tests/e2e/test_verified_isolated.py:349: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/e2e/test_verified_isolated.py:365: in persist_outcome
+    canonical_json(
+src/ddk/models/verified_change.py:55: in canonical_json
+    _inspect(record)
+src/ddk/models/verified_change.py:37: in _inspect
+    _inspect(item, depth + 1)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = ({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': 0, ...},)
+depth = 1
+
+    def _inspect(value: object, depth: int = 0) -> None:
+        if depth > MAX_RECORD_DEPTH:
+            raise ContractError("record_depth_limit")
+        if isinstance(value, dict):
+            for key, item in cast(dict[object, object], value).items():
+                if not isinstance(key, str):
+                    raise ContractError("non_string_json_key")
+                _inspect(key, depth + 1)
+                _inspect(item, depth + 1)
+        elif isinstance(value, list):
+            for item in cast(list[object], value):
+                _inspect(item, depth + 1)
+        elif isinstance(value, str):
+            try:
+                value.encode("utf-8", errors="strict")
+            except UnicodeError as error:
+                raise ContractError("invalid_utf8") from error
+        elif isinstance(value, float):
+            if not math.isfinite(value):
+                raise ContractError("non_finite_number")
+        elif value is not None and not isinstance(value, (int, bool)):
+>           raise ContractError("non_json_value")
+E           ddk.models.verified_change.ContractError: non_json_value
+
+src/ddk/models/verified_change.py:50: ContractError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_verified_isolated.py::test_real_isolated_rgb_comparison_uses_frozen_reference[red]
+FAILED tests/e2e/test_verified_isolated.py::test_real_isolated_rgb_comparison_uses_frozen_reference[blue]
+FAILED tests/e2e/test_verified_isolated.py::test_real_isolated_command_guard_preserves_original[source]
+FAILED tests/e2e/test_verified_isolated.py::test_real_isolated_command_guard_preserves_original[output]
+4 failed, 7 passed in 131.38s (0:02:11)

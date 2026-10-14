@@ -1,0 +1,26 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_failed_worker_start_stops_later_checks_even_if_container_policy_passed __
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-419/test_failed_worker_start_stops0')
+
+    async def test_failed_worker_start_stops_later_checks_even_if_container_policy_passed(tmp_path):
+        request, _, _ = isolated_request(tmp_path)
+        request = replace(request, checks=(*request.checks, dict(request.checks[0], check_id="later")))
+        session = Session()
+    
+        async def failed(*args, **kwargs):
+            return BuildResult(False, "", "worker failed", 1)
+    
+        session.checker = failed
+        isolation = Isolation(session)
+        outcome = await VerifiedEvaluator(isolation=isolation).evaluate(request)
+>       assert len(isolation.requests) == 1
+E       assert 2 == 1
+E        +  where 2 = len([IsolationRequest(owned_root=PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-isolated-evaluate...rker');from ddk.adapters.verified_worker import main;main()"), uid=501, gid=20, timeout_s=1, cleanup_timeout_ms=10000)])
+E        +    where [IsolationRequest(owned_root=PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-isolated-evaluate...rker');from ddk.adapters.verified_worker import main;main()"), uid=501, gid=20, timeout_s=1, cleanup_timeout_ms=10000)] = <tests.unit.adapters.test_isolated_evaluator.Isolation object at 0x10d6d6810>.requests
+
+tests/unit/adapters/test_isolated_evaluator.py:223: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_failed_worker_start_stops_later_checks_even_if_container_policy_passed
+1 failed, 10 deselected in 0.14s

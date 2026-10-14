@@ -1,0 +1,88 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+___ test_actual_environment_mismatch_blocks_project_command[python_version] ____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-412/test_actual_environment_mismat0')
+field = 'python_version'
+
+    @pytest.mark.parametrize(
+        "field", ["python_version", "font_manifest_sha256", "browser_binary_sha256", "os_version"]
+    )
+    async def test_actual_environment_mismatch_blocks_project_command(tmp_path, field):
+        request, _, _ = isolated_request(tmp_path)
+        session = Session()
+        session.metadata[field] = "different"
+        outcome = await VerifiedEvaluator(isolation=Isolation(session)).evaluate(request)
+        assert outcome.results[0]["status"] == "unavailable"
+        assert not any(argv == tuple(request.checks[0]["command_argv"]) for role, argv in session.calls)
+>       assert outcome.environment_sha256 is None
+E       AssertionError: assert '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' is None
+E        +  where '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N...e_sha256='946dc9fbe80ab2d6cf42f9c3828529864f52d9b67fc98cafb75d0174abfdbbd1', cleanup_complete=False, output_bytes=None).environment_sha256
+
+tests/unit/adapters/test_isolated_evaluator.py:146: AssertionError
+_ test_actual_environment_mismatch_blocks_project_command[font_manifest_sha256] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-412/test_actual_environment_mismat1')
+field = 'font_manifest_sha256'
+
+    @pytest.mark.parametrize(
+        "field", ["python_version", "font_manifest_sha256", "browser_binary_sha256", "os_version"]
+    )
+    async def test_actual_environment_mismatch_blocks_project_command(tmp_path, field):
+        request, _, _ = isolated_request(tmp_path)
+        session = Session()
+        session.metadata[field] = "different"
+        outcome = await VerifiedEvaluator(isolation=Isolation(session)).evaluate(request)
+        assert outcome.results[0]["status"] == "unavailable"
+        assert not any(argv == tuple(request.checks[0]["command_argv"]) for role, argv in session.calls)
+>       assert outcome.environment_sha256 is None
+E       AssertionError: assert '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' is None
+E        +  where '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N...e_sha256='946dc9fbe80ab2d6cf42f9c3828529864f52d9b67fc98cafb75d0174abfdbbd1', cleanup_complete=False, output_bytes=None).environment_sha256
+
+tests/unit/adapters/test_isolated_evaluator.py:146: AssertionError
+_ test_actual_environment_mismatch_blocks_project_command[browser_binary_sha256] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-412/test_actual_environment_mismat2')
+field = 'browser_binary_sha256'
+
+    @pytest.mark.parametrize(
+        "field", ["python_version", "font_manifest_sha256", "browser_binary_sha256", "os_version"]
+    )
+    async def test_actual_environment_mismatch_blocks_project_command(tmp_path, field):
+        request, _, _ = isolated_request(tmp_path)
+        session = Session()
+        session.metadata[field] = "different"
+        outcome = await VerifiedEvaluator(isolation=Isolation(session)).evaluate(request)
+        assert outcome.results[0]["status"] == "unavailable"
+        assert not any(argv == tuple(request.checks[0]["command_argv"]) for role, argv in session.calls)
+>       assert outcome.environment_sha256 is None
+E       AssertionError: assert '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' is None
+E        +  where '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N...e_sha256='946dc9fbe80ab2d6cf42f9c3828529864f52d9b67fc98cafb75d0174abfdbbd1', cleanup_complete=False, output_bytes=None).environment_sha256
+
+tests/unit/adapters/test_isolated_evaluator.py:146: AssertionError
+_____ test_actual_environment_mismatch_blocks_project_command[os_version] ______
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-412/test_actual_environment_mismat3')
+field = 'os_version'
+
+    @pytest.mark.parametrize(
+        "field", ["python_version", "font_manifest_sha256", "browser_binary_sha256", "os_version"]
+    )
+    async def test_actual_environment_mismatch_blocks_project_command(tmp_path, field):
+        request, _, _ = isolated_request(tmp_path)
+        session = Session()
+        session.metadata[field] = "different"
+        outcome = await VerifiedEvaluator(isolation=Isolation(session)).evaluate(request)
+        assert outcome.results[0]["status"] == "unavailable"
+        assert not any(argv == tuple(request.checks[0]["command_argv"]) for role, argv in session.calls)
+>       assert outcome.environment_sha256 is None
+E       AssertionError: assert '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' is None
+E        +  where '7b63cc37d0684902f1ba560c9fdd0e9ea8b39c5ade81609c90bdae6ae8d65f36' = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N...e_sha256='946dc9fbe80ab2d6cf42f9c3828529864f52d9b67fc98cafb75d0174abfdbbd1', cleanup_complete=False, output_bytes=None).environment_sha256
+
+tests/unit/adapters/test_isolated_evaluator.py:146: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_actual_environment_mismatch_blocks_project_command[python_version]
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_actual_environment_mismatch_blocks_project_command[font_manifest_sha256]
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_actual_environment_mismatch_blocks_project_command[browser_binary_sha256]
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_actual_environment_mismatch_blocks_project_command[os_version]
+4 failed, 6 deselected in 0.26s

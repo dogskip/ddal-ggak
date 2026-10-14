@@ -1,0 +1,32 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_preview_output_is_collected_and_overflow_blocks_operation ________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-400/test_preview_output_is_collect0')
+local_socket = PosixPath('/tmp/ddk-socket-q71sswk0/socket')
+
+    async def test_preview_output_is_collected_and_overflow_blocks_operation(tmp_path, local_socket):
+        runner = DockerFixture()
+        original = runner.run
+    
+        async def run(command, *args, **kwargs):
+            if "logs" in command:
+                return BuildResult(False, "partial preview", "docker_output_limit", 125)
+            return await original(command, *args, **kwargs)
+    
+        runner.run = run
+        isolation = LocalDockerIsolation(runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"})
+    
+        async def operation(session):
+            await asyncio.sleep(0)
+            return BuildResult(True, "finished", "", 0)
+    
+        result = await isolation.execute(request(tmp_path), b"", operation=operation)
+>       assert not result.completed and result.cleanup_complete
+E       AssertionError: assert (not True)
+E        +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='...'nosuid', 'nodev'], 'shm_bytes': 268435456}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).completed
+
+tests/unit/adapters/test_verified_isolation.py:118: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_preview_output_is_collected_and_overflow_blocks_operation
+1 failed, 37 deselected in 0.09s

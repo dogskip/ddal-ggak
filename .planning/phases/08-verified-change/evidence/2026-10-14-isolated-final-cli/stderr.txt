@@ -1,0 +1,3 @@
+{"event": "Processing request of type CallToolRequest", "logger": "mcp.server.lowlevel.server", "level": "info", "timestamp": "2026-10-14T05:05:46.272012Z"}
+{"event": "Processing request of type ListToolsRequest", "logger": "mcp.server.lowlevel.server", "level": "info", "timestamp": "2026-10-14T05:05:46.316135Z"}
+{"event": "Processing request of type CallToolRequest", "logger": "mcp.server.lowlevel.server", "level": "info", "timestamp": "2026-10-14T05:05:46.317741Z"}

@@ -1,0 +1,79 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_requested_cleanup_budget_is_validated_and_applied ____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-410/test_requested_cleanup_budget_0')
+local_socket = PosixPath('/tmp/ddk-socket-8zcfj__0/socket')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x108ac2d20>
+
+    async def test_requested_cleanup_budget_is_validated_and_applied(tmp_path, local_socket, monkeypatch):
+        import ddk.adapters.verified_isolation as module
+    
+        runner = DockerFixture()
+        isolation = LocalDockerIsolation(runner=runner, environ={"DOCKER_HOST": f"unix://{local_socket}"})
+        original = request(tmp_path)
+>       invalid = replace(original, cleanup_timeout_ms=0)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/adapters/test_verified_isolation.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = IsolationRequest(owned_root=PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytes...p_command=('node', 'server.js'), checker_command=('python3', '-m', 'owned_checker'), uid=1000, gid=1000, timeout_s=300)
+changes = {'cleanup_timeout_ms': 0, 'owned_root': PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-.../mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-410/test_requested_cleanup_budget_0/owned/criteria'), ...}
+
+    def replace(obj, /, **changes):
+        """Return a new object replacing specified fields with new values.
+    
+        This is especially useful for frozen classes.  Example usage::
+    
+          @dataclass(frozen=True)
+          class C:
+              x: int
+              y: int
+    
+          c = C(1, 2)
+          c1 = replace(c, x=3)
+          assert c1.x == 3 and c1.y == 2
+        """
+    
+        # We're going to mutate 'changes', but that's okay because it's a
+        # new dict, even if called with 'replace(obj, **my_changes)'.
+    
+        if not _is_dataclass_instance(obj):
+            raise TypeError("replace() should be called on dataclass instances")
+    
+        # It's an error to have init=False fields in 'changes'.
+        # If a field is not in 'changes', read its value from the provided obj.
+    
+        for f in getattr(obj, _FIELDS).values():
+            # Only consider normal fields or InitVars.
+            if f._field_type is _FIELD_CLASSVAR:
+                continue
+    
+            if not f.init:
+                # Error if this field is specified in changes.
+                if f.name in changes:
+                    raise ValueError(f'field {f.name} is declared with '
+                                     'init=False, it cannot be specified with '
+                                     'replace()')
+                continue
+    
+            if f.name not in changes:
+                if f._field_type is _FIELD_INITVAR and f.default is MISSING:
+                    raise ValueError(f"InitVar {f.name!r} "
+                                     'must be specified with replace()')
+                changes[f.name] = getattr(obj, f.name)
+    
+        # Create the new object, which calls __init__() and
+        # __post_init__() (if defined), using all of the init fields we've
+        # added and/or left in 'changes'.  If there are values supplied in
+        # changes that aren't fields, this will correctly raise a
+        # TypeError.
+>       return obj.__class__(**changes)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: IsolationRequest.__init__() got an unexpected keyword argument 'cleanup_timeout_ms'
+
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/dataclasses.py:1588: TypeError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_requested_cleanup_budget_is_validated_and_applied
+1 failed, 38 deselected in 0.09s

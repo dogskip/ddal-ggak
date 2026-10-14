@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.planning/phases/08-verified-change/evidence/2026-10-14-isolated-installed-check.py", line 91, in <module>
+    asyncio.run(main())
+  File "/Users/bjchoi/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Users/bjchoi/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bjchoi/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.planning/phases/08-verified-change/evidence/2026-10-14-isolated-installed-check.py", line 37, in main
+    assert str(installed).startswith('/tmp/ddk-isolated-installed/'), installed
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: /private/tmp/ddk-isolated-installed/lib/python3.12/site-packages/ddk

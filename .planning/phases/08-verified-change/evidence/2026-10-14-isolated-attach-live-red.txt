@@ -1,0 +1,46 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_real_policy_and_separate_mounts_with_headless_browser __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-432/test_real_policy_and_separate_0')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    async def test_real_policy_and_separate_mounts_with_headless_browser(tmp_path, images):
+        before = owned_containers()
+        request = replace(isolation_request(tmp_path, images), app_command=("node", "-e", "console.log('startup-captured');setInterval(()=>{},1000)"))
+    
+        async def operation(session):
+            app = await session.app(
+                (
+                    "node",
+                    "-e",
+                    "const f=require('fs'); console.log(JSON.stringify("
+                    "['/criteria','/results','/var/run/docker.sock'].map(p=>f.existsSync(p))))",
+                ),
+                timeout_s=3,
+            )
+            checker = await session.checker(
+                (
+                    "python3",
+                    "-I",
+                    "-c",
+                    "import os,json; print(json.dumps([os.path.exists('/workspace'),"
+                    "os.path.exists('/criteria/private.txt')]))",
+                ),
+                timeout_s=3,
+            )
+            assert json.loads(app.stdout) == [False, False, False]
+            assert json.loads(checker.stdout) == [False, True]
+            return BuildResult(True, "verified", "", 0)
+    
+        result = await LocalDockerIsolation().execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=True, cleanup_complete=True, assurance='isolated', code='isolation_un...headless': True, 'chromium_sandbox': True}}, app_stdout='startup-captured
+E         ', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=True, cleanup_complete=True, assurance='isolated', code='isolation_un...headless': True, 'chromium_sandbox': True}}, app_stdout='startup-captured\n', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:436: AssertionError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_verified_isolated.py::test_real_policy_and_separate_mounts_with_headless_browser
+1 failed, 10 deselected in 3.60s

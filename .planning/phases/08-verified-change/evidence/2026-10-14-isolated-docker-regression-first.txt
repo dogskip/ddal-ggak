@@ -1,0 +1,549 @@
+EEEEEEEEEFF                                                              [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_real_default_engine_observes_versions_and_blocks_regressions[ready] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_default_engine_observes_versions_and_blocks_regressions[regression] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_default_engine_observes_versions_and_blocks_regressions[spoofed] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_default_engine_observes_versions_and_blocks_regressions[external] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+____ ERROR at setup of test_real_default_cli_and_mcp_share_isolated_result _____
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_isolated_rgb_comparison_uses_frozen_reference[red] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_isolated_rgb_comparison_uses_frozen_reference[blue] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_isolated_command_guard_preserves_original[source] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+_ ERROR at setup of test_real_isolated_command_guard_preserves_original[output] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x10b8112e0>, _basetemp=PosixPath...folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421'), _retention_count=3, _retention_policy='all')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    @pytest.fixture(scope="module")
+    async def isolated_settings(tmp_path_factory, images):
+        from ddk.adapters.verified_isolation import POLICY_SHA256
+    
+        request = isolation_request(tmp_path_factory.mktemp("isolated-environment"), images)
+        write_worker_bundle(request.criteria_dir)
+        isolation = LocalDockerIsolation()
+        availability = await isolation.preflight()
+    
+        async def operation(session):
+            checker = await session.checker(
+                _ENTRY,
+                timeout_s=15,
+                stdin=canonical_json({"mode": "probe", "browser_executable": None}),
+            )
+            assert checker.success, checker.stderr
+            app = await session.app(("node", "-e", _NODE_ENV, "npm"), timeout_s=5)
+            assert app.success, app.stderr
+            return BuildResult(
+                True,
+                canonical_json(
+                    {**decode_json(checker.stdout.encode()), **decode_json(app.stdout.encode())}
+                ).decode(),
+                "",
+                0,
+            )
+    
+        result = await isolation.execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...9661d3d94da29315e482bc5b6c0683416af77fcefab7f2b104b3fc6bc90'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:64: AssertionError
+=================================== FAILURES ===================================
+__________ test_real_policy_and_separate_mounts_with_headless_browser __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421/test_real_policy_and_separate_0')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    async def test_real_policy_and_separate_mounts_with_headless_browser(tmp_path, images):
+        before = owned_containers()
+        request = isolation_request(tmp_path, images)
+    
+        async def operation(session):
+            app = await session.app(
+                (
+                    "node",
+                    "-e",
+                    "const f=require('fs'); console.log(JSON.stringify("
+                    "['/criteria','/results','/var/run/docker.sock'].map(p=>f.existsSync(p))))",
+                ),
+                timeout_s=3,
+            )
+            checker = await session.checker(
+                (
+                    "python3",
+                    "-I",
+                    "-c",
+                    "import os,json; print(json.dumps([os.path.exists('/workspace'),"
+                    "os.path.exists('/criteria/private.txt')]))",
+                ),
+                timeout_s=3,
+            )
+            assert json.loads(app.stdout) == [False, False, False]
+            assert json.loads(checker.stdout) == [False, True]
+            return BuildResult(True, "verified", "", 0)
+    
+        result = await LocalDockerIsolation().execute(request, b"", operation=operation)
+>       assert result.completed, result
+E       AssertionError: IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...8ee6f156833fa179d105e3f66a5b383cc9259c060e32064e12a899013ea'}, app_stdout='', app_stderr='', app_output_complete=False)
+E       assert False
+E        +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...8ee6f156833fa179d105e3f66a5b383cc9259c060e32064e12a899013ea'}, app_stdout='', app_stderr='', app_output_complete=False).completed
+
+tests/e2e/test_verified_isolated.py:435: AssertionError
+_______ test_real_cancel_repeatedly_removes_descendants_and_owned_tasks ________
+
+fut = <coroutine object Event.wait at 0x10c15fd80>, timeout = 25
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        If the task suppresses the cancellation and returns a value instead,
+        that value is returned.
+    
+        This function is a coroutine.
+        """
+        # The special case for timeout <= 0 is for the following case:
+        #
+        # async def test_waitfor():
+        #     func_started = False
+        #
+        #     async def func():
+        #         nonlocal func_started
+        #         func_started = True
+        #
+        #     try:
+        #         await asyncio.wait_for(func(), 0)
+        #     except asyncio.TimeoutError:
+        #         assert not func_started
+        #     else:
+        #         assert False
+        #
+        # asyncio.run(test_waitfor())
+    
+    
+        if timeout is not None and timeout <= 0:
+            fut = ensure_future(fut)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise TimeoutError from exc
+    
+        async with timeouts.timeout(timeout):
+>           return await fut
+                   ^^^^^^^^^
+
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <asyncio.locks.Event object at 0x10c117920 [unset]>
+
+    async def wait(self):
+        """Block until the internal flag is true.
+    
+        If the internal flag is true on entry, return True
+        immediately.  Otherwise, block until another coroutine calls
+        set() to set the flag to true, then return True.
+        """
+        if self._value:
+            return True
+    
+        fut = self._get_loop().create_future()
+        self._waiters.append(fut)
+        try:
+>           await fut
+E           asyncio.exceptions.CancelledError
+
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/locks.py:212: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-421/test_real_cancel_repeatedly_re0')
+images = ('sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c', 'sha256:56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50')
+
+    async def test_real_cancel_repeatedly_removes_descendants_and_owned_tasks(tmp_path, images):
+        before = owned_containers()
+        for index in range(2):
+            folder = tmp_path / str(index)
+            folder.mkdir()
+            request = isolation_request(folder, images)
+            started = asyncio.Event()
+    
+            async def operation(session, started=started):
+                started.set()
+                await session.app(
+                    (
+                        "node",
+                        "-e",
+                        "require('child_process').spawn('node',['-e','setInterval(()=>{},1000)'],"
+                        "{detached:true,stdio:'ignore'}).unref();setInterval(()=>{},1000)",
+                    ),
+                    timeout_s=15,
+                )
+                return BuildResult(True, "", "", 0)
+    
+            task = asyncio.create_task(
+                LocalDockerIsolation().execute(request, b"", operation=operation)
+            )
+>           await asyncio.wait_for(started.wait(), 25)
+
+tests/e2e/test_verified_isolated.py:469: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x10c204540>
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() <= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+>               raise TimeoutError from exc_val
+E               TimeoutError
+
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/timeouts.py:115: TimeoutError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_verified_isolated.py::test_real_policy_and_separate_mounts_with_headless_browser
+FAILED tests/e2e/test_verified_isolated.py::test_real_cancel_repeatedly_removes_descendants_and_owned_tasks
+ERROR tests/e2e/test_verified_isolated.py::test_real_default_engine_observes_versions_and_blocks_regressions[ready]
+ERROR tests/e2e/test_verified_isolated.py::test_real_default_engine_observes_versions_and_blocks_regressions[regression]
+ERROR tests/e2e/test_verified_isolated.py::test_real_default_engine_observes_versions_and_blocks_regressions[spoofed]
+ERROR tests/e2e/test_verified_isolated.py::test_real_default_engine_observes_versions_and_blocks_regressions[external]
+ERROR tests/e2e/test_verified_isolated.py::test_real_default_cli_and_mcp_share_isolated_result
+ERROR tests/e2e/test_verified_isolated.py::test_real_isolated_rgb_comparison_uses_frozen_reference[red]
+ERROR tests/e2e/test_verified_isolated.py::test_real_isolated_rgb_comparison_uses_frozen_reference[blue]
+ERROR tests/e2e/test_verified_isolated.py::test_real_isolated_command_guard_preserves_original[source]
+ERROR tests/e2e/test_verified_isolated.py::test_real_isolated_command_guard_preserves_original[output]
+2 failed, 9 errors in 26.65s

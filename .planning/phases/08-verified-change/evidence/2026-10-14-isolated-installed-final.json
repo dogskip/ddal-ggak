@@ -1,0 +1,148 @@
+{
+  "actual_isolated_command": {
+    "artifact_ids": [
+      "candidate-command-0",
+      "candidate-policy-0"
+    ],
+    "check_id": "installed-command",
+    "duration_ms": 1868,
+    "evidence_origin": "project-report",
+    "executed_count": null,
+    "exit_code": 0,
+    "failed_count": null,
+    "phase": "candidate",
+    "reason_code": null,
+    "retry_count": 0,
+    "round_no": 0,
+    "skipped_count": null,
+    "status": "passed"
+  },
+  "checked_at": "2026-10-14T05:04:23.524820+00:00",
+  "cleanup_complete": true,
+  "cwd": "/private/tmp",
+  "environment": {
+    "app_image_sha256": "43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c",
+    "architecture": "aarch64",
+    "assurance": "isolated",
+    "browser_binary_sha256": "c1aa0fb5b6c60eb093df69d9e40dd50ab2039d3ccba8836ef21880340a77af64",
+    "browser_version": "149.0.7827.0",
+    "checker_image_sha256": "56753233a98626af7856fc3f3296b2953172aa810bd1d4f2b8e28c2493d03b50",
+    "endpoint_kind": "local",
+    "fixture_sha256": "a0f0674cc7440f7fd4b8a296ab7ec0ab05dc4930f6ea1cbdf4478c838bcb32c2",
+    "font_manifest_sha256": "93dc05cb7b145a75502d70d1a55c9d9bc90a63c9637098cb9a6388c86ebe3367",
+    "locale": "en-US",
+    "lockfile_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "node_version": "22.23.3",
+    "os_name": "Linux",
+    "os_version": "7.2.9-orbstack-00391-g2b298d05fbd4",
+    "package_manager": "npm",
+    "package_manager_version": "10.9.9",
+    "playwright_version": "1.61.0",
+    "policy_sha256": "88b0b4af7f2e8175602bbf2fa286bc6fb6e7ceabd477178a2bd51809280fd346",
+    "python_version": "3.12.3",
+    "record_type": "environment",
+    "runtime_name": "docker",
+    "runtime_version": "29.8.2",
+    "schema_version": "verified-change/1",
+    "timezone": "UTC"
+  },
+  "installed_cli_commands": 5,
+  "installed_mcp_tools": [
+    "ddk_status",
+    "ddk_verify",
+    "ddk_version",
+    "design_new",
+    "preflight"
+  ],
+  "installed_package": "/private/tmp/ddk-isolated-installed/lib/python3.12/site-packages/ddk",
+  "original_preserved": true,
+  "policy_evidence": {
+    "app_id": "dbf314feeee2ab63052fbea4bb5117912b4a26781599ddb8bd4b35e13f760e85",
+    "app_name": "ddk-4b3d0ea5-d0d0-472d-a43d-c7022667bd93-app",
+    "app_probe": {
+      "cap_eff": 0,
+      "cpu_period": 100000,
+      "cpu_quota": 100000,
+      "external_blocked": true,
+      "gid": 20,
+      "interfaces": [
+        "lo"
+      ],
+      "memory_max": 2147483648,
+      "mnt_ns": "mnt:[4026532821]",
+      "mounts": {
+        "/": "ro",
+        "/tmp": "rw",
+        "/workspace": "rw"
+      },
+      "net_ns": "net:[4026532826]",
+      "no_new_privs": 1,
+      "pid_ns": "pid:[4026532824]",
+      "pids_max": 256,
+      "seccomp": 2,
+      "shm_bytes": 268435456,
+      "tmp_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec",
+        "relatime"
+      ],
+      "uid": 501
+    },
+    "boundary": "linux-vm",
+    "browser": {
+      "chromium_sandbox": true,
+      "headless": true,
+      "started": true
+    },
+    "checker_id": "3db2edb1ce77540629efea966803d9cf4912ddaed561e8c2e2343a3166bfba0c",
+    "checker_name": "ddk-4b3d0ea5-d0d0-472d-a43d-c7022667bd93-checker",
+    "checker_probe": {
+      "cap_eff": 0,
+      "cpu_period": 100000,
+      "cpu_quota": 100000,
+      "external_blocked": true,
+      "gid": 20,
+      "interfaces": [
+        "lo"
+      ],
+      "memory_max": 2147483648,
+      "mnt_ns": "mnt:[4026533028]",
+      "mounts": {
+        "/": "ro",
+        "/criteria": "ro",
+        "/results": "rw",
+        "/tmp": "rw"
+      },
+      "net_ns": "net:[4026532826]",
+      "no_new_privs": 1,
+      "pid_ns": "pid:[4026533031]",
+      "pids_max": 256,
+      "seccomp": 2,
+      "shm_bytes": 268435456,
+      "tmp_flags": [
+        "rw",
+        "nosuid",
+        "nodev",
+        "noexec",
+        "relatime"
+      ],
+      "uid": 501
+    },
+    "context": "orbstack",
+    "endpoint": "unix:///Users/bjchoi/.orbstack/run/docker.sock",
+    "owner": "4b3d0ea5-d0d0-472d-a43d-c7022667bd93",
+    "policy_sha256": "88b0b4af7f2e8175602bbf2fa286bc6fb6e7ceabd477178a2bd51809280fd346",
+    "seccomp_sha256": "eff094b4486cc71022412e6ff3ea1b49637f24d9b2c61c2a472c57834132e35f"
+  },
+  "python_modules_compared": 151,
+  "result": "passed",
+  "scope": "installed imports, CLI/MCP registration, byte equality and actual isolated command; browser scenarios use the source-checkout E2E evidence",
+  "sdist_sha256": "894918c2625cec237e13c383aa7ba37a7d027cd750d70be37ed768108174ab64",
+  "wheel_sha256": "e171f37cc788d4f5fee6e49149d7bb075ae357f9a732226e4e51d7074958d005",
+  "worker_bundle_sha256": "6c74334a4878f1dea186eca70b0ca2c6e1ff3d983a1ca52c4c7b846b48551db9",
+  "source_distribution_excludes_internal_evidence": true,
+  "source_distribution_checker_recipe": true,
+  "wheel_contents_check": "ddalggak-1.0.0-py3-none-any.whl: ok"
+}

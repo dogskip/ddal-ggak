@@ -1,0 +1,43 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_multiple_checks_reuse_private_source_without_recreating_originals ____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-405/test_multiple_checks_reuse_pri0')
+
+    async def test_multiple_checks_reuse_private_source_without_recreating_originals(tmp_path):
+        request, _, _ = isolated_request(tmp_path)
+        request = replace(request, checks=(*request.checks, dict(request.checks[0], check_id="later")))
+        isolation = Isolation()
+>       outcome = await VerifiedEvaluator(isolation=isolation).evaluate(request)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/adapters/test_isolated_evaluator.py:188: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/ddk/adapters/verified_evaluator.py:346: in evaluate
+    return await evaluate_isolated(
+src/ddk/adapters/isolated_evaluator.py:181: in evaluate_isolated
+    path.write_bytes(file.content)
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1036: in write_bytes
+    with self.open(mode='wb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-isolated-evaluate-349dn1s_/criteria/inputs/criteria/execution.json')
+mode = 'wb', buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       PermissionError: [Errno 13] Permission denied: '/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-isolated-evaluate-349dn1s_/criteria/inputs/criteria/execution.json'
+
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/pathlib.py:1013: PermissionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_multiple_checks_reuse_private_source_without_recreating_originals
+1 failed, 9 deselected in 0.17s

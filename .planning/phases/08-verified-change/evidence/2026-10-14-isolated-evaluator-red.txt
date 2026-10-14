@@ -1,0 +1,36 @@
+F....F                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_default_evaluator_executes_command_in_verified_app_and_preserves_original _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-399/test_default_evaluator_execute0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109b2eae0>
+
+    async def test_default_evaluator_executes_command_in_verified_app_and_preserves_original(tmp_path, monkeypatch):
+        request, original, _ = isolated_request(tmp_path)
+        host = AsyncMock()
+        monkeypatch.setattr("ddk.adapters.verified_evaluator.SubprocessBuildRunner", lambda: host)
+        isolation = Isolation()
+        outcome = await VerifiedEvaluator(isolation=isolation).evaluate(request)
+>       assert outcome.assurance == "isolated"
+E       AssertionError: assert None == 'isolated'
+E        +  where None = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N..._tree_sha256='946dc9fbe80ab2d6cf42f9c3828529864f52d9b67fc98cafb75d0174abfdbbd1', cleanup_complete=True, output_bytes=0).assurance
+
+tests/unit/adapters/test_isolated_evaluator.py:111: AssertionError
+_____________ test_cleanup_failure_cannot_supply_isolated_success ______________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-399/test_cleanup_failure_cannot_su0')
+
+    async def test_cleanup_failure_cannot_supply_isolated_success(tmp_path):
+        request, _, _ = isolated_request(tmp_path)
+        isolation = Isolation()
+        isolation.cleanup = False
+        outcome = await VerifiedEvaluator(isolation=isolation).evaluate(request)
+>       assert not outcome.cleanup_complete
+E       AssertionError: assert not True
+E        +  where True = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N..._tree_sha256='946dc9fbe80ab2d6cf42f9c3828529864f52d9b67fc98cafb75d0174abfdbbd1', cleanup_complete=True, output_bytes=0).cleanup_complete
+
+tests/unit/adapters/test_isolated_evaluator.py:137: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_default_evaluator_executes_command_in_verified_app_and_preserves_original
+FAILED tests/unit/adapters/test_isolated_evaluator.py::test_cleanup_failure_cannot_supply_isolated_success
+2 failed, 4 passed in 0.19s

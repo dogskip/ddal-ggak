@@ -1,0 +1,1654 @@
+E.EEEEEEEEEEEEEEEEEEEEE....s.                                            [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_real_cli_verification_requires_authority_and_retains_headless_evidence _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+fixturedef = <FixtureDef argname='settings' scope='function' baseid='tests/e2e/test_cli_verified_change.py'>
+request = <SubRequest 'settings' for <Function test_real_cli_verification_requires_authority_and_retains_headless_evidence>>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_fixture_setup(fixturedef: FixtureDef, request) -> object | None:
+        if (
+            fixturedef.argname == "event_loop_policy"
+            and fixturedef.func.__module__ != __name__
+        ):
+            warnings.warn(
+                PytestDeprecationWarning(_EVENT_LOOP_POLICY_FIXTURE_DEPRECATION_WARNING),
+            )
+        asyncio_mode = _get_asyncio_mode(request.config)
+        if not _is_asyncio_fixture_function(fixturedef.func):
+            if asyncio_mode == Mode.STRICT:
+                # Ignore async fixtures without explicit asyncio mark in strict mode
+                # This applies to pytest_trio fixtures, for example
+                return (yield)
+            if not _is_coroutine_or_asyncgen(fixturedef.func):
+                return (yield)
+        default_loop_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+        loop_scope = (
+            getattr(fixturedef.func, "_loop_scope", None)
+            or default_loop_scope
+            or fixturedef.scope
+        )
+        runner_fixture_id = f"_{loop_scope}_scoped_runner"
+        runner = request.getfixturevalue(runner_fixture_id)
+        # Prevent the runner closing before the fixture's async teardown.
+        runner_fixturedef = request._get_active_fixturedef(runner_fixture_id)
+        runner_fixturedef.addfinalizer(
+            functools.partial(fixturedef.finish, request=request)
+        )
+        synchronizer = _fixture_synchronizer(fixturedef, runner, request)
+        _make_asyncio_fixture_function(synchronizer, loop_scope)
+        with MonkeyPatch.context() as c:
+            c.setattr(fixturedef, "func", synchronizer)
+>           hook_result = yield
+                          ^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+____ ERROR at setup of test_steps_share_context_but_different_flows_do_not _____
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_steps_share_context_but_different_flows_do_not>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_runtime_errors_and_denied_connections_never_pass[/network] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_runtime_errors_and_denied_connections_never_pass[/network]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_runtime_errors_and_denied_connections_never_pass[/worker] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_runtime_errors_and_denied_connections_never_pass[/worker]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_runtime_errors_and_denied_connections_never_pass[/errors] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_runtime_errors_and_denied_connections_never_pass[/errors]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_runtime_errors_and_denied_connections_never_pass[/requests] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_runtime_errors_and_denied_connections_never_pass[/requests]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_runtime_errors_and_denied_connections_never_pass[/http] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_runtime_errors_and_denied_connections_never_pass[/http]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_rgb_requires_approved_reference_without_generating_a_baseline[False] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_rgb_requires_approved_reference_without_generating_a_baseline[False]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_rgb_requires_approved_reference_without_generating_a_baseline[True] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_rgb_requires_approved_reference_without_generating_a_baseline[True]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+__ ERROR at setup of test_deadline_and_cancellation_close_browser_and_context __
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_deadline_and_cancellation_close_browser_and_context>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_internal_redirect_is_explicitly_unavailable_and_external_is_blocked[/internal-redirect-unavailable-redirect_unavailable] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_internal_redirect_is_explicitly_unavailable_and_external_is_blocked[/internal-redirect-unavailable-redirect_unavailable]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_internal_redirect_is_explicitly_unavailable_and_external_is_blocked[/redirect-failed-redirect_blocked] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_internal_redirect_is_explicitly_unavailable_and_external_is_blocked[/redirect-failed-redirect_blocked]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_evaluator_observes_both_versions_and_rejects_regression[ready] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_evaluator_observes_both_versions_and_rejects_regression[ready]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_evaluator_observes_both_versions_and_rejects_regression[regression] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_evaluator_observes_both_versions_and_rejects_regression[regression]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_evaluator_observes_both_versions_and_rejects_regression[spoofed] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_evaluator_observes_both_versions_and_rejects_regression[spoofed]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_visual_reference_is_fixed_and_color_changes_fail[red] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_visual_reference_is_fixed_and_color_changes_fail[red]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_visual_reference_is_fixed_and_color_changes_fail[blue] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_visual_reference_is_fixed_and_color_changes_fail[blue]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_rejects_changed_private_source_and_request_output_overflow[command-source] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_rejects_changed_private_source_and_request_output_overflow[command-source]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-source] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-source]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_rejects_changed_private_source_and_request_output_overflow[output-limit] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_rejects_changed_private_source_and_request_output_overflow[output-limit]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_rejects_changed_private_source_and_request_output_overflow[timeout-output] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_rejects_changed_private_source_and_request_output_overflow[timeout-output]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+_ ERROR at setup of test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-output] _
+
+    @pytest.fixture
+    async def settings() -> BrowserSettings:
+        env = environment()
+        env.update(
+            os_name=platform.system(),
+            os_version=platform.release(),
+            architecture=platform.machine(),
+            runtime_name="pytest-local",
+            runtime_version=version("pytest"),
+            python_version=platform.python_version(),
+            node_version="not-used",
+            package_manager="not-used",
+            package_manager_version="not-used",
+        )
+        env["fixture_sha256"] = FIXTURE
+        env["playwright_version"] = version("playwright")
+        env["assurance"] = "trusted-local"
+        env["locale"] = "en-US"
+        env["timezone"] = "UTC"
+        async with async_playwright() as playwright:
+            binary = playwright.chromium.executable_path
+            if not Path(binary).is_file():
+                build = next(
+                    parent for parent in Path(binary).parents if parent.name.startswith("chromium-")
+                )
+                shell = build.parent / build.name.replace("chromium-", "chromium_headless_shell-")
+>               binary = str(next(shell.rglob("chrome-headless-shell")))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               StopIteration
+
+tests/e2e/test_verified_browser.py:75: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = <Coroutine test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-output]>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:944: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:455: in _async_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/asyncio/base_events.py:691: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def setup():
+>       res = await fixture_function(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+.venv/lib/python3.12/site-packages/pytest_asyncio/plugin.py:451: RuntimeError
+=========================== short test summary info ============================
+ERROR tests/e2e/test_cli_verified_change.py::test_real_cli_verification_requires_authority_and_retains_headless_evidence
+ERROR tests/e2e/test_verified_browser.py::test_steps_share_context_but_different_flows_do_not
+ERROR tests/e2e/test_verified_browser.py::test_runtime_errors_and_denied_connections_never_pass[/network]
+ERROR tests/e2e/test_verified_browser.py::test_runtime_errors_and_denied_connections_never_pass[/worker]
+ERROR tests/e2e/test_verified_browser.py::test_runtime_errors_and_denied_connections_never_pass[/errors]
+ERROR tests/e2e/test_verified_browser.py::test_runtime_errors_and_denied_connections_never_pass[/requests]
+ERROR tests/e2e/test_verified_browser.py::test_runtime_errors_and_denied_connections_never_pass[/http]
+ERROR tests/e2e/test_verified_browser.py::test_rgb_requires_approved_reference_without_generating_a_baseline[False]
+ERROR tests/e2e/test_verified_browser.py::test_rgb_requires_approved_reference_without_generating_a_baseline[True]
+ERROR tests/e2e/test_verified_browser.py::test_deadline_and_cancellation_close_browser_and_context
+ERROR tests/e2e/test_verified_browser.py::test_internal_redirect_is_explicitly_unavailable_and_external_is_blocked[/internal-redirect-unavailable-redirect_unavailable]
+ERROR tests/e2e/test_verified_browser.py::test_internal_redirect_is_explicitly_unavailable_and_external_is_blocked[/redirect-failed-redirect_blocked]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_evaluator_observes_both_versions_and_rejects_regression[ready]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_evaluator_observes_both_versions_and_rejects_regression[regression]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_evaluator_observes_both_versions_and_rejects_regression[spoofed]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_visual_reference_is_fixed_and_color_changes_fail[red]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_visual_reference_is_fixed_and_color_changes_fail[blue]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[command-source]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-source]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[output-limit]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[timeout-output]
+ERROR tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-output]
+6 passed, 1 skipped, 2245 deselected, 22 errors in 86.17s (0:01:26)

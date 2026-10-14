@@ -49,7 +49,7 @@ uv build
 
 ## D1: 자료 계약과 모델 없는 검사
 
-상태: 계약·저장·원본 포착·모델 없는 조율과 공통 서비스를 구현했다. 설치한 wheel의 schema 조회와 CLI·MCP 연결을 확인했다. 실제 검사 연결은 명시적으로 승인한 trusted-local 범위이며 기본 격리 실행은 미완료다.
+상태: 계약·저장·원본 포착·모델 없는 조율과 공통 서비스를 구현했다. 설치한 wheel의 schema 조회와 CLI·MCP 연결을 확인했다. 실제 검사 연결은 명시적으로 승인한 trusted-local과 로컬 Docker 격리 경로다. 후속 구현과 실행 근거는 11·12번 문서 및 isolated-final 기록을 따른다.
 
 contract_storage 담당은 `models/verified_change.py`, `services/verified_change_store.py`, `services/durable_files.py`, `security/file_access.py`와 집중 시험을 맡는다. root는 기존 자료 저장과 호출 경계를 연결한다.
 
@@ -64,7 +64,7 @@ contract_storage 담당은 `models/verified_change.py`, `services/verified_chang
 
 ## D2: 실제 동작·화면·실행 경계
 
-상태: 격리 정책과 브라우저 연결을 구현하고 실제 trusted-local 검사에 headless 동작·차단·취소 후 오류 수거를 연결했다. 격리 검사 작업 전송은 미구현이며 로컬 Docker 소켓도 없다. 실제 격리 실행 성공은 확인하지 못했다.
+상태: 격리 정책과 브라우저 연결, 앱·검사 작업 전송을 구현했다. 현재 macOS ARM64·OrbStack Linux 환경에서 실제 기본 검사, headless 동작·RGB·외부 요청 차단·취소·하위 실행 정리를 확인했다. 다른 장비·실행기와 실제 Vite·Next.js 전체 지원은 별도 조건이다. 상세 범위는 [후속 검토](12-ISOLATED-EXECUTION-REVIEW.md)를 따른다.
 
 - RuntimeValidator의 공통 경계를 통해 고정 Flow를 실행한다. 한 Flow는 같은 context, 다른 Flow는 다른 context다.
 - 이동·클릭·입력·기대 결과·화면 비교·오류·실패 요청을 독립 관찰 자료로 연결한다.
@@ -107,11 +107,15 @@ contract_storage 담당은 `models/verified_change.py`, `services/verified_chang
 | 작업 | 범위 | 상태 |
 |---|---|---|
 | 공통 사용자 서비스 | 사례 가져오기·검사·순수 조회·민감 자료를 기본 제외한 ZIP·관리된 반영·복구 | 구현·독립 재검토 완료 |
-| 실제 검사 연결 | 고정 실행계획·명령·시험 보고·headless Flow·복사본 실행·정리 | trusted-local 실제 실행·변조·상한·미정 차단 확인, 격리 검사 작업은 미구현 |
+| 실제 검사 연결 | 고정 실행계획·명령·시험 보고·headless Flow·복사본 실행·정리 | trusted-local 및 로컬 Docker 실제 실행·변조·상한·미정 차단 확인 |
 | CLI | 기존 명령을 유지하는 change 하위 명령 5개·종료 값·JSON 출력 | 실제 기본 서비스·evaluator·headless 확인 |
 | MCP | 동일 서비스 검사·조회, 실제 stdio 협상·입력 오류·동일 요청·취소 | SDK 해석 전 원문 보호·조회 무변경·권한 거부 확인 |
 | 3심·회귀 | 독립 2·3심 반례, 전체 일반·브라우저·타입·형식·설치 검사 | 필수 잔여 지적 없음, 최종 결과는 별도 기록 |
 
-새 자동 수정, 실제 격리 성공, 외부 사용자의 반복 사용을 완료로 간주하지 않는다. 현재 main에 공개한 범위와 이 분기의 구현을 구분한다.
+새 자동 수정과 외부 사용자의 반복 사용을 완료로 간주하지 않는다. 실제 격리는 현재 확인한 장비·실행기·고정 시험 앱 범위다. 현재 main에 공개한 범위와 이 분기의 구현을 구분한다.
 
 현재 기능 판단은 [재평가](09-FUNCTIONAL-ASSESSMENT.md), 심사 범위는 [새 3심 기록](10-FUNCTIONAL-REVIEW.md)을 따른다. 최종 명령 결과와 소스 SHA는 `evidence/2026-10-14-functional-final.json`에 기록한다.
+
+## 2026-10-14 실제 격리 후속 구현
+
+기본 경로의 실제 작업 전송과 환경 대조를 추가했다. 명세와 수용 조건은 [후속 계획](11-ISOLATED-EXECUTION-PLAN.md), 반례와 검토 범위는 [후속 검토](12-ISOLATED-EXECUTION-REVIEW.md), 최신 실행 근거는 `evidence/2026-10-14-isolated-final.json`이다. 앞의 functional-final은 이전 소스의 기록으로 유지한다. 같은 담당자의 세 단계 검토를 독립 3심으로 표시하지 않는다. 다음 기능 우선순위는 새 수정 요청의 재검사·비용 예약·중단 복구 연결이다.

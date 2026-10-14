@@ -110,9 +110,9 @@ class TestB1ReleaseGateEmptyState:
         sc = calc.calculate(state)
         decision = gate.decide(state, sc)
         blocker_ids = [b.id for b in decision.blockers]
-        assert any(
-            "missing" in bid.lower() or "evidence" in bid.lower() for bid in blocker_ids
-        ), f"must have a missing-evidence blocker, got: {blocker_ids}"
+        assert any("missing" in bid.lower() or "evidence" in bid.lower() for bid in blocker_ids), (
+            f"must have a missing-evidence blocker, got: {blocker_ids}"
+        )
 
     def test_gate_ready_with_clean_runtime(self):
         """Gate should approve when runtime passes cleanly."""
@@ -349,9 +349,7 @@ class TestB5RollbackCleanup:
         assert (git_repo / "src" / "component.tsx").exists()
 
         await adapter.rollback_to(git_repo, ref, force=True)
-        assert not (git_repo / "src").exists(), (
-            "rollback_to must clean untracked directories"
-        )
+        assert not (git_repo / "src").exists(), "rollback_to must clean untracked directories"
 
 
 # ──────────────────────────────────────────────
@@ -369,13 +367,9 @@ class TestB6PreflightEnvLoading:
             result_json = preflight()
             result = json.loads(result_json)
             checks = result["checks"]
-            api_check = next(
-                (r for r in checks if r["check"] == "DDK_ANTHROPIC_API_KEY"), None
-            )
+            api_check = next((r for r in checks if r["check"] == "DDK_ANTHROPIC_API_KEY"), None)
             assert api_check is not None
-            assert api_check["ok"] is True, (
-                "preflight must detect API key from environment"
-            )
+            assert api_check["ok"] is True, "preflight must detect API key from environment"
 
 
 # ──────────────────────────────────────────────
@@ -410,16 +404,8 @@ class TestB8LoggingActivation:
         from ddk.cli import main as cli_callback
 
         with patch("ddk.logging.setup.configure_logging") as mock_log:
-            ctx = MagicMock()
-            ctx.invoked_subcommand = "run"
             with contextlib.suppress(SystemExit, typer.Exit):
-                cli_callback(
-                    ctx,
-                    case_dir="",
-                    log_level="INFO",
-                    dry_run=False,
-                    output=Path("."),
-                )
+                cli_callback(log_level="INFO", output=Path("."))
             mock_log.assert_called_once()
 
 

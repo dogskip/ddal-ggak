@@ -12,11 +12,20 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import TypedDict
+
+from ddk.adapters.chromium_browser import (
+    PLAYWRIGHT_BUILD,
+    BrowserUnavailableError,
+    ChromiumBrowserAdapter,
+)
+from ddk.models.config import DdalggakConfig
 
 
 class CheckResult(TypedDict):
@@ -37,7 +46,14 @@ class PreflightDoctor:
     3. At least one LLM API key env var is set
     4. Node.js is on PATH (for build runner)
     5. ``git`` version >= 2.28
+    6. Headless Chromium for the screenshot comparison (optional)
+
+    Pass the loaded settings so a key kept in ``.env`` counts; without them only the process
+    environment is read.
     """
+
+    def __init__(self, config: DdalggakConfig | None = None) -> None:
+        self._config = config
 
     def run_checks(self) -> list[CheckResult]:
         """Execute all preflight checks and return results.
@@ -51,7 +67,12 @@ class PreflightDoctor:
             self._check_api_key(),
             self._check_node(),
             self._check_git(),
+            self._check_browser(),
         ]
+
+    def check_browser(self) -> CheckResult:
+        """Whether a headless Chromium is available for the screenshot comparison."""
+        return self._check_browser()
 
     # ------------------------------------------------------------------
     # Individual checks
@@ -85,18 +106,23 @@ class PreflightDoctor:
             )
         return CheckResult(
             name="uv package manager",
-            status="fail",
-            detail="not found on PATH — install from https://docs.astral.sh/uv/",
-            critical=True,
+            status="warn",
+            detail="not found on PATH — only needed to install ddk with uv (https://docs.astral.sh/uv/)",
+            critical=False,
         )
 
     def _check_api_key(self) -> CheckResult:
-        """Check that at least one recognised LLM API key is set."""
+        """Check the API keys for the provider that is actually implemented."""
+        if self._config is not None and self._config.anthropic_api_key:
+            return CheckResult(
+                name="LLM API key",
+                status="pass",
+                detail="set (environment or .env)",
+                critical=True,
+            )
         key_vars = [
             "DDK_ANTHROPIC_API_KEY",
             "ANTHROPIC_API_KEY",
-            "OPENAI_API_KEY",
-            "GEMINI_API_KEY",
         ]
         found = [v for v in key_vars if os.environ.get(v)]
         if found:
@@ -119,7 +145,14 @@ class PreflightDoctor:
             return CheckResult(
                 name="Node.js",
                 status="warn",
-                detail="not found — some build runners may fail",
+                detail="not found — the build, type and lint checks of a run need it",
+                critical=False,
+            )
+        if not shutil.which("npm"):
+            return CheckResult(
+                name="Node.js",
+                status="warn",
+                detail=f"found at {node_path}, but npm is missing — builds in the sandbox need it",
                 critical=False,
             )
         try:
@@ -144,9 +177,10 @@ class PreflightDoctor:
         if not git_path:
             return CheckResult(
                 name="git >= 2.28",
-                status="fail",
-                detail="git not found on PATH",
-                critical=True,
+                status="warn",
+                detail="git not found on PATH — ddk still runs, but checkpoints and rollback "
+                "are unavailable",
+                critical=False,
             )
         try:
             result = subprocess.run(
@@ -185,7 +219,28 @@ class PreflightDoctor:
         except Exception as exc:  # noqa: BLE001
             return CheckResult(
                 name="git >= 2.28",
-                status="fail",
+                status="warn",
                 detail=f"git check failed: {exc}",
-                critical=True,
+                critical=False,
             )
+
+    def _check_browser(self) -> CheckResult:
+        name = "Headless Chromium"
+        custom = os.environ.get("DDK_CHROMIUM_PATH", "")
+        if custom:
+            if Path(custom).is_file():
+                return CheckResult(name=name, status="pass", detail=custom, critical=False)
+            return CheckResult(
+                name=name,
+                status="warn",
+                detail=f"DDK_CHROMIUM_PATH does not point to a file: {custom}",
+                critical=False,
+            )
+        try:
+            used = asyncio.run(ChromiumBrowserAdapter().probe())
+        except BrowserUnavailableError as exc:
+            detail = f"{exc} (or skip the comparison with --no-visual)"
+            return CheckResult(name=name, status="warn", detail=detail, critical=False)
+        if used != PLAYWRIGHT_BUILD:
+            used = f"{used} (installed browser, used because Playwright has no build)"
+        return CheckResult(name=name, status="pass", detail=used, critical=False)

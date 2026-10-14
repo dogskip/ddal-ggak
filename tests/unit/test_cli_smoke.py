@@ -41,6 +41,7 @@ class TestVersionCommand:
 # ---------------------------------------------------------------------------
 # ddk doctor
 # ---------------------------------------------------------------------------
+@pytest.mark.usefixtures("no_browser_start")
 class TestDoctorCommand:
     def test_runs_without_crash(self) -> None:
         result = runner.invoke(app, ["doctor"])
@@ -121,6 +122,32 @@ class TestPreflightCommand:
         monkeypatch.delenv("DDK_ANTHROPIC_API_KEY", raising=False)
         result = runner.invoke(app, ["preflight"])
         assert "❌ LLM API key" not in result.output
+
+    def test_unsupported_provider_never_passes_preflight(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DDK_LLM_PROVIDER", "openai")
+        monkeypatch.setenv("DDK_OPENAI_API_KEY", "sk-openai-test")
+        monkeypatch.delenv("DDK_ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+        result = runner.invoke(app, ["preflight"])
+
+        assert result.exit_code == 1
+        assert "unsupported" in result.output.lower()
+
+    def test_unimplemented_sandbox_never_passes_preflight(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DDK_LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("DDK_ANTHROPIC_API_KEY", "sk-ant-test")
+        monkeypatch.setenv("DDK_SANDBOX_MODE", "worktree")
+
+        result = runner.invoke(app, ["preflight"])
+
+        assert result.exit_code == 1
+        assert "sandbox" in result.output.lower()
+        assert "unsupported" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------

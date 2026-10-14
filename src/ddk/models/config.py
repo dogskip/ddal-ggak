@@ -12,6 +12,7 @@ DEFAULT_SANDBOX_MODE = "tempdir"
 
 class LLMProvider(StrEnum):
     ANTHROPIC = "anthropic"
+    # Reserved for forward-compatible config parsing; runtime adapters are not shipped yet.
     OPENAI = "openai"
     FAKE = "fake"
 
@@ -30,18 +31,20 @@ class DdalggakConfig(BaseSettings):
         default="",
         validation_alias=AliasChoices("DDK_OPENAI_API_KEY", "OPENAI_API_KEY"),
     )
-    llm_model: str = "claude-3-5-sonnet-20241022"
-    light_model: str = "claude-3-haiku-20240307"
+    llm_model: str = DEFAULT_PRIMARY_MODEL
+    light_model: str = DEFAULT_LIGHT_MODEL
     cost_cap_usd: float = 2.0
-    sandbox_mode: str = "worktree"
+    sandbox_mode: str = DEFAULT_SANDBOX_MODE
     sandbox_timeout_seconds: int = 300
+    install_dependencies: bool = False
     playwright_browser: str = "chromium"
     log_level: str = "INFO"
     log_format: str = "text"
     log_redact: bool = True
-    case_dir: str = ".ddk"
-    ssim_threshold: float = 0.92
-    pixel_diff_threshold: float = 0.05
+    visual_check: bool = True
+    ssim_threshold: float = Field(default=0.92, ge=0.0, le=1.0)
+    max_mismatch_ratio: float = Field(default=0.03, ge=0.0, le=1.0)
+    chromium_path: str = ""
     reproducibility_mode: str = "best_effort"
     benchmark_seed: int = 42
     record_all_calls: bool = True

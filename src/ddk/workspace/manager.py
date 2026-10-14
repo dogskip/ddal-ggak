@@ -29,11 +29,16 @@ class WorkspaceManager:
 
         Creates:
         - ``.ddk/``
+        - ``.ddk/.gitignore`` (``*``; keeps the workspace out of the target repo's git status)
         - ``.ddk/cases/``
         - ``.ddk/schema-version.json``
         """
         self.root.mkdir(parents=True, exist_ok=True)
         (self.root / "cases").mkdir(exist_ok=True)
+
+        gitignore = self.root / ".gitignore"
+        if not gitignore.exists():
+            gitignore.write_text("*\n", encoding="utf-8")
 
         version_file = self.root / "schema-version.json"
         if not version_file.exists():

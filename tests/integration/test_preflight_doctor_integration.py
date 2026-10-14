@@ -13,7 +13,7 @@ class TestPreflightDoctorIntegration:
     def test_run_checks_returns_list(self) -> None:
         results = PreflightDoctor().run_checks()
         assert isinstance(results, list)
-        assert len(results) == 5
+        assert len(results) == 6
 
     def test_all_results_have_required_keys(self) -> None:
         results = PreflightDoctor().run_checks()

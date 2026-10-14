@@ -53,3 +53,23 @@ class TestApiKeyAliasChoices:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-bare")
         cfg = DdalggakConfig()
         assert cfg.openai_api_key == "sk-openai-ddk"
+
+
+def test_default_models_are_current_supported_anthropic_models(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("DDK_LLM_MODEL", raising=False)
+    monkeypatch.delenv("DDK_LIGHT_MODEL", raising=False)
+
+    cfg = DdalggakConfig()
+
+    assert cfg.llm_model == "claude-sonnet-5-5"
+    assert cfg.light_model == "claude-haiku-5-5"
+
+
+def test_default_sandbox_matches_the_implemented_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("DDK_SANDBOX_MODE", raising=False)
+
+    assert DdalggakConfig().sandbox_mode == "tempdir"

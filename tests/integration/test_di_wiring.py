@@ -39,38 +39,38 @@ def fake_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestBuildRuntimeServicesDI:
-    """Verify _build_runtime_services() wires DdalggakConfig → ClaudeAdapter."""
+    """Verify build_runtime_services() wires DdalggakConfig → ClaudeAdapter."""
 
     def test_cost_cap_wired_from_config(self) -> None:
         """cost_cap_usd must propagate from DdalggakConfig into ClaudeAdapter."""
-        from ddk.cli import _build_runtime_services  # noqa: PLC0415
+        from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
 
         cfg = DdalggakConfig(cost_cap_usd=0.42)
-        services = _build_runtime_services(cfg)
+        services = build_runtime_services(cfg)
 
         assert isinstance(services.llm, ClaudeAdapter)
         assert services.llm._cost_cap_usd == pytest.approx(0.42), (
-            "_build_runtime_services() must pass cost_cap_usd=cfg.cost_cap_usd "
+            "build_runtime_services() must pass cost_cap_usd=cfg.cost_cap_usd "
             "to ClaudeAdapter — omitting it silently defaults to inf and "
             "bypasses the cost guard entirely"
         )
 
     def test_default_cost_cap_is_config_default(self) -> None:
         """When cost_cap_usd is not overridden, the DdalggakConfig default (2.0) applies."""
-        from ddk.cli import _build_runtime_services  # noqa: PLC0415
+        from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
 
         cfg = DdalggakConfig()
-        services = _build_runtime_services(cfg)
+        services = build_runtime_services(cfg)
 
         assert services.llm._cost_cap_usd == pytest.approx(cfg.cost_cap_usd)
         assert cfg.cost_cap_usd == pytest.approx(2.0)
 
     def test_cost_cap_is_not_inf(self) -> None:
         """The wired cost_cap must never be float('inf') when config has a finite value."""
-        from ddk.cli import _build_runtime_services  # noqa: PLC0415
+        from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
 
         cfg = DdalggakConfig()
-        services = _build_runtime_services(cfg)
+        services = build_runtime_services(cfg)
 
         assert not math.isinf(services.llm._cost_cap_usd), (
             "cost_cap_usd must not be inf in production — the config default is 2.0 USD"
@@ -78,11 +78,32 @@ class TestBuildRuntimeServicesDI:
 
     def test_model_wired_from_config(self) -> None:
         """llm_model from config must be passed to ClaudeAdapter._default_model."""
-        from ddk.cli import _build_runtime_services  # noqa: PLC0415
+        from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
 
         cfg = DdalggakConfig(llm_model="claude-3-haiku-20240307")
-        services = _build_runtime_services(cfg)
+        services = build_runtime_services(cfg)
         assert services.llm._default_model == "claude-3-haiku-20240307"
+
+    def test_primary_and_light_models_reach_pipeline_services(self) -> None:
+        from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
+
+        cfg = DdalggakConfig(
+            llm_model="custom-primary-model",
+            light_model="custom-light-model",
+        )
+        services = build_runtime_services(cfg)
+
+        assert services.primary_model == "custom-primary-model"
+        assert services.light_model == "custom-light-model"
+
+    def test_unimplemented_sandbox_mode_is_rejected(self) -> None:
+        """A configured mode must never be silently replaced by a different sandbox."""
+        import typer
+
+        from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
+
+        with pytest.raises(typer.Exit):
+            build_runtime_services(DdalggakConfig(sandbox_mode="worktree"))
 
 
 class TestServerDI:

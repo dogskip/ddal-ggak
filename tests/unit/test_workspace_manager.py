@@ -20,3 +20,19 @@ def test_latest_case_id_returns_none_when_no_cases_exist(tmp_path) -> None:
     manager.init()
 
     assert manager.latest_case_id() is None
+
+
+def test_init_writes_self_ignoring_gitignore(tmp_path) -> None:
+    WorkspaceManager(tmp_path).init()
+
+    assert (tmp_path / ".ddk" / ".gitignore").read_text(encoding="utf-8").strip() == "*"
+
+
+def test_init_keeps_a_gitignore_the_user_edited(tmp_path) -> None:
+    manager = WorkspaceManager(tmp_path)
+    manager.init()
+    (tmp_path / ".ddk" / ".gitignore").write_text("cases/\n", encoding="utf-8")
+
+    manager.init()
+
+    assert (tmp_path / ".ddk" / ".gitignore").read_text(encoding="utf-8") == "cases/\n"

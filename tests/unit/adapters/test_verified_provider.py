@@ -7,6 +7,7 @@ from ddk.adapters.verified_provider import (
     CodexCliProvider,
     OpenAICompatibleProvider,
     default_price,
+    select_price,
 )
 from ddk.services.verified_repair import RepairRequest
 
@@ -68,6 +69,23 @@ async def test_cli_bridge_does_not_invent_zero_usage_or_cost(factory):
 def test_default_price_is_case_bound_and_has_dated_evidence():
     price = default_price("claude-sonnet-5-5", "a" * 64)
     assert price.evaluator_sha256 == "a" * 64 and price.input_micro_usd_per_million > 0
+
+
+@pytest.mark.parametrize(
+    ("provider", "endpoint", "override", "code"),
+    [
+        ("unknown", None, None, "invalid_provider_selection"),
+        ("anthropic", "https://unapproved.example", None, "invalid_provider_selection"),
+        ("openai-compatible", None, None, "invalid_provider_selection"),
+        ("codex-cli", None, None, "price_override_required"),
+        ("claude-cli", None, None, "price_override_required"),
+        ("openai-compatible", "http://127.0.0.1:1234", None, "price_override_required"),
+        ("anthropic", None, {}, "price_invalid"),
+    ],
+)
+def test_quote_selection_cannot_guess_another_provider_price(provider, endpoint, override, code):
+    with pytest.raises(ValueError, match=code):
+        select_price(provider, "a" * 64, override, endpoint=endpoint)
 
 
 async def test_owned_transport_runs_real_process_and_collects_exact_bytes():

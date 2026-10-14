@@ -77,3 +77,8 @@ def no_browser_start(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.delenv("DDK_CHROMIUM_PATH", raising=False)
     monkeypatch.setattr(ChromiumBrowserAdapter, "probe", found)
+
+    async def observed(repository: Path) -> tuple[dict[str, str], str]:
+        return {"browser_binary_sha256": "a" * 64, "font_manifest_sha256": "b" * 64}, "browser"
+
+    monkeypatch.setattr("ddk.services.verified_host.observe_environment", observed)

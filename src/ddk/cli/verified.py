@@ -67,10 +67,6 @@ def _repair_provider() -> RepairProvider:
     return provider
 
 
-async def _replay_provider(request: RepairRequest) -> ProviderResult:
-    raise ValueError("request_replay_execution_forbidden")
-
-
 def _mapping(path: Path | None, *, arrays: bool = False) -> Record | None:
     if path is None:
         return None
@@ -110,6 +106,8 @@ def _emit(payload: Record, as_json: bool) -> None:
 def _exit_code(payload: Record) -> int:
     if payload.get("status") == "cancelled":
         return 130
+    if payload.get("status") == "blocked" and payload.get("decision") == "ready":
+        return 1
     if "decision" in payload:
         if payload["decision"] == "blocked" and any(
             action.get("code") in _INPUT_OR_EXECUTION_UNAVAILABLE
@@ -222,13 +220,15 @@ def repair(
     candidate: Path = typer.Option(
         ..., "--candidate", help="Exact source-run candidate directory."
     ),
-    price: Path = typer.Option(..., "--price", help="Caller-verified maximum-price JSON."),
-    input_token_limit: int = typer.Option(..., "--input-token-limit", min=1, max=2**53 - 1),
-    output_token_limit: int = typer.Option(..., "--output-token-limit", min=1, max=128000),
+    price: Path | None = typer.Option(None, "--price", help="Override the dated built-in price."),
+    provider: str = typer.Option("anthropic", "--provider"),
+    endpoint: str | None = typer.Option(None, "--endpoint"),
+    input_token_limit: int = typer.Option(32000, "--input-token-limit", min=1, max=2**53 - 1),
+    output_token_limit: int = typer.Option(4096, "--output-token-limit", min=1, max=128000),
     confirm_provider: bool = typer.Option(
         False,
         "--confirm-provider",
-        help="Approve sending redacted scoped source to Anthropic and incurring API charges.",
+        help="Approve redacted scoped source transfer to the selected provider and any charges.",
     ),
     trusted_local: bool = typer.Option(
         False, "--trusted-local", help="Approve host execution for a trusted-local case."
@@ -241,21 +241,23 @@ def repair(
     selected = run_id or str(uuid4())
 
     def execute() -> Record:
-        from ddk.services.verified_budget import VerifiedPrice
+        from ddk.adapters.verified_provider import select_price
 
         if not confirm_provider:
             raise ValueError("provider_confirmation_required")
-        data = decode_json(read_regular(price, MAX_RECORD_BYTES))
-        try:
-            pricing = VerifiedPrice(**data)
-        except TypeError as error:
-            raise ValueError("price_invalid") from error
         service = _service(repo)
-        provider = (
-            _replay_provider
-            if service.store.path_for("run", selected).exists()
-            else _repair_provider()
+        source = service.store.run(source_run_id)
+        case = service.store.case(source["case_id"])
+        pricing = select_price(
+            provider,
+            case["evaluator_sha256"],
+            decode_json(read_regular(price, MAX_RECORD_BYTES)) if price else None,
+            endpoint=endpoint,
         )
+
+        async def lazy_provider(request: RepairRequest) -> ProviderResult:
+            return await repair_provider(provider, endpoint)(request)
+
         return asyncio.run(
             service.repair(
                 source_run_id,
@@ -265,7 +267,7 @@ def repair(
                 price=pricing,
                 input_limit=input_token_limit,
                 output_limit=output_token_limit,
-                provider=provider,
+                provider=lazy_provider,
                 provider_approved=True,
                 trusted_local_approved=trusted_local,
                 project_inputs=_mapping(project_inputs),
@@ -389,5 +391,7 @@ execute_command = _execute
 emit_result = _emit
 
 
-def repair_provider() -> RepairProvider:
-    return _repair_provider()
+def repair_provider(kind: str = "anthropic", endpoint: str | None = None) -> RepairProvider:
+    from ddk.adapters.verified_provider import provider_for
+
+    return _repair_provider() if kind == "anthropic" else provider_for(kind, endpoint)

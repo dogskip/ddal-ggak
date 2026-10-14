@@ -399,21 +399,19 @@ async def ddk_repair(
             raise ToolError("provider_endpoint_not_granted")
     elif endpoint is not None:
         raise ToolError("provider_endpoint_not_granted")
-    from ddk.adapters.verified_provider import default_price
+    from ddk.adapters.verified_provider import select_price
     from ddk.models.verified_change import decode_json
-    from ddk.services.verified_budget import VerifiedPrice
 
     service = _verified_service(repository)
     try:
         source = service.store.run(source_run_id)
         case = service.store.case(source["case_id"])
-        price = (
-            VerifiedPrice(**decode_json(price_json.encode()))
-            if price_json
-            else default_price("claude-sonnet-5-5", case["evaluator_sha256"])
+        price = select_price(
+            provider,
+            case["evaluator_sha256"],
+            decode_json(price_json.encode()) if price_json else None,
+            endpoint=endpoint,
         )
-        if price.provider != provider:
-            raise ValueError("price_provider_mismatch")
         result = await service.repair(
             source_run_id,
             baseline=Path(baseline),

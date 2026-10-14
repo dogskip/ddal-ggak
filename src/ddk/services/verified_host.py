@@ -16,7 +16,9 @@ from importlib.metadata import version
 from pathlib import Path
 
 from playwright.async_api import async_playwright
+from pydantic import ValidationError
 
+from ddk.models.config import DdalggakConfig
 from ddk.models.verified_change import Record, record_digest
 from ddk.security.file_access import file_identity, parent_descriptor
 
@@ -250,6 +252,21 @@ async def readiness(repository: Path) -> Record:
         key: bool(os.environ.get(key))
         for key in ("ANTHROPIC_API_KEY", "DDK_ANTHROPIC_API_KEY", "OPENAI_API_KEY")
     }
+    try:
+        settings_options: Record = {"_env_file": repository / ".env"}
+        config = DdalggakConfig(**settings_options)
+        keys["configured_anthropic_key"] = bool(config.anthropic_api_key)
+        keys["configured_openai_key"] = bool(config.openai_api_key)
+        checks.append({"name": "settings", "status": "ready", "observed": "valid", "action": None})
+    except ValidationError:
+        checks.append(
+            {
+                "name": "settings",
+                "status": "blocked",
+                "observed": "invalid",
+                "action": "Review .env and environment; ddk preflight reports invalid fields.",
+            }
+        )
     checks.append(
         {
             "name": "provider-credentials",

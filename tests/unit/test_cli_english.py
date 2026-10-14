@@ -77,6 +77,13 @@ class TestHelp:
 
 
 class TestMessages:
+    @pytest.mark.usefixtures("no_browser_start")
+    def test_doctor_readiness_labels_follow_the_selected_language(self, tmp_path: Path) -> None:
+        result = runner.invoke(app, ["doctor", "--repo", str(tmp_path)], env=ENGLISH)
+        assert result.exit_code in (0, 2), result.output
+        assert "settings" in result.output.lower()
+        assert not HANGUL.search(result.output)
+
     def test_unreadable_settings_name_the_variable(self) -> None:
         result = runner.invoke(app, ["run", "x.png"], env={**ENGLISH, "DDK_COST_CAP_USD": "plenty"})
 

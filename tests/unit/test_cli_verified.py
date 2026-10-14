@@ -490,3 +490,10 @@ def test_saved_cancelled_run_keeps_cancellation_exit_code(service):
     result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
     assert result.exit_code == 130, result.output
     assert json.loads(result.stdout) == service.result
+
+
+def test_blocked_workflow_cannot_exit_zero_with_a_ready_verification(service):
+    service.result.update(status="blocked", actions=[{"code": "working_tree_changed"}])
+    result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
+    assert result.exit_code == 1, result.output
+    assert json.loads(result.stdout) == service.result

@@ -53,7 +53,7 @@ def test_doctor_still_runs_and_reports_the_setting_problem(
 
     result = runner.invoke(app, ["doctor"])
 
-    assert result.exit_code == 1
+    assert result.exit_code == 2
     assert "Python" in result.output
     assert "설정 값" in result.output
 
@@ -76,4 +76,4 @@ def test_a_valid_dotenv_file_is_read(monkeypatch: pytest.MonkeyPatch, tmp_path: 
 
     result = runner.invoke(app, ["doctor"])
 
-    assert "✅ LLM API key" in result.output
+    assert "✅ provider-credentials" in result.output

@@ -168,4 +168,7 @@ async def up(
                 required_assurance=case["assurance_required"],
                 target_run_id=source["run_id"],
             )
+            if answer["application"]["state"] != "applied":
+                answer["status"] = "blocked"
+                answer["actions"] = [*answer["actions"], *answer["application"]["actions"]]
     return answer

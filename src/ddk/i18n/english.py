@@ -231,13 +231,7 @@ ENGLISH: dict[str, str] = {
     "❌ Chromium 을 내려받지 못했습니다. 네트워크를 확인하거나 Chrome 을 설치하세요.": (
         "❌ Chromium could not be downloaded. Check the network, or install Google Chrome."
     ),
-    "  ❌ 설정 값: 환경 변수나 .env 의 값이 올바르지 않습니다 (ddk run 에서 자세히 표시)": (
-        "  ❌ Settings: a value in the environment or .env is invalid (ddk run shows which)"
-    ),
-    "\n[red]❌ 필수 환경 설정이 누락됐습니다.[/red]": (
-        "\n[red]❌ A required part of the environment is missing.[/red]"
-    ),
-    "\n[green]✅ 모든 검사 통과.[/green]": "\n[green]✅ All checks passed.[/green]",
+    "설정 값": "Settings",
     ".ddk/ 작업 폴더를 초기화합니다 (이미 있으면 안전하게 건너뜀).": (
         "Create the .ddk/ work folder (an existing one is left alone)."
     ),

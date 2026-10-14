@@ -11,7 +11,7 @@ from ddk.i18n import t
 from ddk.workspace.manager import WorkspaceManager
 
 from .app import app
-from .common import console, err_console, get_config, state
+from .common import console, err_console, get_config
 
 
 @app.command()
@@ -76,62 +76,41 @@ def doctor(
         help=t("먼저 헤드리스 Chromium 을 내려받습니다 (Playwright 사용, 한 번만)"),
     ),
 ) -> None:
-    """Check every tool the loop needs and say which ones are optional."""
-    if dry_run or as_json:
-        import asyncio
+    """Inspect one readiness contract; dry-run always excludes installation."""
+    import asyncio
 
-        from ddk.services.verified_host import readiness
+    from rich.table import Table
 
-        from .verified import emit_result
+    from ddk.services.verified_host import readiness
 
-        result = asyncio.run(readiness(repo))
-        emit_result(result, as_json)
-        if not as_json:
-            from rich.table import Table
+    from .verified import emit_result, execute_command
 
-            table = Table("Check", "Status", "Action")
-            for row in result["checks"]:
-                table.add_row(row["name"], row["status"], row["action"] or "")
-            console.print(table)
-        if result["status"] == "blocked":
-            raise typer.Exit(2)
-        return
-    from ddk.preflight.doctor import PreflightDoctor  # noqa: PLC0415
-
-    if install_browser:
-        console.print(t("Chromium 을 내려받는 중입니다…"))
+    if install_browser and not dry_run:
+        err_console.print(t("Chromium 을 내려받는 중입니다…"))
         if not install_chromium():
             err_console.print(
                 t("❌ Chromium 을 내려받지 못했습니다. 네트워크를 확인하거나 Chrome 을 설치하세요.")
             )
             raise typer.Exit(1)
 
-    results = PreflightDoctor(state.config).run_checks()
-    has_critical_fail = False
+    if as_json:
+        execute_command(True, lambda: asyncio.run(readiness(repo)))
+        return
 
-    if state.config_error is not None:
-        console.print(
-            t("  ❌ 설정 값: 환경 변수나 .env 의 값이 올바르지 않습니다 (ddk run 에서 자세히 표시)")
+    result = asyncio.run(readiness(repo))
+    emit_result(result, False)
+    table = Table("Check", "Status", "Action")
+    names = {"python": "Python", "chromium": "Headless Chromium", "settings": t("설정 값")}
+    icons = {"ready": "✅", "warning": "⚠️", "blocked": "❌"}
+    for row in result["checks"]:
+        table.add_row(
+            f"{icons[row['status']]} {names.get(row['name'], row['name'])}",
+            row["status"],
+            row["action"] or "",
         )
-        has_critical_fail = True
-
-    for r in results:
-        if r["status"] == "pass":
-            icon = "✅"
-        elif r["status"] == "warn":
-            icon = "⚠️ "
-        else:
-            icon = "❌"
-            if r["critical"]:
-                has_critical_fail = True
-
-        console.print(f"  {icon} {r['name']}: {r['detail']}")
-
-    if has_critical_fail:
-        console.print(t("\n[red]❌ 필수 환경 설정이 누락됐습니다.[/red]"))
-        raise typer.Exit(1)
-
-    console.print(t("\n[green]✅ 모든 검사 통과.[/green]"))
+    console.print(table)
+    if result["status"] == "blocked":
+        raise typer.Exit(2)
 
 
 @app.command(

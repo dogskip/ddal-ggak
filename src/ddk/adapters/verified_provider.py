@@ -52,6 +52,30 @@ def default_price(model: str, evaluator_sha256: str) -> VerifiedPrice:
     )
 
 
+def select_price(
+    provider: str,
+    evaluator_sha256: str,
+    override: Record | None = None,
+    *,
+    endpoint: str | None = None,
+) -> VerifiedPrice:
+    if provider not in PROVIDERS or (provider == "openai-compatible") != (endpoint is not None):
+        raise ValueError("invalid_provider_selection")
+    if override is None and provider != "anthropic":
+        raise ValueError("price_override_required")
+    try:
+        price = (
+            VerifiedPrice(**override)
+            if override is not None
+            else default_price("claude-sonnet-5-5", evaluator_sha256)
+        )
+    except TypeError as error:
+        raise ValueError("price_invalid") from error
+    if price.provider != provider:
+        raise ValueError("price_provider_mismatch")
+    return price
+
+
 async def _owned(argv: list[str], payload: bytes) -> bytes:
     if len(payload) > 2 * 1024**2:
         raise ValueError("provider_input_limit")

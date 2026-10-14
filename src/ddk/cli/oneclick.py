@@ -10,7 +10,7 @@ import typer
 from ddk.models.verified_change import Record, decode_json
 from ddk.security.file_access import read_regular
 from ddk.services.case_bootstrapper import CaseBootstrapper
-from ddk.services.verified_budget import ProviderResult, VerifiedPrice
+from ddk.services.verified_budget import ProviderResult
 from ddk.services.verified_change_store import VerifiedChangeStore
 from ddk.services.verified_index import VerifiedIndexCatalog
 from ddk.services.verified_repair import RepairProvider, RepairRequest
@@ -20,23 +20,7 @@ from .verified import change_app, execute_command, repair_provider
 
 
 def select_provider(kind: str, endpoint: str | None = None) -> RepairProvider:
-    import os
-
-    from ddk.adapters.verified_provider import (
-        ClaudeCliProvider,
-        CodexCliProvider,
-        OpenAICompatibleProvider,
-    )
-
-    if kind == "anthropic":
-        return repair_provider()
-    if kind == "claude-cli":
-        return ClaudeCliProvider()
-    if kind == "codex-cli":
-        return CodexCliProvider()
-    if kind == "openai-compatible" and endpoint:
-        return OpenAICompatibleProvider(endpoint, api_key=os.environ.get("OPENAI_API_KEY"))
-    raise ValueError("invalid_provider_selection")
+    return repair_provider(kind, endpoint)
 
 
 @app.command(
@@ -89,7 +73,7 @@ def one_command(
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
     async def execute() -> Record:
-        from ddk.adapters.verified_provider import default_price
+        from ddk.adapters.verified_provider import select_price
         from ddk.services.verified_up import up
 
         selected_case = case_id
@@ -105,13 +89,12 @@ def one_command(
         if repair and confirm_provider and not dry_run:
             assert selected_case is not None
             case = VerifiedChangeStore(repo, create=False).case(selected_case)
-            quote = (
-                VerifiedPrice(**decode_json(read_regular(price, 2 * 1024**2)))
-                if price
-                else default_price("claude-sonnet-5-5", case["evaluator_sha256"])
+            quote = select_price(
+                provider,
+                case["evaluator_sha256"],
+                decode_json(read_regular(price, 2 * 1024**2)) if price else None,
+                endpoint=endpoint,
             )
-            if quote.provider != provider:
-                raise ValueError("price_provider_mismatch")
 
             async def lazy_provider(request: RepairRequest) -> ProviderResult:
                 return await select_provider(provider, endpoint)(request)

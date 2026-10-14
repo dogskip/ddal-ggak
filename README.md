@@ -125,7 +125,7 @@ Know the limits before trusting a green result:
 | `ddk report` | Write the evidence report of a case (`--open` shows it) |
 | `ddk apply` | Apply a legacy image-run `ready` case; `--dry-run` previews it; conflicts block writes |
 | `ddk status`, `ddk certify` | The saved state and verdict of a case |
-| `ddk change verify/status/export/apply/recover` | Verify existing changes against fixed criteria, inspect evidence, export, apply and recover owned changes |
+| `ddk change verify/repair/status/export/apply/recover` | Verify existing changes against fixed criteria, inspect evidence, export, apply and recover owned changes |
 | `ddk doctor` | Check Python, uv, API key, Node.js, git, Chromium (`--install-browser` downloads it) |
 | `ddk design new "<idea>"` | Design Studio: turn an idea into design documents |
 | `ddk install --all` | Register `/ddk:design` and the MCP server with Claude Code, Cursor, Codex, Gemini CLI and others |
@@ -193,8 +193,10 @@ Docker acceptance tests. Recorded model replies prove the demo flow, not real-mo
 project. Actual isolated acceptance has covered macOS ARM64 with OrbStack and a static Node fixture;
 other hosts and real Vite/Next.js repositories still need direct evidence.
 
-Next: repair and reverify under one request budget, easier case preparation, common test-report
-formats and broader real-project validation. These are planned, not shipped; see the
+`ddk change repair` now proposes scoped source fixes and independently rechecks them under one
+request budget. It requires explicit provider approval and verified maximum prices; failed or unknown
+usage cannot authorize further calls. Next: easier case preparation, common test-report formats and
+broader real-project validation. See the
 [roadmap and acceptance criteria](ROADMAP.md). Share a sanitized failing case in an
 [issue](https://github.com/dogskip/ddal-ggak/issues); raw reports can contain private project data.
 

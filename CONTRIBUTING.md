@@ -40,6 +40,10 @@ All contributions must pass four quality gates:
 The opt-in end-to-end tests run the real loop (npm, Chromium, screenshot comparison):
 `DDK_E2E=1 uv run pytest tests/e2e -m playwright`. CI runs them in their own job.
 
+Repair regression coverage includes proposal/cycle/budget/cancellation cases and a real headless
+repair-to-apply flow. Provider network tests use the real SDK with a mock transport; ordinary CI does
+not send source to a paid provider.
+
 Real isolated execution is a separate opt-in: `DDK_DOCKER_E2E=1`, `DDK_APP_IMAGE` and
 `DDK_CHECKER_IMAGE` must identify prebuilt local immutable images, then run
 `uv run pytest tests/e2e/test_verified_isolated.py -m docker`. It never pulls images and is not part

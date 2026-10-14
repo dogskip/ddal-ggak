@@ -2,14 +2,14 @@
 
 [한국어](ROADMAP.ko.md) · [Current behavior](docs/VERIFIED-CHANGES.md)
 
-Status: beta. Public development is consolidated on `main`. These priorities are planned work, not
-available commands. The goal is useful, repeatable change verification; stars and test counts alone
+Status: beta. Public development is consolidated on `main`. The P0 CLI workflow is implemented; later priorities are planned work.
+Implementation and live-provider quality are separate claims. The goal is useful, repeatable change verification; stars and test counts alone
 do not establish adoption or reliability.
 
 | Order | Outcome | Completion criteria |
 | --- | --- | --- |
-| P0 — next | Repair and reverify one existing-change request | Freeze case, criteria, baseline and requirement mapping. Reserve round/call/time/output/cost budgets before provider work; charge retries to the same request. Unknown spend or repeated failure stops new work. Independently verify the candidate and preserve interruption recovery; never change criteria to obtain `ready`. |
-| P1 | Easier first-case preparation | Validate inputs, show exact files/commands/grants, produce a reviewable case and actionable errors. Require explicit execution approval. Prove a clean-install flow with a new user. |
+| P0 — implemented in CLI | Repair and reverify one existing-change request | Freeze case, criteria, baseline and requirement mapping. Reserve round/call/time/output/cost budgets before provider work; charge retries to the same request. Unknown spend or repeated failure stops new work. Independently verify the candidate and preserve interruption recovery; never change criteria to obtain `ready`. |
+| P1 — next | Easier first-case preparation | Validate inputs, show exact files/commands/grants, produce a reviewable case and actionable errors. Require explicit execution approval. Prove a clean-install flow with a new user. |
 | P1 | Common test reports | Add narrow Vitest/Jest adapters with fixed report provenance. Missing, malformed, zero-test, skipped or failing reports cannot pass. Verify real framework examples, not only synthetic JSON. |
 | P2 | Real-project and host evidence | Test at least three representative repositories and multiple host environments with independent users. Publish sanitized reproducible cases, failures, time, cost and repair effectiveness. Lockfile-based dependency preparation requires explicit installation approval and provenance. |
 
@@ -20,7 +20,9 @@ budget; a green unit suite alone does not close a product claim.
 
 Current isolated acceptance covers a static Node fixture on macOS ARM64 with OrbStack Linux.
 Real-framework portability, first-use success and independent review of the latest feature work remain
-open. P0 must retain current safe apply/recovery and isolation behavior.
+open. P0 reuses current safe apply/recovery and isolation behavior. Its provider replies are tested with
+recorded data and the real SDK against a mock transport; live paid-model effectiveness remains open.
+MCP repair is deferred until a separate provider-authorization contract exists.
 
 Public docs, runtime schema, synthetic test fixtures and README images stay versioned. Internal
 design/review notes, launch drafts and raw execution evidence stay local and are excluded from Git

@@ -21,6 +21,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `ddk change repair`: approved source-run scope, explicit provider/price grants, one durable budget
+  across proposals and independent rechecks, immutable round evidence, replay conflict detection and
+  cycle/limit/unknown-cost stops. Existing managed apply/recovery consumes the final verified result.
+- A bounded Anthropic attempt preserves the exact output reservation and observed model identity;
+  unsupported or missing usage remains unknown. Ready records reject unsettled calls, and recursive
+  source references stop at depth 32. Real headless repair-to-apply coverage uses recorded proposals.
+
 #### Existing-change verification
 
 - `ddk change verify/status/export/apply/recover`: fixed cases, explicit baseline/candidate,

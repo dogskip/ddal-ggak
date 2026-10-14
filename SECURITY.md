@@ -92,6 +92,12 @@ confirmation. Recovery handles interrupted owned transactions while preserving e
 Legacy `--force`, `--allow-blocked` and whole-repository `ddk rollback` are disabled. A passing
 verification is not a security audit of the application.
 
+Repair requires an explicit provider grant and caller-verified prices. Only approved changed source
+and bounded, redacted failed-check excerpts enter the model context; screenshots are omitted.
+Proposals cannot alter criteria, tests, permissions or dependencies and are independently rechecked.
+Missing usage, unsupported charge categories and interrupted HTTP calls stop further paid attempts;
+reservation ceilings do not guarantee the provider's final invoice. MCP does not expose repair.
+
 ### Publication boundaries
 
 Internal plans/reviews, launch drafts and raw execution evidence are excluded from Git and source

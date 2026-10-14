@@ -102,6 +102,57 @@ permissions. Uncertain state remains `unknown`. Forced overwrite and whole-repos
 unavailable; failed cleanup/persistence never becomes success. Recovery handles interrupted owned
 transactions, not arbitrary undo of completed transactions or legacy image-run applies.
 
+## Repair under one request budget
+
+`ddk change repair` starts a new request from a completed source run. Provide the same explicit
+baseline/candidate and protected-file mapping used by that source. The candidate must match its
+saved hash. Only its already approved changed paths and requirement mapping can be repaired.
+The model cannot create additional paths, delete files, change permissions, tests or dependencies.
+
+```bash
+ddk change repair --source-run-id SOURCE_RUN_UUID \
+  --baseline ./baseline --candidate ./candidate --repo ./repository \
+  --price ./verified-price.json --input-token-limit 32768 --output-token-limit 8192 \
+  --confirm-provider --run-id REPAIR_RUN_UUID --json
+```
+
+`--confirm-provider` authorizes transmission of scoped, redacted source and bounded failed-check
+excerpts to Anthropic, and API charges. A new execution needs `ANTHROPIC_API_KEY` or
+`DDK_ANTHROPIC_API_KEY`. Trusted-local cases also require `--trusted-local`; isolated cases cannot
+be downgraded. Screenshots and arbitrary repository files are not sent as model context.
+
+`--price` is an explicit caller-verified JSON object, not an automatic price estimate:
+
+| Required fields | Meaning |
+| --- | --- |
+| `provider`, `model` | `anthropic` and an explicit supported model from `known_model_names()` |
+| `input_micro_usd_per_million`, `output_micro_usd_per_million` | Verified maximum linear prices in millionths of a US dollar per million tokens |
+| `extra_max_micro_usd` | Verified maximum additional charge per attempt in millionths of a US dollar |
+| `source_url`, `verified_at` | Pricing source HTTPS URL and verification timestamp ending in `Z` |
+| `evaluator_sha256` | Exact fixed case criteria hash |
+
+Verify prices against the [provider pricing](https://platform.claude.com/docs/en/about-claude/pricing).
+The input ceiling is used for reservation and to conservatively bound UTF-8 prompt bytes; it is not
+an exact local tokenizer or a guarantee about provider billing. Observed usage above the authorized
+input/output/extra allowance blocks the run. The actual observed model must match the priced model.
+
+Round 0 rechecks baseline and candidate. Passing candidates make no model call. Each proposal gets
+one durable reservation and one HTTP attempt, with SDK retries disabled and no extra output allowance
+for thinking. All preparation, calls and rechecks share one monotonic deadline and cumulative output
+allowance. Output bytes include captured process output and the canonical UTF-8 final SDK message,
+including reasoning and metadata, rather than HTTP framing. Source/criteria/command limits stay fixed. Missing usage, unknown charges, unsupported
+cache/tool/tier pricing, repeated candidates and exhausted limits stop further work. The provider's
+[usage fields distinguish cached input](https://platform.claude.com/docs/en/build-with-claude/prompt-caching);
+missing cache counters are not assumed to be zero.
+
+Every accepted candidate, check result and usage/price artifact is retained by round within the same
+run. Earlier evidence is immutable; final apply uses only the latest independently verified source.
+An HTTP interruption retains reserved/unknown usage and blocks further paid work for that case.
+Repeating the same run ID reads saved state without re-executing; changed inputs conflict. Pending
+work is not automatically resumed or recharged, and source-reference depth is limited to 32.
+Use existing `status`, `export`, `apply` and `recover`; recover still concerns interrupted applies,
+not replay of uncertain provider calls. Automatic reconciliation of unknown charges is unavailable.
+
 ## MCP and current limits
 
 `ddk serve` exposes `ddk_verify` and `ddk_status` alongside `design_new`, `preflight` and `ddk_version`.
@@ -115,6 +166,7 @@ errors; persisted run IDs remain inspectable. Testing covers SDK 1.28.1 and nego
 Oversized, excessively nested, duplicate-key or invalid UTF-8 requests terminate stdio without
 manufacturing successful replies or deleting saved runs.
 
-Automatic repair/reverification, common test-report adapters and guided case preparation are unfinished.
+Common test-report adapters and guided case preparation are unfinished. Repair is CLI-only and
+its current provider/context support is deliberately narrow; live paid-model quality is unverified.
 The legacy demo uses recorded model responses; this path verifies explicit changes without a model.
 Passing fixed criteria does not prove a defect-free app, product superiority or GitHub popularity.

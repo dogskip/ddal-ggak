@@ -123,7 +123,7 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk report` | case 의 증거 보고서 생성 (`--open` 으로 바로 열기) |
 | `ddk apply` | 기존 이미지 실행의 `ready` 결과 반영. `--dry-run`으로 계획 조회, 충돌 시 중단 |
 | `ddk status`, `ddk certify` | 저장된 case 상태와 판정 조회 |
-| `ddk change verify/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
+| `ddk change verify/repair/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
 | `ddk doctor` | Python, uv, API 키, Node.js, git, Chromium 점검 (`--install-browser` 로 Chromium 내려받기) |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
 | `ddk install --all` | Claude Code, Cursor, Codex, Gemini CLI 등에 `/ddk:design` 과 MCP 서버 등록 |
@@ -189,8 +189,9 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 격리 검사의 실제 확인 범위는 macOS ARM64·OrbStack과 Node 정적 시험 앱입니다.
 다른 장비·실행 환경과 실제 Vite·Next.js 저장소는 추가 검증이 필요합니다.
 
-다음 순서는 동일 요청 예산 안의 수정·재검사, 초기 기준 준비, 일반 시험 보고 수집, 실제 프로젝트 검증
-확대입니다. 완료 조건은 [후속 계획](ROADMAP.ko.md)에 있습니다. 문제가 있으면 민감한 자료를 제외한
+`ddk change repair`는 명시적인 제공자 전송 승인과 검증한 최대 단가를 전제로, 승인 경로의 수정 제안과
+독립 재검사를 같은 요청 예산으로 수행합니다. 비용 미정이나 상한 초과 시 추가 호출을 중단합니다.
+다음은 초기 기준 준비, 일반 시험 보고 수집, 실제 프로젝트 검증 확대입니다. 완료 조건은 [후속 계획](ROADMAP.ko.md)에 있습니다. 문제가 있으면 민감한 자료를 제외한
 사례로 [이슈](https://github.com/dogskip/ddal-ggak/issues)를 등록하세요. 원본 보고서는 프로젝트의
 비공개 정보를 포함할 수 있습니다.
 

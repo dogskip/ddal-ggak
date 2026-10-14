@@ -1,0 +1,32 @@
+{
+  "baseline_file_count": 458,
+  "baseline_manifest_path": "docs/design/reviews/2026-10-14-workspace-before.json",
+  "baseline_manifest_sha256": "5a5966d3f8ec719993d7f6c76c1697e5c4888617f4bc02548ad44b11fbe10a50",
+  "changed_preexisting_files": [],
+  "new_files": [
+    "docs/design/34-verified-change-design.md",
+    "docs/design/35-verified-change-storage.md",
+    "docs/design/36-verified-change-verification.md",
+    "docs/design/reviews/2026-10-14-analysis.md",
+    "docs/design/reviews/2026-10-14-artifact-manifest.json",
+    "docs/design/reviews/2026-10-14-baseline.json",
+    "docs/design/reviews/2026-10-14-document-validation.json",
+    "docs/design/reviews/2026-10-14-official-sources.md",
+    "docs/design/reviews/2026-10-14-preservation.json",
+    "docs/design/reviews/2026-10-14-second-review.md",
+    "docs/design/reviews/2026-10-14-third-review.md",
+    "docs/design/reviews/2026-10-14-third-validation-before-fix.json",
+    "docs/design/reviews/2026-10-14-three-review.md",
+    "docs/design/reviews/2026-10-14-validation-before-fix.json",
+    "docs/design/reviews/2026-10-14-workspace-before.json",
+    "docs/design/reviews/check_verified_change_design.py",
+    "docs/design/verified-change/GLOSSARY.md",
+    "docs/design/verified-change/contract-examples.json",
+    "docs/design/verified-change/contract.schema.json"
+  ],
+  "new_files_outside_design_docs": [],
+  "source_hash_count": 154,
+  "source_hash_mismatches": [],
+  "head": "3e53e93c8ec27e026c8271de5522609063ae1ca3",
+  "scope": "new design documents, schema, hypothetical examples, document checker and evidence only"
+}

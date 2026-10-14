@@ -1,0 +1,435 @@
+{
+  "scope": "document schema, hypothetical relations, field tables, traceability, local links",
+  "result": "failed",
+  "definitions": 21,
+  "fields": 202,
+  "valid_examples": 10,
+  "invalid_examples": 44,
+  "examples_matched": 46,
+  "requirements_traced": 20,
+  "acceptance_tests_defined": 30,
+  "local_links_checked": 26,
+  "failures": [
+    "review-with-corrupt-criteria:[]",
+    "repair-without-source-run:[]",
+    "untrusted-baseline-preservation:[]",
+    "apply-of-blocked-run:[]",
+    "criteria-mislabeled-as-source:[]",
+    "before-hash-not-baseline:[]",
+    "create-of-existing-baseline-file:[]",
+    "criteria-in-write-scope:[]"
+  ],
+  "observations": [
+    {
+      "name": "approved-case",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "ready-run",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "prepared-apply",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "browser-flow",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "fixed-environment",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "owned-lock",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "failed-target-is-blocked",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "unconfirmed-pending-run",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "passing-required-with-advisory",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "approved-case-with-existing-test",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "unknown-field",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "unknown-schema",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/9', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "missing-required-field",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "non-utc-date",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "short-hash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "orphan-check",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_check"
+      ]
+    },
+    {
+      "name": "optional-check-for-required-requirement",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "optional_check_for_required_requirement",
+        "missing_independent_preserve"
+      ]
+    },
+    {
+      "name": "duplicate-check",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_check"
+      ]
+    },
+    {
+      "name": "protected-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unsafe_scope"
+      ]
+    },
+    {
+      "name": "criteria-hash-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "criteria_hash_mismatch"
+      ]
+    },
+    {
+      "name": "missing-required-result",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "baseline-preserve-failed",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "baseline_preserve_not_passed"
+      ]
+    },
+    {
+      "name": "required-result-skipped",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "required-result-flaky",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "criteria-integrity-false",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "environment-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "environment_mismatch"
+      ]
+    },
+    {
+      "name": "candidate-round-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "candidate_round_mismatch"
+      ]
+    },
+    {
+      "name": "project-report-instead-of-independent-ui",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "untrusted_observation"
+      ]
+    },
+    {
+      "name": "completed-without-decision",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "late-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "run_deadline"
+      ]
+    },
+    {
+      "name": "changed-outside-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "outside_change_scope",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "create-with-before-state",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "change_before_state",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "artifact-after-hash-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "after_artifact_mismatch"
+      ]
+    },
+    {
+      "name": "change-permission-escalation",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "mode_changed",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "orphan-artifact",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_artifact"
+      ]
+    },
+    {
+      "name": "duplicate-result-key",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_result"
+      ]
+    },
+    {
+      "name": "wrong-apply-run-hash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_run_hash"
+      ]
+    },
+    {
+      "name": "wrong-apply-mode",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_entry_state"
+      ]
+    },
+    {
+      "name": "snapshot-without-reference",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "snapshot_reference_missing",
+        "snapshot_threshold_missing"
+      ]
+    },
+    {
+      "name": "external-goto",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "external_or_invalid_url"
+      ]
+    },
+    {
+      "name": "isolation-without-image",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "missing_isolated_images"
+      ]
+    },
+    {
+      "name": "latest-failure-hidden-by-old-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "unknown-reservation-exceeds-budget",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "cost_reservation_limit"
+      ]
+    },
+    {
+      "name": "verify-must-not-call-model",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "verify_called_model",
+        "missing_price_artifact",
+        "cost_reservation_limit"
+      ]
+    },
+    {
+      "name": "zero-test-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "zero_or_incomplete_test"
+      ]
+    },
+    {
+      "name": "remote-execution-endpoint",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "remote_endpoint"
+      ]
+    },
+    {
+      "name": "review-with-corrupt-criteria",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "repair-without-source-run",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "untrusted-baseline-preservation",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "apply-of-blocked-run",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "criteria-mislabeled-as-source",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "before-hash-not-baseline",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "create-of-existing-baseline-file",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "criteria-in-write-scope",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    }
+  ],
+  "implementation_evidence": 0,
+  "product_effect_evidence": 0,
+  "phase": "independent_counterexamples_before_fix",
+  "source_sha256": {
+    "docs/design/reviews/check_verified_change_design.py": "a694cb11f3ab3a8b681d273ac4a55f052dc777dccc9e257f9244662039925dc1",
+    "docs/design/verified-change/contract.schema.json": "5dc80f87716599427dc185cb9570d049458008df0e901f3608bac1a933e5e141",
+    "docs/design/verified-change/contract-examples.json": "67ed7670f53d013ad21617c5b8f35d3ce54bd8ed9e9cc8203f256dba3ffc498f"
+  }
+}

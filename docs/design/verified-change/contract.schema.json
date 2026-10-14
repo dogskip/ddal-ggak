@@ -1,0 +1,2073 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ddalggak Verified Change Contract",
+  "description": "미구현 목표 계약; 문법 검증과 관계 검증을 함께 사용한다.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/Case"
+    },
+    {
+      "$ref": "#/$defs/Run"
+    },
+    {
+      "$ref": "#/$defs/Apply"
+    },
+    {
+      "$ref": "#/$defs/Flow"
+    },
+    {
+      "$ref": "#/$defs/Environment"
+    },
+    {
+      "$ref": "#/$defs/Lock"
+    }
+  ],
+  "$defs": {
+    "Viewport": {
+      "type": "object",
+      "description": "화면 크기",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "화면 너비"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "화면 높이"
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    },
+    "Limits": {
+      "type": "object",
+      "description": "승인된 실행 상한",
+      "properties": {
+        "step_timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000,
+          "description": "단계 최대 시간"
+        },
+        "run_timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000,
+          "description": "실행 전체 최대 시간"
+        },
+        "cleanup_timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000,
+          "description": "정리 최대 시간"
+        },
+        "max_fix_attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "최대 수정 횟수"
+        },
+        "max_provider_requests": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "제공자 요청 총 상한"
+        },
+        "budget_micro_usd": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "예약 포함 비용 상한"
+        },
+        "max_file_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "일반 파일 상한"
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "실행 출력 상한"
+        },
+        "max_artifact_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "자료 총 상한"
+        },
+        "max_changed_files": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "변경 파일 수 상한"
+        },
+        "cpu_millis_per_worker": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64000,
+          "description": "작업 하나의 CPU 상한; 1000은 CPU 하나"
+        },
+        "memory_bytes_per_worker": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "작업 하나의 메모리 상한"
+        },
+        "max_processes_per_worker": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "작업 하나의 최대 프로세스 수"
+        },
+        "browser_shm_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "검사 작업의 공유 메모리 상한"
+        }
+      },
+      "required": [
+        "step_timeout_ms",
+        "run_timeout_ms",
+        "cleanup_timeout_ms",
+        "max_fix_attempts",
+        "max_provider_requests",
+        "budget_micro_usd",
+        "max_file_bytes",
+        "max_output_bytes",
+        "max_artifact_bytes",
+        "max_changed_files",
+        "cpu_millis_per_worker",
+        "memory_bytes_per_worker",
+        "max_processes_per_worker",
+        "browser_shm_bytes"
+      ],
+      "additionalProperties": false
+    },
+    "Requirement": {
+      "type": "object",
+      "description": "요구 테이블; 사례 안의 ID 고유",
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "사례 안의 요구 ID"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "수용할 결과"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "필수 요구"
+        },
+        "check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "연결한 검사 ID"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "description": "연결한 검사 ID"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "description",
+        "required",
+        "check_ids"
+      ],
+      "additionalProperties": false
+    },
+    "Check": {
+      "type": "object",
+      "description": "검사 정의 테이블; 검사 기준 파일은 고정",
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "사례 안의 검사 ID"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "preserve",
+            "target",
+            "policy"
+          ],
+          "description": "검사의 역할"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "필수 검사"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "command",
+            "test",
+            "browser",
+            "visual",
+            "policy"
+          ],
+          "description": "검사 종류"
+        },
+        "definition_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+        },
+        "definition_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "command_argv": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048,
+            "description": "실행 파일과 인자"
+          },
+          "minItems": 0,
+          "maxItems": 100,
+          "description": "셸 평가 없는 명령 배열"
+        },
+        "viewport": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Viewport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000,
+          "description": "검사 최대 시간"
+        }
+      },
+      "required": [
+        "check_id",
+        "role",
+        "required",
+        "kind",
+        "definition_path",
+        "definition_sha256",
+        "command_argv",
+        "viewport",
+        "timeout_ms"
+      ],
+      "additionalProperties": false
+    },
+    "InputFile": {
+      "type": "object",
+      "description": "고정한 입력 파일 목록",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "파일 권한"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "파일 크기"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "source",
+            "criteria",
+            "fixture",
+            "reference",
+            "environment"
+          ],
+          "description": "입력의 역할"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "mode",
+        "size_bytes",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "Case": {
+      "type": "object",
+      "description": "고정한 사례 정의; 파일 해시는 실행에서 참조",
+      "properties": {
+        "record_type": {
+          "const": "case"
+        },
+        "schema_version": {
+          "const": "verified-change/1"
+        },
+        "case_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "legacy_alias": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "기존 사례 별칭"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "supersedes_case_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "description": "UUID v4 식별자"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "UTC 시각"
+        },
+        "request": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192,
+          "description": "요청 원문"
+        },
+        "scope_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+            "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "description": "허용된 프로그램 변경 경로"
+        },
+        "assurance_required": {
+          "type": "string",
+          "enum": [
+            "isolated",
+            "trusted-local"
+          ],
+          "description": "승인된 최소 실행 경계"
+        },
+        "baseline_tree_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "environment_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "evaluator_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InputFile"
+          },
+          "minItems": 1,
+          "maxItems": 100000,
+          "description": "고정 입력 목록"
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "description": "요구 목록"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "description": "검사 정의 목록"
+        },
+        "limits": {
+          "$ref": "#/$defs/Limits"
+        }
+      },
+      "required": [
+        "record_type",
+        "schema_version",
+        "case_id",
+        "legacy_alias",
+        "supersedes_case_id",
+        "created_at",
+        "request",
+        "scope_paths",
+        "assurance_required",
+        "baseline_tree_sha256",
+        "environment_sha256",
+        "evaluator_sha256",
+        "inputs",
+        "requirements",
+        "checks",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "CheckResult": {
+      "type": "object",
+      "description": "검사 결과 테이블; run 안의 phase/check 고유",
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "사례의 검사 ID"
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "baseline",
+            "candidate"
+          ],
+          "description": "검사 대상"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "skipped",
+            "unavailable",
+            "flaky"
+          ],
+          "description": "검사 결과"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -2147483648,
+              "maximum": 2147483647,
+              "description": "명령 종료 값"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "executed_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "실행한 시험 수"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "failed_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "실패한 시험 수"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "skipped_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "건너뛴 시험 수"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "검사 재시도 수"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "검사 시간"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "실패 또는 미확인 코드"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "자료 ID"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "description": "자료 ID"
+        },
+        "evidence_origin": {
+          "type": "string",
+          "enum": [
+            "trusted-observer",
+            "project-report"
+          ],
+          "description": "판정 자료의 관찰 주체; 프로그램 자체 보고와 구분"
+        },
+        "round_no": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "기준은 0, 후보는 해당 수정 회차"
+        }
+      },
+      "required": [
+        "check_id",
+        "phase",
+        "status",
+        "exit_code",
+        "executed_count",
+        "failed_count",
+        "skipped_count",
+        "retry_count",
+        "duration_ms",
+        "reason_code",
+        "artifact_ids",
+        "evidence_origin",
+        "round_no"
+      ],
+      "additionalProperties": false
+    },
+    "FileChange": {
+      "type": "object",
+      "description": "변경 테이블; 생성은 이전 값 없음, 갱신은 이전 값 필수",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "create",
+            "update"
+          ],
+          "description": "변경 종류"
+        },
+        "before_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "전체 SHA256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "before_mode": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 511,
+              "description": "이전 권한"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after_mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "새 권한"
+        },
+        "after_artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "새 파일 자료 ID"
+        },
+        "requirement_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "변경의 요구 ID"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "description": "변경의 요구 ID"
+        }
+      },
+      "required": [
+        "path",
+        "action",
+        "before_sha256",
+        "after_sha256",
+        "before_mode",
+        "after_mode",
+        "after_artifact_id",
+        "requirement_ids"
+      ],
+      "additionalProperties": false
+    },
+    "Artifact": {
+      "type": "object",
+      "description": "자료 테이블; 공개 승인 없는 민감 자료는 외부 제공 금지",
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "run 안의 자료 ID"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "log",
+            "trace",
+            "screenshot",
+            "diff",
+            "source",
+            "patch",
+            "price",
+            "data"
+          ],
+          "description": "자료 종류"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "자료 크기"
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "민감 자료 여부"
+        },
+        "public_export_allowed": {
+          "type": "boolean",
+          "description": "공개 내보내기 승인 여부"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "kind",
+        "path",
+        "sha256",
+        "size_bytes",
+        "sensitive",
+        "public_export_allowed"
+      ],
+      "additionalProperties": false
+    },
+    "ModelCall": {
+      "type": "object",
+      "description": "모델 요청 테이블; 모든 제공자 재시도 포함",
+      "properties": {
+        "call_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "attempt_no": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "제공자 실제 요청 순번"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "제공자 이름"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "실제 모델 이름"
+        },
+        "price_artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "가격 자료 ID"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "reserved",
+            "settled",
+            "unknown"
+          ],
+          "description": "비용 확인 상태"
+        },
+        "reserved_micro_usd": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "요청 전 최대 비용 예약"
+        },
+        "calculated_micro_usd": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "usage와 가격 자료로 계산한 비용; 청구서 금액 아님"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "input_tokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "제공자가 보고한 입력 수"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "output_tokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "제공자가 보고한 출력 수"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "UTC 시각"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$",
+              "description": "UTC 시각"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "round_no": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "수정할 입력 후보의 회차; 생성할 다음 후보의 회차가 아님"
+        }
+      },
+      "required": [
+        "call_id",
+        "attempt_no",
+        "provider",
+        "model",
+        "price_artifact_id",
+        "state",
+        "reserved_micro_usd",
+        "calculated_micro_usd",
+        "input_tokens",
+        "output_tokens",
+        "created_at",
+        "completed_at",
+        "round_no"
+      ],
+      "additionalProperties": false
+    },
+    "Integrity": {
+      "type": "object",
+      "description": "판정 전 무결성 확인",
+      "properties": {
+        "case_match": {
+          "type": "boolean",
+          "description": "사례 해시 일치"
+        },
+        "criteria_match": {
+          "type": "boolean",
+          "description": "검사 기준 일치"
+        },
+        "environment_match": {
+          "type": "boolean",
+          "description": "환경 조건 일치"
+        },
+        "candidate_match": {
+          "type": "boolean",
+          "description": "후보 해시 일치"
+        },
+        "artifacts_complete": {
+          "type": "boolean",
+          "description": "참조 자료 완전"
+        },
+        "cleanup_complete": {
+          "type": "boolean",
+          "description": "정리 완료"
+        }
+      },
+      "required": [
+        "case_match",
+        "criteria_match",
+        "environment_match",
+        "candidate_match",
+        "artifacts_complete",
+        "cleanup_complete"
+      ],
+      "additionalProperties": false
+    },
+    "Action": {
+      "type": "object",
+      "description": "결과 조치",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "오류 또는 조치 코드"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "description": "대상 경로 또는 검사 ID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "사용자가 필요한 판단"
+        },
+        "retryable": {
+          "type": "boolean",
+          "description": "조건을 해결한 뒤 재시도 가능"
+        }
+      },
+      "required": [
+        "code",
+        "target",
+        "message",
+        "retryable"
+      ],
+      "additionalProperties": false
+    },
+    "Run": {
+      "type": "object",
+      "description": "실행 테이블; 완료 manifest 공개 전에는 조회 자료일 뿐 완료 근거가 아님",
+      "properties": {
+        "record_type": {
+          "const": "run"
+        },
+        "schema_version": {
+          "const": "verified-change/1"
+        },
+        "run_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "case_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "case_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "UTC 시각"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$",
+              "description": "UTC 시각"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "running",
+            "completed",
+            "cancelled",
+            "failed"
+          ],
+          "description": "실행 상태"
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "blocked",
+                "manual-review"
+              ],
+              "description": "결과 판정"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assurance": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "isolated",
+                "trusted-local"
+              ],
+              "description": "실제로 확인한 실행 경계"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate_tree_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "전체 SHA256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "environment_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "전체 SHA256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evaluator_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "integrity": {
+          "$ref": "#/$defs/Integrity"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CheckResult"
+          },
+          "minItems": 0,
+          "maxItems": 2000,
+          "description": "검사 결과"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FileChange"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "description": "파일 변경"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Artifact"
+          },
+          "minItems": 0,
+          "maxItems": 10000,
+          "description": "자료 목록"
+        },
+        "model_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ModelCall"
+          },
+          "minItems": 0,
+          "maxItems": 100,
+          "description": "제공자 요청 목록"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "description": "필요한 조치"
+        },
+        "request_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "case·작업·후보·상한을 고정한 요청 바이트의 해시"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "verify",
+            "repair",
+            "generation"
+          ],
+          "description": "요청한 작업"
+        },
+        "source_run_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "description": "수정의 원래 실행 ID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "latest_round": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "마지막 후보 회차"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rounds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CandidateRound"
+          },
+          "maxItems": 11,
+          "description": "요청 안의 후보 회차"
+        },
+        "duration_ms": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "준비부터 정리 종료까지 단조 시간 차이로 측정한 실행 시간"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "record_type",
+        "schema_version",
+        "run_id",
+        "case_id",
+        "case_sha256",
+        "started_at",
+        "finished_at",
+        "status",
+        "decision",
+        "assurance",
+        "candidate_tree_sha256",
+        "environment_sha256",
+        "evaluator_sha256",
+        "integrity",
+        "results",
+        "changes",
+        "artifacts",
+        "model_calls",
+        "actions",
+        "request_sha256",
+        "operation",
+        "source_run_id",
+        "latest_round",
+        "rounds",
+        "duration_ms"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision": {
+                "const": "ready"
+              }
+            },
+            "required": [
+              "decision"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "completed"
+              },
+              "finished_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "Z$",
+                "description": "UTC 시각"
+              },
+              "results": {
+                "minItems": 1
+              },
+              "integrity": {
+                "properties": {
+                  "case_match": {
+                    "const": true
+                  },
+                  "criteria_match": {
+                    "const": true
+                  },
+                  "environment_match": {
+                    "const": true
+                  },
+                  "candidate_match": {
+                    "const": true
+                  },
+                  "artifacts_complete": {
+                    "const": true
+                  },
+                  "cleanup_complete": {
+                    "const": true
+                  }
+                }
+              },
+              "assurance": {
+                "enum": [
+                  "isolated",
+                  "trusted-local"
+                ]
+              },
+              "candidate_tree_sha256": {
+                "type": "string"
+              },
+              "environment_sha256": {
+                "type": "string"
+              },
+              "latest_round": {
+                "type": "integer"
+              },
+              "rounds": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "prepared",
+                  "running",
+                  "cancelled",
+                  "failed"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "decision": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "completed"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "finished_at": {
+                "type": "string"
+              },
+              "decision": {
+                "enum": [
+                  "ready",
+                  "blocked",
+                  "manual-review"
+                ]
+              },
+              "duration_ms": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ApplyEntry": {
+      "type": "object",
+      "description": "반영 파일 기록; 해시 재조회로 실제 상태를 확인",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+        },
+        "before_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "전체 SHA256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "before_mode": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 511,
+              "description": "이전 권한"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after_mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "새 권한"
+        },
+        "backup_path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+              "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "staged_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "written",
+            "restored",
+            "conflict"
+          ],
+          "description": "파일 반영 상태"
+        }
+      },
+      "required": [
+        "path",
+        "before_sha256",
+        "after_sha256",
+        "before_mode",
+        "after_mode",
+        "backup_path",
+        "staged_path",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "Apply": {
+      "type": "object",
+      "description": "반영 테이블; 파일 기록 보존 후 원본 쓰기",
+      "properties": {
+        "record_type": {
+          "const": "apply"
+        },
+        "schema_version": {
+          "const": "verified-change/1"
+        },
+        "apply_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "case_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "run_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "run_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "changes_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "UTC 시각"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "UTC 시각"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "prepared",
+            "applying",
+            "applied",
+            "rolling_back",
+            "rolled_back",
+            "conflict",
+            "unknown"
+          ],
+          "description": "반영 상태"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApplyEntry"
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "description": "대상 파일 목록"
+        },
+        "quiescence_confirmed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "UTC 시각"
+        },
+        "postcheck_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$",
+              "description": "UTC 시각"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "description": "복구와 충돌 조치"
+        }
+      },
+      "required": [
+        "record_type",
+        "schema_version",
+        "apply_id",
+        "case_id",
+        "run_id",
+        "run_sha256",
+        "changes_sha256",
+        "created_at",
+        "updated_at",
+        "state",
+        "entries",
+        "quiescence_confirmed_at",
+        "postcheck_at",
+        "actions"
+      ],
+      "additionalProperties": false
+    },
+    "Selector": {
+      "type": "object",
+      "description": "승인된 선택자",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "role",
+            "label",
+            "test-id",
+            "css"
+          ],
+          "description": "선택자 종류"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "역할 또는 선택 값"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "description": "접근 가능한 이름"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "strategy",
+        "value",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "FlowStep": {
+      "type": "object",
+      "description": "화면 동작 정의; action별 관계 제약은 저장 문서에 정의",
+      "properties": {
+        "step_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "시나리오 안의 순번 ID"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "goto",
+            "click",
+            "fill",
+            "press",
+            "expect-visible",
+            "expect-text",
+            "expect-count",
+            "expect-url",
+            "snapshot"
+          ],
+          "description": "허용된 화면 동작"
+        },
+        "selector": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Selector"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 2048,
+              "description": "입력 또는 기대 값"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000,
+              "description": "기대 항목 수"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reference_path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+              "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rgb_tolerance": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "RGB 각 성분 차이 한도"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_mismatch_ppm": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "description": "허용 다른 픽셀 비율의 백만분율"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300000,
+          "description": "동작 최대 시간"
+        }
+      },
+      "required": [
+        "step_id",
+        "action",
+        "selector",
+        "value",
+        "count",
+        "reference_path",
+        "rgb_tolerance",
+        "max_mismatch_ppm",
+        "timeout_ms"
+      ],
+      "additionalProperties": false
+    },
+    "Flow": {
+      "type": "object",
+      "description": "별도 일반 파일로 고정하는 화면 동작 기준",
+      "properties": {
+        "record_type": {
+          "const": "flow"
+        },
+        "schema_version": {
+          "const": "verified-change/1"
+        },
+        "flow_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "사용 시나리오 ID"
+        },
+        "check_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "연결한 검사 ID"
+        },
+        "entry_path": {
+          "type": "string",
+          "pattern": "^/(?!/)[^\\\\\\u0000-\\u001f\\u007f]*$",
+          "maxLength": 2048,
+          "description": "소유한 앱의 상대 URL 경로; 외부 origin은 금지"
+        },
+        "fixture_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "전체 SHA256"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlowStep"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "description": "같은 context에서 실행할 동작"
+        }
+      },
+      "required": [
+        "record_type",
+        "schema_version",
+        "flow_id",
+        "check_id",
+        "entry_path",
+        "fixture_sha256",
+        "steps"
+      ],
+      "additionalProperties": false
+    },
+    "CandidateRound": {
+      "type": "object",
+      "properties": {
+        "round_no": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "후보 회차"
+        },
+        "candidate_tree_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "해당 후보의 파일 묶음 해시"
+        },
+        "changes_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "해당 회차의 변경 묶음 해시"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "회차 시작 UTC 시각"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$",
+              "description": "회차 종료 UTC 시각"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "round_no",
+        "candidate_tree_sha256",
+        "changes_sha256",
+        "started_at",
+        "finished_at"
+      ],
+      "additionalProperties": false,
+      "description": "후보 회차 기록; 자동 수정은 같은 run 안의 다음 회차"
+    },
+    "Environment": {
+      "type": "object",
+      "description": "고정한 비교 환경; 기준과 후보에서 같은 값 사용",
+      "properties": {
+        "os_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "실행 OS"
+        },
+        "os_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "OS 판"
+        },
+        "architecture": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "실행 장비 종류"
+        },
+        "runtime_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "실행기 이름"
+        },
+        "runtime_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "실행기 판"
+        },
+        "python_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "검사 Python 판"
+        },
+        "node_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "프로그램 Node 판"
+        },
+        "package_manager": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "대상 앱의 패키지 도구"
+        },
+        "package_manager_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "패키지 도구 판"
+        },
+        "playwright_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Playwright 판"
+        },
+        "browser_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "브라우저 판"
+        },
+        "locale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "화면 언어 조건"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "화면 시간대 조건"
+        },
+        "record_type": {
+          "const": "environment"
+        },
+        "schema_version": {
+          "const": "verified-change/1"
+        },
+        "assurance": {
+          "type": "string",
+          "enum": [
+            "isolated",
+            "trusted-local"
+          ],
+          "description": "확인한 실행 경계"
+        },
+        "app_image_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "앱 작업의 고정 이미지"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "checker_image_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "검사 작업의 고정 이미지"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lockfile_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "의존성 잠금 파일 해시"
+        },
+        "browser_binary_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "브라우저 실행 파일 해시"
+        },
+        "fixture_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "fixture 입력 묶음 해시"
+        },
+        "font_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "글꼴 목록 해시"
+        },
+        "policy_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "실행 제한과 적용 정책 해시"
+        },
+        "endpoint_kind": {
+          "type": "string",
+          "enum": [
+            "local",
+            "remote"
+          ],
+          "description": "확인한 실행기 접속 범위; 첫 판은 local만 실행"
+        }
+      },
+      "required": [
+        "os_name",
+        "os_version",
+        "architecture",
+        "runtime_name",
+        "runtime_version",
+        "python_version",
+        "node_version",
+        "package_manager",
+        "package_manager_version",
+        "playwright_version",
+        "browser_version",
+        "locale",
+        "timezone",
+        "record_type",
+        "schema_version",
+        "assurance",
+        "app_image_sha256",
+        "checker_image_sha256",
+        "lockfile_sha256",
+        "browser_binary_sha256",
+        "fixture_sha256",
+        "font_manifest_sha256",
+        "policy_sha256",
+        "endpoint_kind"
+      ],
+      "additionalProperties": false
+    },
+    "Lock": {
+      "type": "object",
+      "description": "원본 반영과 사례별 모델 요청에 재사용하는 단일 작성자 기록",
+      "properties": {
+        "record_type": {
+          "const": "lock"
+        },
+        "schema_version": {
+          "const": "verified-change/1"
+        },
+        "owner_run_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "잠금 소유 실행"
+        },
+        "nonce": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "획득할 때 생성한 소유 확인 값"
+        },
+        "pid": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "소유 process ID; 단독 해제 근거로 사용하지 않음"
+        },
+        "process_start_token": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "시작한 process의 재사용 구분 값"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "획득 UTC 시각"
+        }
+      },
+      "required": [
+        "record_type",
+        "schema_version",
+        "owner_run_id",
+        "nonce",
+        "pid",
+        "process_start_token",
+        "created_at"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

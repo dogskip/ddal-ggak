@@ -1,0 +1,605 @@
+{
+  "scope": "document schema, hypothetical relations, field tables, traceability, local links",
+  "result": "failed",
+  "definitions": 21,
+  "fields": 202,
+  "valid_examples": 14,
+  "invalid_examples": 62,
+  "examples_matched": 57,
+  "requirements_traced": 20,
+  "acceptance_tests_defined": 30,
+  "local_links_checked": 26,
+  "failures": [
+    "r3-clear-input:[\"schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/dashboard', 'fixture_sha256'\"]",
+    "r3-empty-text:[\"schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/dashboard', 'fixture_sha256'\"]",
+    "r3-ready-without-observation-artifact:[]",
+    "r3-ready-with-unfinished-latest-round:[]",
+    "r3-settled-without-usage:[]",
+    "r3-settled-above-reservation-ready:[]",
+    "r3-price-reference-has-wrong-kind:[]",
+    "r3-model-call-refers-to-missing-round:[]",
+    "r3-result-refers-to-missing-round:[]",
+    "r3-applied-with-prepared-entry:[]",
+    "r3-duplicate-apply-path:[]",
+    "r3-external-entry-backslash:[]",
+    "r3-external-goto-backslash:[]",
+    "r3-external-entry-tab:[]",
+    "r3-external-goto-newline:[]",
+    "r3-unused-or-invalid-click-value:[]",
+    "r3-unused-or-invalid-goto-count:[]",
+    "r3-unused-or-invalid-snapshot-value:[]",
+    "r3-unused-or-invalid-snapshot-count:[]"
+  ],
+  "observations": [
+    {
+      "name": "approved-case",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "ready-run",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "prepared-apply",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "browser-flow",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "fixed-environment",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "owned-lock",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "failed-target-is-blocked",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "unconfirmed-pending-run",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "passing-required-with-advisory",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "approved-case-with-existing-test",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-clear-input",
+      "expected": "valid",
+      "matched": false,
+      "diagnostics": [
+        "schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/dashboard', 'fixture_sha256'"
+      ]
+    },
+    {
+      "name": "r3-empty-text",
+      "expected": "valid",
+      "matched": false,
+      "diagnostics": [
+        "schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/dashboard', 'fixture_sha256'"
+      ]
+    },
+    {
+      "name": "r3-settled-with-known-usage",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-observed-cost-overrun-remains-blocked",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "unknown-field",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "unknown-schema",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/9', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "missing-required-field",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "non-utc-date",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "short-hash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "orphan-check",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_check"
+      ]
+    },
+    {
+      "name": "optional-check-for-required-requirement",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "optional_check_for_required_requirement",
+        "missing_independent_preserve"
+      ]
+    },
+    {
+      "name": "duplicate-check",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_check"
+      ]
+    },
+    {
+      "name": "protected-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unsafe_scope"
+      ]
+    },
+    {
+      "name": "criteria-hash-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "criteria_hash_mismatch"
+      ]
+    },
+    {
+      "name": "missing-required-result",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "baseline-preserve-failed",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "baseline_preserve_not_passed"
+      ]
+    },
+    {
+      "name": "required-result-skipped",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "required-result-flaky",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "criteria-integrity-false",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "environment-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "environment_mismatch"
+      ]
+    },
+    {
+      "name": "candidate-round-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "candidate_round_mismatch"
+      ]
+    },
+    {
+      "name": "project-report-instead-of-independent-ui",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "untrusted_observation"
+      ]
+    },
+    {
+      "name": "completed-without-decision",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "late-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "run_deadline"
+      ]
+    },
+    {
+      "name": "changed-outside-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "outside_change_scope",
+        "before_not_baseline",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "create-with-before-state",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "change_before_state",
+        "create_existing_baseline",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "artifact-after-hash-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "after_artifact_mismatch"
+      ]
+    },
+    {
+      "name": "change-permission-escalation",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "mode_changed",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "orphan-artifact",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_artifact"
+      ]
+    },
+    {
+      "name": "duplicate-result-key",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_result"
+      ]
+    },
+    {
+      "name": "wrong-apply-run-hash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_run_hash"
+      ]
+    },
+    {
+      "name": "wrong-apply-mode",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_entry_state"
+      ]
+    },
+    {
+      "name": "snapshot-without-reference",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "snapshot_reference_missing",
+        "snapshot_threshold_missing"
+      ]
+    },
+    {
+      "name": "external-goto",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "external_or_invalid_url"
+      ]
+    },
+    {
+      "name": "isolation-without-image",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "missing_isolated_images"
+      ]
+    },
+    {
+      "name": "latest-failure-hidden-by-old-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "unknown-reservation-exceeds-budget",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "cost_reservation_limit"
+      ]
+    },
+    {
+      "name": "verify-must-not-call-model",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "verify_called_model",
+        "missing_price_artifact",
+        "cost_reservation_limit"
+      ]
+    },
+    {
+      "name": "zero-test-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "zero_or_incomplete_test",
+        "baseline_test_not_executed"
+      ]
+    },
+    {
+      "name": "remote-execution-endpoint",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "remote_endpoint"
+      ]
+    },
+    {
+      "name": "review-with-corrupt-criteria",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "integrity_not_complete"
+      ]
+    },
+    {
+      "name": "repair-without-source-run",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "repair_source_missing"
+      ]
+    },
+    {
+      "name": "untrusted-baseline-preservation",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "untrusted_baseline_observation"
+      ]
+    },
+    {
+      "name": "apply-of-blocked-run",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_run_not_ready"
+      ]
+    },
+    {
+      "name": "criteria-mislabeled-as-source",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "criteria_role_mismatch"
+      ]
+    },
+    {
+      "name": "before-hash-not-baseline",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "before_not_baseline"
+      ]
+    },
+    {
+      "name": "create-of-existing-baseline-file",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "create_existing_baseline"
+      ]
+    },
+    {
+      "name": "criteria-in-write-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "protected_input_in_scope"
+      ]
+    },
+    {
+      "name": "r3-ready-without-observation-artifact",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-ready-with-unfinished-latest-round",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-settled-without-usage",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-settled-above-reservation-ready",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-price-reference-has-wrong-kind",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-model-call-refers-to-missing-round",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-result-refers-to-missing-round",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-applied-with-prepared-entry",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-duplicate-apply-path",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-external-entry-backslash",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-external-goto-backslash",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-external-entry-tab",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-external-goto-newline",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-unused-or-invalid-click-value",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-unused-or-invalid-goto-count",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-unused-or-invalid-snapshot-value",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-unused-or-invalid-snapshot-count",
+      "expected": "invalid",
+      "matched": false,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-unused-or-invalid-press-empty",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/dashboard', 'fixture_sha256'"
+      ]
+    }
+  ],
+  "implementation_evidence": 0,
+  "product_effect_evidence": 0,
+  "input_sha256": {
+    "docs/design/34-verified-change-design.md": "9ca59e36fb8032a49c3250d5686c5a0a2d42949bf5bddc1dc9d06a6521ce58da",
+    "docs/design/35-verified-change-storage.md": "10d1a096fabb4694737fde245af951e7c16479bd600f7311db97185d6dc91cc0",
+    "docs/design/36-verified-change-verification.md": "da1f11f8a75caa7565747bd31f258f778296e69e3f4d485aab12b89a306a6f0e",
+    "docs/design/verified-change/contract.schema.json": "5dc80f87716599427dc185cb9570d049458008df0e901f3608bac1a933e5e141",
+    "docs/design/verified-change/contract-examples.json": "ead5397c4d8f2cb24edc19d1768184225306e553b94adcbe457142d45233787b"
+  },
+  "checker_sha256_before_fix": "683fb6a0f97892d120a4c6dbf843976e8543a33736677835ff74b953de62b0b8"
+}

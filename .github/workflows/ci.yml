@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-type-check:
     name: Lint & Type Check
@@ -18,9 +22,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
       - name: Ruff lint
-        run: uv run ruff check src/ tests/
+        run: uv run ruff check src/ tests/ scripts/
       - name: Ruff format check
-        run: uv run ruff format --check src/ tests/
+        run: uv run ruff format --check src/ tests/ scripts/
       - name: Pyright type check
         run: uv run pyright src/
 
@@ -36,6 +40,46 @@ jobs:
         run: uv sync --extra dev
       - name: Run tests (excluding playwright)
         run: uv run pytest tests/ -q -m "not playwright" --tb=short --cov=src/ddk --cov-report=term-missing
+
+  package:
+    name: Build & install the wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Build
+        run: uv build
+      - name: The wheel carries the demo project and the slash commands
+        run: python3 scripts/check_wheel.py dist/*.whl
+      - name: Install it into a clean environment and start the CLI
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/wheel-env"
+          uv pip install --python "$RUNNER_TEMP/wheel-env/bin/python" dist/*.whl
+          "$RUNNER_TEMP/wheel-env/bin/ddk" --help
+          "$RUNNER_TEMP/wheel-env/bin/ddk" demo --help
+          "$RUNNER_TEMP/wheel-env/bin/python" -m ddk version
+
+  e2e:
+    name: End-to-end (real npm, Chromium, screenshot comparison)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: uv sync --extra dev
+      - name: Install headless Chromium and its system libraries
+        run: uv run python -m playwright install --with-deps --only-shell chromium
+      - name: Run the whole loop for real
+        env:
+          DDK_E2E: "1"
+        run: uv run pytest tests/e2e -m playwright -q --tb=short
 
   security-audit:
     name: Security Audit (pip-audit)

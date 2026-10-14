@@ -1,0 +1,45 @@
+# Publishes to PyPI when a version tag is pushed. Nothing here runs until the maintainer has set it up:
+#
+#   1. On pypi.org add a pending publisher for the project `ddalggak`:
+#      owner `dogskip`, repository `ddal-ggak`, workflow `release.yml`, environment `pypi`.
+#   2. In the GitHub repository settings create the environment `pypi` (required reviewers are optional).
+#   3. Bump `version` in pyproject.toml, then:  git tag v1.0.1 && git push origin v1.0.1
+#
+# The tag must match the version in pyproject.toml, or the build stops.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: The tag matches the version in pyproject.toml
+        run: test "v$(uv version --short)" = "$GITHUB_REF_NAME"
+      - name: Build
+        run: uv build
+      - name: The wheel carries the demo project and the slash commands
+        run: python3 scripts/check_wheel.py dist/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

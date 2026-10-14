@@ -128,7 +128,7 @@ def _ssim(reference: Image.Image, actual: Image.Image) -> float:
     return max(0.0, min(1.0, score))
 
 
-def _fragment(record: Record, name: str) -> None:
+def validate_fragment(record: Record, name: str) -> None:
     validator = cast(Any, contract_validator())
     schema: Record = {"$defs": validator.schema["$defs"], "$ref": "#/$defs/" + name}
     errors = list(validator.evolve(schema=schema).iter_errors(record))
@@ -202,7 +202,7 @@ def _prepare(
     settings: BrowserSettings,
     references: Mapping[str, VisualReference],
 ) -> tuple[Record, str]:
-    _fragment(check, "Check")
+    validate_fragment(check, "Check")
     if hashlib.sha256(flow).hexdigest() != check["definition_sha256"]:
         raise ValueError("criteria_hash_mismatch")
     definition = parse_record(flow)
@@ -445,7 +445,7 @@ def _publish(
         "sensitive": True,
         "public_export_allowed": False,
     }
-    _fragment(artifact, "Artifact")
+    validate_fragment(artifact, "Artifact")
     artifacts.append(artifact)
 
 
@@ -663,5 +663,5 @@ async def run_flow(
         "evidence_origin": "trusted-observer",
         "round_no": round_no,
     }
-    _fragment(result, "CheckResult")
+    validate_fragment(result, "CheckResult")
     return BrowserRun(result, artifacts, cleanup_complete)

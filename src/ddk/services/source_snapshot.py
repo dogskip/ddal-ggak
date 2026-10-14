@@ -54,6 +54,19 @@ class SourceSnapshot:
     tree_sha256: str
 
 
+def source_matches(
+    path: Path, snapshot: SourceSnapshot, *, max_file_bytes: int, max_total_bytes: int
+) -> bool:
+    """Exact source content, modes and list after execution."""
+    try:
+        observed = capture_source(
+            path, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes
+        )
+        return observed.tree_sha256 == snapshot.tree_sha256
+    except (OSError, ValueError):
+        return False
+
+
 def manifest_digest(files: Iterable[SnapshotFile]) -> str:
     ordered = sorted(files, key=lambda item: item.path.encode("utf-8"))
     ensure_distinct_paths([item.path for item in ordered])

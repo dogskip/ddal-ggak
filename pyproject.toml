@@ -75,6 +75,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["src"]
 markers = [
+    "docker: opt-in local Docker execution with prebuilt immutable images",
     "integration: real API calls — requires ANTHROPIC_API_KEY",
     "playwright: requires Playwright + browser binaries (skip in CI with -m 'not playwright')",
 ]

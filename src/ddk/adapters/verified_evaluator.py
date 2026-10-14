@@ -20,6 +20,8 @@ from ddk.adapters.subprocess_build_runner import SubprocessBuildRunner
 from ddk.adapters.subprocess_preview import SubprocessPreviewLauncher
 from ddk.adapters.verified_browser import BrowserSettings, VisualReference, run_flow
 from ddk.adapters.verified_isolation import LocalDockerIsolation
+from ddk.adapters.verified_reports import check_result as _result
+from ddk.adapters.verified_reports import command_report
 from ddk.models.verified_change import (
     Record,
     decode_json,
@@ -29,7 +31,7 @@ from ddk.models.verified_change import (
 )
 from ddk.security.file_access import read_regular
 from ddk.security.repo_paths import ensure_distinct_paths
-from ddk.services.source_snapshot import SnapshotFile, capture_source, manifest_digest
+from ddk.services.source_snapshot import SnapshotFile, manifest_digest, source_matches
 from ddk.services.verified_change_engine import (
     EvaluationArtifact,
     EvaluationOutcome,
@@ -241,26 +243,6 @@ def _prepare(request: EvaluationRequest, *, trusted_local: bool) -> _Inputs:
     return _Inputs(plan, files, settings, references)
 
 
-def _result(request: EvaluationRequest, check: Record, reason: str | None = None) -> Record:
-    return {
-        "check_id": check["check_id"],
-        "phase": request.phase,
-        "status": "unavailable",
-        "exit_code": None,
-        "executed_count": None,
-        "failed_count": None,
-        "skipped_count": None,
-        "retry_count": 0,
-        "duration_ms": 0,
-        "reason_code": reason,
-        "artifact_ids": [],
-        "evidence_origin": "project-report"
-        if check["kind"] in {"command", "test"}
-        else "trusted-observer",
-        "round_no": 0,
-    }
-
-
 def _stopped(request: EvaluationRequest) -> str | None:
     if time.monotonic_ns() >= request.deadline_ns:
         return "timeout"
@@ -289,33 +271,10 @@ async def _command(
         payload = b"Command deadline exceeded; partial output size is unknown"
         output_bytes = None
     else:
-        result["exit_code"] = answer.returncode
-        result["status"] = "passed" if answer.success else "failed"
-        result["reason_code"] = None if answer.success else "command_failed"
+        result = command_report(request, check, answer)
         cleanup = answer.returncode != 125
         payload = (answer.stdout + "\n" + answer.stderr).encode()
         output_bytes = len(answer.stdout.encode()) + len(answer.stderr.encode())
-        if answer.returncode in {124, 125, 126, 127}:
-            result.update(status="unavailable", reason_code="command_unavailable")
-        elif check["kind"] == "test":
-            try:
-                counts = decode_json(answer.stdout.encode())
-                keys = {"executed_count", "failed_count", "skipped_count"}
-                _require(
-                    set(counts) == keys
-                    and all(
-                        type(counts[key]) is int and 0 <= counts[key] <= 2**53 - 1 for key in keys
-                    ),
-                    "test_report_invalid",
-                )
-                _require(counts["failed_count"] <= counts["executed_count"], "test_report_invalid")
-                result.update(counts)
-                if counts["executed_count"] == 0 or counts["skipped_count"]:
-                    result.update(status="unavailable", reason_code="test_report_incomplete")
-                elif counts["failed_count"]:
-                    result.update(status="failed", reason_code="test_failed")
-            except ValueError:
-                result.update(status="unavailable", reason_code="test_report_invalid")
     artifact = EvaluationArtifact(
         f"{request.phase}-command-{index}",
         "log",
@@ -344,22 +303,19 @@ def _cleanup_failed(error: BaseException) -> bool:
 
 
 def _copy_intact(request: EvaluationRequest, app: Path) -> bool:
-    try:
-        observed = capture_source(
-            app,
-            max_file_bytes=request.limits["max_file_bytes"],
-            max_total_bytes=min(_MAX_BYTES, request.limits["max_artifact_bytes"]),
-        )
-    except (OSError, ValueError):
-        return False
-    return observed.tree_sha256 == request.snapshot.tree_sha256
+    return source_matches(
+        app,
+        request.snapshot,
+        max_file_bytes=request.limits["max_file_bytes"],
+        max_total_bytes=min(_MAX_BYTES, request.limits["max_artifact_bytes"]),
+    )
 
 
 class VerifiedEvaluator:
     """Use local execution only when the CLI explicitly supplied its separate grant.
 
-    Docker policy preflight is available; its checker transport is not implemented.
-    An available daemon therefore never silently enables host execution.
+    The default uses separate policy-verified containers. An available daemon
+    never grants host execution.
     """
 
     def __init__(
@@ -383,29 +339,14 @@ class VerifiedEvaluator:
                 cleanup_complete=True,
             )
         if not self._local:
-            availability = await self._isolation.preflight(deadline_ns=request.deadline_ns)
-            detail = (
-                "isolated_worker_unavailable" if availability.available else availability.reason
-            )
-            artifact = EvaluationArtifact(
-                f"{request.phase}-isolation",
-                "log",
-                f"artifacts/{request.phase}/isolation.log",
-                detail.encode(),
-            )
-            unavailable = tuple(
-                _result(request, check, "isolation_unavailable") for check in request.checks
-            )
-            for result in unavailable:
-                result["artifact_ids"] = [artifact.artifact_id]
-            return EvaluationOutcome(
-                unavailable,
-                (artifact,),
-                None,
-                request.environment_sha256,
-                request.evaluator_sha256,
-                request.input_tree_sha256,
-                True,
+            from ddk.adapters.isolated_evaluator import evaluate_isolated
+
+            return await evaluate_isolated(
+                request,
+                plan=inputs.plan,
+                files=inputs.files,
+                settings=inputs.settings,
+                isolation=self._isolation,
             )
         results: list[Record] = []
         artifacts: list[EvaluationArtifact] = []

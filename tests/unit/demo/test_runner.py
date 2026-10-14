@@ -11,6 +11,7 @@ import pytest
 from ddk.adapters.filesystem import FilesystemAdapter
 from ddk.adapters.local_git import LocalGitAdapter
 from ddk.adapters.playwright_browser import ConsoleEntry, FailedRequestEntry
+from ddk.adapters.sandbox.base import CommandResult
 from ddk.adapters.sandbox.tempdir import TempDirSandbox
 from ddk.adapters.screenshot_diff_local import LocalScreenshotDiffAdapter
 from ddk.demo.runner import (
@@ -54,16 +55,24 @@ class SequenceBrowser:
         return None
 
 
+class _InstallingBuildRunner(FakeBuildRunner):
+    async def run(self, command: list[str], cwd: Path, timeout: int = 300) -> CommandResult:
+        if command[:2] == ["npm", "ci"]:
+            await _no_install(cwd)
+        return await super().run(command, cwd, timeout)
+
+
 def _services(scratch: Path) -> RuntimeServices:
     return RuntimeServices(
         llm=demo_model(),
         filesystem=FilesystemAdapter(),
         git=LocalGitAdapter(),
         sandbox=TempDirSandbox(),
-        build_runner=FakeBuildRunner(),
+        build_runner=_InstallingBuildRunner(),
         browser=SequenceBrowser(scratch),
         screenshot_diff=LocalScreenshotDiffAdapter(),
         preview=FakePreviewLauncher(),
+        install_dependencies=True,
         max_fix_attempts=3,
     )
 
@@ -71,7 +80,7 @@ def _services(scratch: Path) -> RuntimeServices:
 async def _no_install(project: Path) -> None:
     """Leaves what `npm ci` would, as far as the validator looks: the `vite` executable."""
     binaries = project / "node_modules" / ".bin"
-    binaries.mkdir(parents=True)
+    binaries.mkdir(parents=True, exist_ok=True)
     (binaries / "vite").write_text("")
 
 
@@ -219,3 +228,52 @@ async def test_demo_leaves_an_evidence_report_with_both_checks(tmp_path: Path) -
     page = result.report_path.read_text(encoding="utf-8")
     assert page.count("<h3>") >= 2 and "R-10" in page
     assert page.count('src="data:image/png') >= 5  # design, 2 results, 2 differences (+ overlay)
+
+
+@pytest.mark.parametrize("available", [True, False])
+async def test_prerequisites_probe_the_browser_from_an_active_event_loop(
+    monkeypatch: pytest.MonkeyPatch, available: bool
+) -> None:
+    import asyncio
+
+    from ddk.adapters.chromium_browser import BrowserUnavailableError, ChromiumBrowserAdapter
+
+    caller_loop = asyncio.get_running_loop()
+    observed: list[asyncio.AbstractEventLoop] = []
+
+    async def probe(self: ChromiumBrowserAdapter) -> str:
+        observed.append(asyncio.get_running_loop())
+        await asyncio.sleep(0)
+        if not available:
+            raise BrowserUnavailableError("probe actually failed")
+        return "Playwright's Chromium"
+
+    monkeypatch.delenv("DDK_CHROMIUM_PATH", raising=False)
+    monkeypatch.setattr("ddk.demo.runner.shutil.which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(ChromiumBrowserAdapter, "probe", probe)
+
+    problems = check_prerequisites()
+
+    assert len(observed) == 1
+    assert observed[0] is not caller_loop
+    assert problems == [] if available else "probe actually failed" in problems[0]
+
+
+def test_real_services_install_dependencies_in_the_validation_copy() -> None:
+    from ddk.demo.runner import real_services
+
+    assert real_services().install_dependencies is True
+
+
+async def test_validation_installs_dependencies_in_each_disposable_copy(tmp_path: Path) -> None:
+    services = _services(tmp_path)
+    result = await run_demo(tmp_path / "demo", services=services, install=_no_install)
+    assert isinstance(services.build_runner, _InstallingBuildRunner)
+    installs = [
+        entry for entry in services.build_runner.run_log if entry["command"][:2] == ["npm", "ci"]
+    ]
+
+    assert len(installs) == 2
+    assert all(Path(str(entry["cwd"])) != result.project_path for entry in installs)
+    assert all(not Path(str(entry["cwd"])).exists() for entry in installs)
+    assert (result.project_path / "node_modules/.bin/vite").is_file()

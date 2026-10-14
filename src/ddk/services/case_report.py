@@ -14,7 +14,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol, cast
 
 from PIL import Image
 from pydantic import BaseModel, TypeAdapter
@@ -29,10 +29,16 @@ from ddk.models.scorecard import Scorecard
 from ddk.models.validation import RuntimeValidationReport
 from ddk.models.visual import VisualRegressionReport
 
+type JsonValue = None | bool | int | float | str | list[JsonValue] | dict[str, JsonValue]
+
 REPORT_NAME = "report.html"
 _MAX_IMAGE_WIDTH = 1100
 _MAX_PROMPT_CHARS = 600
 _ROUND_DIR = re.compile(r"round-(\d+)$")
+
+
+class _Resizable(Protocol):
+    def resize(self, size: tuple[int, int], resample: int, /) -> Image.Image: ...
 
 
 class ReportUnavailableError(RuntimeError):
@@ -76,6 +82,7 @@ def load_case_report(case_path: Path) -> CaseReport:
         )
     attempts = _load_list(reports / "fix-attempts.json", FixAttempt)
     case_input = _read_json(reports / "case-input.json")
+    calls = _read_json(reports / "llm-calls.json", [])
     return CaseReport(
         case_id=decision.case_id,
         decision=decision,
@@ -86,9 +93,7 @@ def load_case_report(case_path: Path) -> CaseReport:
         rounds=_load_rounds(case_path),
         design=_find_design(case_path, case_input),
         generated=_load(reports / "generated-artifacts.json", GeneratedArtifactSet),
-        calls=[
-            call for call in _read_json(reports / "llm-calls.json", []) if isinstance(call, dict)
-        ],
+        calls=[call for call in calls if isinstance(call, dict)] if isinstance(calls, list) else [],
         prompt=str(case_input.get("prompt", "")) if isinstance(case_input, dict) else "",
     )
 
@@ -135,9 +140,9 @@ def write_report(case_path: Path, output: Path | None = None) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def _read_json(path: Path, default: Any = None) -> Any:
+def _read_json(path: Path, default: JsonValue = None) -> JsonValue:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return cast(JsonValue, json.loads(path.read_text(encoding="utf-8")))
     except (OSError, ValueError):
         return default
 
@@ -187,7 +192,7 @@ def _load_rounds(case_path: Path) -> list[Round]:
     ]
 
 
-def _find_design(case_path: Path, case_input: Any) -> Path | None:
+def _find_design(case_path: Path, case_input: JsonValue) -> Path | None:
     inputs = case_path / "artifacts" / "inputs"
     if isinstance(case_input, dict):
         names = case_input.get("image_paths")
@@ -221,7 +226,9 @@ def _data_uri(path: Path | None) -> str | None:
             image = source.convert("RGBA" if "A" in source.getbands() else "RGB")
         if image.width > _MAX_IMAGE_WIDTH:
             height = max(1, round(image.height * _MAX_IMAGE_WIDTH / image.width))
-            image = image.resize((_MAX_IMAGE_WIDTH, height), Image.Resampling.LANCZOS)
+            image = cast(_Resizable, image).resize(
+                (_MAX_IMAGE_WIDTH, height), Image.Resampling.LANCZOS
+            )
         buffer = io.BytesIO()
         image.save(buffer, format="PNG", optimize=True)
     except (OSError, ValueError):

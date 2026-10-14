@@ -333,7 +333,10 @@ class RuntimeValidator:
             return None
         command_line = " ".join(plan.install_command)
         if not self._install:
-            return f"dependencies are not installed; run `{command_line}` or pass --install"
+            return (
+                "dependencies are not installed in the disposable copy; "
+                f"pass --install to allow `{command_line}` (source dependencies are not copied)"
+            )
 
         result = await self._build.run(
             plan.install_command, cwd=sandbox_dir, timeout=self._install_timeout

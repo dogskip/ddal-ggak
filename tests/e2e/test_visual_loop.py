@@ -164,6 +164,7 @@ async def _render_design(repo: Path, out_dir: Path) -> Path:
         LocalScreenshotDiffAdapter(),
         preview=SubprocessPreviewLauncher(),
         visual_dir=out_dir,
+        install_dependencies=True,
     )
     good = GeneratedArtifactSet(
         case_id="design",
@@ -201,6 +202,7 @@ async def test_wrong_looking_page_is_repaired_from_the_design_and_certified(
         screenshot_diff=LocalScreenshotDiffAdapter(),
         preview=SubprocessPreviewLauncher(),
         max_fix_attempts=3,
+        install_dependencies=True,
     )
     manager = WorkspaceManager(repo)
     manager.init()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -10,12 +11,30 @@ import pytest
 from ddk.adapters.subprocess_build_runner import SubprocessBuildRunner
 
 
+@pytest.fixture(autouse=True)
+def mocked_process_group() -> object:
+    with patch("os.killpg"):
+        yield
+
+
+def _process(stdout: bytes = b"", stderr: bytes = b"", code: int = 0) -> MagicMock:
+    process = MagicMock()
+    process.pid = 4242
+    process.returncode = code
+    process.stdout = asyncio.StreamReader()
+    process.stderr = asyncio.StreamReader()
+    process.stdout.feed_data(stdout)
+    process.stderr.feed_data(stderr)
+    process.stdout.feed_eof()
+    process.stderr.feed_eof()
+    process.wait = AsyncMock(return_value=code)
+    return process
+
+
 class TestSubprocessBuildRunner:
     @pytest.mark.asyncio
     async def test_success(self) -> None:
-        mock_proc = MagicMock()
-        mock_proc.communicate = AsyncMock(return_value=(b"ok\n", b""))
-        mock_proc.returncode = 0
+        mock_proc = _process(b"ok\n")
 
         with patch(
             "asyncio.create_subprocess_exec",
@@ -33,9 +52,7 @@ class TestSubprocessBuildRunner:
 
     @pytest.mark.asyncio
     async def test_failure(self) -> None:
-        mock_proc = MagicMock()
-        mock_proc.communicate = AsyncMock(return_value=(b"", b"error\n"))
-        mock_proc.returncode = 1
+        mock_proc = _process(stderr=b"error\n", code=1)
 
         with patch(
             "asyncio.create_subprocess_exec",
@@ -52,14 +69,12 @@ class TestSubprocessBuildRunner:
 
     @pytest.mark.asyncio
     async def test_timeout_returns_124(self) -> None:
-        mock_proc = MagicMock()
-        mock_proc.communicate = AsyncMock(side_effect=[TimeoutError(), (b"", b"")])
-        mock_proc.kill = MagicMock()
-        mock_proc.pid = 4242
+        mock_proc = _process()
+        mock_proc.stdout = asyncio.StreamReader()
 
         with (
             patch("asyncio.create_subprocess_exec", return_value=mock_proc),
-            patch("os.killpg"),
+            patch("os.killpg", side_effect=lambda *_: mock_proc.stdout.feed_eof()),
         ):
             runner = SubprocessBuildRunner()
             result = await runner.run(
@@ -92,9 +107,7 @@ class TestSubprocessBuildRunner:
         monkeypatch.setenv("DDK_ANTHROPIC_API_KEY", "must-not-leak")
         monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "must-not-leak")
         monkeypatch.setenv("HOME", "/host/home")
-        mock_proc = MagicMock()
-        mock_proc.communicate = AsyncMock(return_value=(b"ok\n", b""))
-        mock_proc.returncode = 0
+        mock_proc = _process(b"ok\n")
 
         with patch(
             "asyncio.create_subprocess_exec",

@@ -17,6 +17,7 @@ import os
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import TypedDict
 
@@ -237,10 +238,20 @@ class PreflightDoctor:
                 critical=False,
             )
         try:
-            used = asyncio.run(ChromiumBrowserAdapter().probe())
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                used = asyncio.run(ChromiumBrowserAdapter().probe())
+            else:
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    used = executor.submit(self._probe_browser).result()
         except BrowserUnavailableError as exc:
             detail = f"{exc} (or skip the comparison with --no-visual)"
             return CheckResult(name=name, status="warn", detail=detail, critical=False)
         if used != PLAYWRIGHT_BUILD:
             used = f"{used} (installed browser, used because Playwright has no build)"
         return CheckResult(name=name, status="pass", detail=used, critical=False)
+
+    @staticmethod
+    def _probe_browser() -> str:
+        return asyncio.run(ChromiumBrowserAdapter().probe())

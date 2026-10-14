@@ -97,6 +97,7 @@ def real_services(chromium_path: str | None = None) -> RuntimeServices:
         browser=ChromiumBrowserAdapter(executable_path=chromium_path),
         screenshot_diff=LocalScreenshotDiffAdapter(),
         preview=SubprocessPreviewLauncher(),
+        install_dependencies=True,
         max_fix_attempts=3,
     )
 

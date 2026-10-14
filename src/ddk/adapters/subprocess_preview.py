@@ -5,13 +5,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import socket
-import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .preview import PreviewStartError
 from .sandbox.policy import is_command_allowed
-from .subprocess_build_runner import child_environment, kill_process_tree
+from .subprocess_build_runner import ProcessOutput, start_owned_process, stop_owned_process
 
 _HOST = "127.0.0.1"
 _POLL_S = 0.1
@@ -22,19 +22,23 @@ _TAIL_CHARS = 600
 class _Session:
     url: str
     _process: asyncio.subprocess.Process
-    _log: Path
+    _output: ProcessOutput
     _stopped: bool = field(default=False)
+
+    def output(self) -> tuple[str, str]:
+        """Return bounded stdout and stderr collected from this owned process."""
+        return self._output.text()
 
     async def stop(self) -> None:
         if self._stopped:
             return
+        try:
+            await stop_owned_process(self._process, self._output)
+        except Exception as exc:
+            raise PreviewStartError(f"Preview cleanup failed: {exc}") from exc
         self._stopped = True
-        if self._process.returncode is None:
-            kill_process_tree(self._process)
-            with contextlib.suppress(ProcessLookupError):
-                await self._process.wait()
-        with contextlib.suppress(OSError):
-            self._log.unlink()
+        if self._output.exceeded.is_set():
+            raise PreviewStartError("Preview output limit exceeded (10 MiB combined stdout/stderr)")
 
 
 class SubprocessPreviewLauncher:
@@ -43,55 +47,52 @@ class SubprocessPreviewLauncher:
     async def start(self, command: list[str], cwd: Path, *, timeout_s: float = 60.0) -> _Session:
         if not command or not is_command_allowed(command[0]):
             raise PreviewStartError(f"Command not allowed: {command[0] if command else ''}")
-
+        started_ns = time.monotonic_ns()
         port = _free_port()
         argv = [part.replace("{port}", str(port)) for part in command]
-        log_file = tempfile.NamedTemporaryFile(  # noqa: SIM115
-            prefix="ddk-preview-", suffix=".log", delete=False
-        )
-        log_path = Path(log_file.name)
         try:
-            process = await asyncio.create_subprocess_exec(
-                *argv,
-                cwd=str(cwd),
-                env=child_environment(cwd),
-                stdin=asyncio.subprocess.DEVNULL,
-                stdout=log_file,
-                stderr=asyncio.subprocess.STDOUT,
-                start_new_session=True,
-            )
+            process, output = await start_owned_process(argv, cwd, stdin=asyncio.subprocess.DEVNULL)
         except FileNotFoundError as exc:
-            log_path.unlink(missing_ok=True)
             raise PreviewStartError(f"Command not found: {argv[0]}") from exc
-        finally:
-            log_file.close()
-
-        session = _Session(url=f"http://{_HOST}:{port}/", _process=process, _log=log_path)
+        session = _Session(url=f"http://{_HOST}:{port}/", _process=process, _output=output)
         try:
-            await _wait_until_listening(process, port, timeout_s, log_path)
-        except BaseException:
-            await session.stop()
+            await _wait_until_listening(
+                process, port, timeout_s, started_ns + int(timeout_s * 1e9), output
+            )
+        except BaseException as exc:
+            try:
+                await session.stop()
+            except Exception as cleanup:
+                exc.add_note(f"Preview cleanup failed: {cleanup}")
             raise
         return session
 
 
 async def _wait_until_listening(
-    process: asyncio.subprocess.Process, port: int, timeout_s: float, log_path: Path
+    process: asyncio.subprocess.Process,
+    port: int,
+    timeout_s: float,
+    deadline_ns: int,
+    output: ProcessOutput,
 ) -> None:
-    loop = asyncio.get_running_loop()
-    deadline = loop.time() + timeout_s
     while True:
+        if output.exceeded.is_set():
+            raise PreviewStartError("Preview output limit exceeded (10 MiB combined stdout/stderr)")
         if process.returncode is not None:
             raise PreviewStartError(
-                f"preview server exited with code {process.returncode}: {_tail(log_path)}"
+                f"preview server exited with code {process.returncode}: {_tail(output)}"
             )
-        if await _accepts(port):
-            return
-        if loop.time() >= deadline:
+        remaining = (deadline_ns - time.monotonic_ns()) / 1e9
+        if remaining <= 0:
             raise PreviewStartError(
-                f"preview server did not start listening within {timeout_s:g}s: {_tail(log_path)}"
+                f"preview server did not start listening within {timeout_s:g}s: {_tail(output)}"
             )
-        await asyncio.sleep(_POLL_S)
+        try:
+            if await asyncio.wait_for(_accepts(port), timeout=min(remaining, _POLL_S)):
+                return
+        except TimeoutError:
+            pass
+        await asyncio.sleep(min(_POLL_S, max(0, (deadline_ns - time.monotonic_ns()) / 1e9)))
 
 
 async def _accepts(port: int) -> bool:
@@ -111,9 +112,7 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _tail(log_path: Path) -> str:
-    try:
-        text = log_path.read_text(encoding="utf-8", errors="replace").strip()
-    except OSError:
-        return "no output"
+def _tail(output: ProcessOutput) -> str:
+    stdout, stderr = output.text()
+    text = (stdout + stderr).strip()
     return text[-_TAIL_CHARS:] if text else "no output"

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ddk.i18n import t
+from ddk.models.fix import FixAttempt
 
 _STEP_MARKS = {"passed": "✓", "failed": "✗", "skipped": "–", "unavailable": "?"}
 _MAX_ERROR_CHARS = 160
@@ -107,7 +108,7 @@ def _validate(update: dict[str, Any]) -> str:
 
 
 def _autofix(update: dict[str, Any]) -> str:
-    attempts = update.get("fix_attempts") or []
+    attempts: list[FixAttempt] = update.get("fix_attempts") or []
     if not attempts:
         return ""
     last = attempts[-1]

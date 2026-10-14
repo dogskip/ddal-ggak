@@ -2,18 +2,31 @@
 
 from __future__ import annotations
 
+import asyncio
 import signal
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from ddk.adapters.subprocess_build_runner import SubprocessBuildRunner
+
+
+@pytest.fixture(autouse=True)
+def mocked_process_group() -> object:
+    with patch("os.killpg"):
+        yield
 
 
 def _process(*, pid: int = 4242, returncode: int = 0) -> MagicMock:
     process = MagicMock()
     process.pid = pid
     process.returncode = returncode
-    process.communicate = AsyncMock(return_value=(b"", b""))
+    process.stdout = asyncio.StreamReader()
+    process.stderr = asyncio.StreamReader()
+    process.stdout.feed_eof()
+    process.stderr.feed_eof()
+    process.wait = AsyncMock(return_value=returncode)
     return process
 
 
@@ -28,11 +41,11 @@ async def test_missing_executable_is_reported_as_exit_127(tmp_path: Path) -> Non
 
 async def test_timeout_kills_the_whole_process_group(tmp_path: Path) -> None:
     process = _process()
-    process.communicate = AsyncMock(side_effect=[TimeoutError(), (b"", b"")])
+    process.stdout = asyncio.StreamReader()
 
     with (
         patch("asyncio.create_subprocess_exec", return_value=process),
-        patch("os.killpg") as killpg,
+        patch("os.killpg", side_effect=lambda *_: process.stdout.feed_eof()) as killpg,
     ):
         result = await SubprocessBuildRunner().run(["npm", "run", "build"], cwd=tmp_path, timeout=1)
 

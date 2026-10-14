@@ -7,12 +7,15 @@ Opt-in (needs Node, network for `npm ci`, and a Chromium build):
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
+import stat
 from pathlib import Path
 
 import pytest
 
-from ddk.demo.runner import check_prerequisites, run_demo
+from ddk.demo.runner import _npm_ci, check_prerequisites, run_demo
 
 pytestmark = [
     pytest.mark.playwright,
@@ -24,9 +27,30 @@ async def test_demo_repairs_the_first_draft_and_ends_ready(tmp_path: Path) -> No
     assert check_prerequisites() == []
     from ddk.demo.runner import real_services
 
+    original_dependencies: dict[str, tuple[int, str]] = {}
+
+    async def install(project: Path) -> None:
+        await _npm_ci(project)
+        original_dependencies.update(_dependency_manifest(project / "node_modules"))
+
     result = await run_demo(
-        tmp_path / "demo", services=real_services(os.environ.get("DDK_CHROMIUM_PATH") or None)
+        tmp_path / "demo",
+        services=real_services(os.environ.get("DDK_CHROMIUM_PATH") or None),
+        install=install,
     )
+
+    assert original_dependencies
+    final_dependencies = _dependency_manifest(result.project_path / "node_modules")
+    preservation = {
+        "before_sha256": _manifest_sha256(original_dependencies),
+        "after_sha256": _manifest_sha256(final_dependencies),
+        "entry_count": len(original_dependencies),
+        "unchanged": final_dependencies == original_dependencies,
+    }
+    (tmp_path / "dependency-preservation.json").write_text(
+        json.dumps(preservation, indent=2), encoding="utf-8"
+    )
+    assert preservation["unchanged"]
 
     first = result.first_attempt
     final = result.final_state["visual_regression_report"]
@@ -39,3 +63,24 @@ async def test_demo_repairs_the_first_draft_and_ends_ready(tmp_path: Path) -> No
     assert "export default function App" in generated.read_text()
     assert result.report_path is not None and result.report_path.is_file()
     assert "ready" in result.report_path.read_text(encoding="utf-8")
+
+
+def _dependency_manifest(folder: Path) -> dict[str, tuple[int, str]]:
+    manifest: dict[str, tuple[int, str]] = {}
+    for path in folder.rglob("*"):
+        mode = path.lstat().st_mode
+        if stat.S_ISLNK(mode):
+            value = "symlink:" + os.readlink(path)
+        elif stat.S_ISREG(mode):
+            value = hashlib.sha256(path.read_bytes()).hexdigest()
+        elif stat.S_ISDIR(mode):
+            value = "directory"
+        else:
+            continue
+        manifest[path.relative_to(folder).as_posix()] = (mode, value)
+    return manifest
+
+
+def _manifest_sha256(manifest: dict[str, tuple[int, str]]) -> str:
+    encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()

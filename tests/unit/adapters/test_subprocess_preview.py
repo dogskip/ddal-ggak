@@ -27,6 +27,18 @@ def _refused(host: str, port: int) -> bool:
 
 
 class TestStart:
+    async def test_owned_output_is_available_without_private_session_access(self, tmp_path):
+        script = "console.log('preview-ready');console.error('preview-warning');" + _SERVER
+        session = await SubprocessPreviewLauncher().start(
+            ["node", "-e", script, "{port}"], tmp_path, timeout_s=20
+        )
+        try:
+            stdout, stderr = session.output()
+            assert "preview-ready" in stdout
+            assert "preview-warning" in stderr
+        finally:
+            await session.stop()
+
     async def test_serves_on_the_chosen_port_and_stop_releases_it(self, tmp_path: Path) -> None:
         launcher = SubprocessPreviewLauncher()
 

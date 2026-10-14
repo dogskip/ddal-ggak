@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import os
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -136,7 +136,7 @@ class ChromiumBrowserAdapter:
     @asynccontextmanager
     async def _visit(
         self, url: str, viewport: tuple[int, int], wait_ms: int
-    ) -> AsyncIterator[tuple[Page, _PageEvents]]:
+    ) -> AsyncGenerator[tuple[Page, _PageEvents]]:
         browser = await self._ensure_browser()
         context = await browser.new_context(
             viewport={"width": viewport[0], "height": viewport[1]},
@@ -215,7 +215,7 @@ class ChromiumBrowserAdapter:
     def _on_console(self, events: _PageEvents, message: Any) -> None:
         if message.type != "error" or str(message.text).startswith(_RESOURCE_NOISE):
             return
-        location = message.location or {}
+        location: dict[str, Any] = message.location or {}
         events.console.append(
             ConsoleEntry(
                 level="error",

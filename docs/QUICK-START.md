@@ -22,3 +22,8 @@ ddk apply
 The [README](../README.md) explains what each step does and what the check can and cannot see; the
 [user guide](USER-GUIDE.md) covers preparing a repository, reading the report, steering a run and
 fixing common problems. Korean: [README.ko.md](../README.ko.md), [USER-GUIDE.ko.md](USER-GUIDE.ko.md).
+
+For model-free verification of an explicit baseline and candidate, use the separate
+[verified-change guide](VERIFIED-CHANGES.md). It requires an approved case, fixed inputs and prebuilt
+local images for default isolated execution. Legacy force options and whole-repository rollback
+are disabled. Planned improvements and acceptance criteria are in the [roadmap](../ROADMAP.md).

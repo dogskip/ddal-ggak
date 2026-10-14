@@ -121,9 +121,9 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk demo` | 내장 페이지로 전체 절차 체험 (API 키 불필요) |
 | `ddk run <이미지>…` | 생성, 검사, 비교, 수정, 판정 |
 | `ddk report` | case 의 증거 보고서 생성 (`--open` 으로 바로 열기) |
-| `ddk apply` | `ready` case 의 파일을 저장소에 적용 (`--dry-run`, `--force`, `--allow-blocked`) |
+| `ddk apply` | 기존 이미지 실행의 `ready` 결과 반영. `--dry-run`으로 계획 조회, 충돌 시 중단 |
 | `ddk status`, `ddk certify` | 저장된 case 상태와 판정 조회 |
-| `ddk rollback` | 수정 회차의 git 점검점으로 저장소 되돌리기 (`git reset --hard`, 사용 설명서를 먼저 읽을 것) |
+| `ddk change verify/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
 | `ddk doctor` | Python, uv, API 키, Node.js, git, Chromium 점검 (`--install-browser` 로 Chromium 내려받기) |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
 | `ddk install --all` | Claude Code, Cursor, Codex, Gemini CLI 등에 `/ddk:design` 과 MCP 서버 등록 |
@@ -160,34 +160,54 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 프로젝트 자신의 Vite, Next.js, Astro 로 미리보기를 띄웁니다. 그 밖의 구성도 생성과 검사는 되지만,
 브라우저로 비교할 수 없으므로 `--no-visual` 이 필요합니다.
 
-## 에이전트와 MCP
+## 기존 변경 검사
 
-`ddk install --all` 은 찾아낸 AI 코딩 도구에 `/ddk:design` 명령과 MCP 서버를 추가합니다. 둘 다
-**Design Studio**(아이디어에서 설계 문서까지)를 위한 것입니다. 이미지에서 코드까지의 절차는 지금은 CLI
-전용입니다. 에이전트는 셸 도구에서 `ddk run <이미지> --json` 을 호출하고, 결과에서 보고서 경로를 읽을
-수 있습니다.
+`ddk change`는 모델과 API 키 없이 명시적인 기준·후보 폴더를 승인된 case와 고정 입력으로 검사합니다.
+요구 관계, 명령·시험·브라우저 결과, 환경 해시와 `ready`·`blocked`·`manual-review`의 근거를 기록합니다.
+
+기본 `isolated`는 로컬 Docker에서 앱과 검사를 분리하며 미리 준비한 고정 이미지를 사용합니다.
+격리를 사용할 수 없거나 환경이 다르면 중단합니다. 사용자 환경 실행이나 의존성 설치로 자동 대체하지
+않습니다. 명시적인 `--trusted-local`은 신뢰한 프로젝트 명령을 사용자 권한으로 실행합니다.
+검사 통과가 앱 전체의 무결함을 보증하지는 않습니다.
+
+필수 입력, 실행 제약, 관리된 반영·복구는 [기존 변경 사용 설명서](docs/VERIFIED-CHANGES.ko.md)를
+참고하세요. 위의 이미지 생성 절차와 별개입니다. 기존 `--force`, `--allow-blocked`와 저장소 전체를
+초기화하는 `ddk rollback`은 중단됩니다.
+
+## AI 도구와 MCP
+
+`ddk install --all`은 지원하는 AI 코딩 도구에 `/ddk:design`과 `ddk serve`를 등록합니다.
+서버는 `design_new`, `preflight`, `ddk_version`, `ddk_verify`, `ddk_status`를 제공합니다.
+기존 변경 검사는 CLI와 같은 서비스·기록을 사용하며 MCP에서는 isolated 실행만 허용합니다.
+반영·복구는 공개하지 않습니다. 이미지 생성은 CLI에서 `ddk run <이미지> --json`을 실행해
+판정과 보고서 경로를 조회합니다.
 
 ## 상태
 
-베타입니다. `ddk demo` 와, 모델 응답을 대본으로 재생하고 선택적으로 실제 브라우저를 사용하는 1,600개
-이상의 테스트가 전체 절차를 끝까지 검증합니다. 내 디자인에서 코드가 얼마나 좋은지는 모델과 디자인에
-달렸고, 실제 모델을 사용하는 경로는 데모보다 사용 경험이 훨씬 적습니다. 거친 부분이 있을 수 있으니, 결과가
-나빴던 case 의 보고서와 함께 [이슈](https://github.com/dogskip/ddal-ggak/issues)를 남겨 주세요.
-아직 없는 것: MCP 로 이미지에서 코드까지, Vite·Next.js·Astro 이외의 미리보기 서버, 이미지 둘 이상 비교.
+베타입니다. 일반 시험 2,200개 이상, 선택 실행하는 실제 브라우저 E2E와 로컬 Docker 검사가 있습니다.
+기록된 모델 응답은 시연 절차의 근거이며 실제 프로젝트의 모델 품질을 입증하지 않습니다.
+격리 검사의 실제 확인 범위는 macOS ARM64·OrbStack과 Node 정적 시험 앱입니다.
+다른 장비·실행 환경과 실제 Vite·Next.js 저장소는 추가 검증이 필요합니다.
+
+다음 순서는 동일 요청 예산 안의 수정·재검사, 초기 기준 준비, 일반 시험 보고 수집, 실제 프로젝트 검증
+확대입니다. 완료 조건은 [후속 계획](ROADMAP.ko.md)에 있습니다. 문제가 있으면 민감한 자료를 제외한
+사례로 [이슈](https://github.com/dogskip/ddal-ggak/issues)를 등록하세요. 원본 보고서는 프로젝트의
+비공개 정보를 포함할 수 있습니다.
 
 ## 개발
 
 ```bash
 git clone https://github.com/dogskip/ddal-ggak && cd ddal-ggak
-uv sync --extra dev
-uv run pytest -m "not playwright"                  # 네트워크와 브라우저 없이
-uv run ruff check . && uv run ruff format --check . && uv run pyright
+uv sync --frozen --extra dev
+uv run pytest -m "not playwright and not docker"  # 네트워크와 브라우저 없이
+uv run ruff check src/ tests/ scripts/ && uv run ruff format --check src/ tests/ scripts/ && uv run pyright
 DDK_E2E=1 uv run pytest tests/e2e -m playwright    # 실제 npm 과 Chromium
 uv run python scripts/make_readme_assets.py        # 위의 그림 다시 생성
 ```
 
 [CONTRIBUTING.md](CONTRIBUTING.md), [사용 설명서](docs/USER-GUIDE.ko.md), [변경 기록](CHANGELOG.md),
-[설계 문서](docs/design/00-document-inventory.md)를 참고하세요.
+[후속 계획](ROADMAP.ko.md)을 참고하세요. 공개 개발 기준은 `main`이며 내부 계획과 실행 원본은
+로컬에 보관하고 Git과 배포 자료에서 제외합니다.
 
 ## 라이선스
 

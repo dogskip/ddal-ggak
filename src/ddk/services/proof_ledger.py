@@ -3,14 +3,9 @@
 This component audits ddalggak's own comparative claims and mechanically refuses
 to overclaim.
 
-``ProofLedger`` resolves the capability matrix against real files on disk, and
-``ClaimGate`` evaluates the gate conditions from
-``docs/design/27-identity-positioning.md`` §"Gate 조건" and
-``docs/design/28-gsd-superset-matrix.md`` §"Claim Gate 규칙".
-
-Design principle (doc 27 §메시징 원칙): *identity broad, claims narrow.* A claim
-is ``allowed`` only when its evidence resolves and its gate conditions hold —
-otherwise it is denied with explicit, inspectable reasons.
+``ProofLedger`` resolves the public capability catalog against local files. ``ClaimGate``
+checks required evidence without treating path coverage as behavioral verification.
+See ``benchmarks/README.md`` for optional local inputs and claim limitations.
 """
 
 from __future__ import annotations
@@ -40,7 +35,7 @@ class MatrixLoadError(RuntimeError):
 
 
 class ClaimGate:
-    """Evaluate doc 27 / doc 28 claim conditions against resolved evidence.
+    """Evaluate claim conditions against resolved evidence.
 
     Pure with respect to its inputs except for filesystem probes under
     ``repo_root`` (baseline / comparative artifacts).
@@ -59,7 +54,7 @@ class ClaimGate:
     # -- individual gates -------------------------------------------------
 
     def _identity(self) -> ClaimGateResult:
-        """doc 27 #1 — identity doc exists and PRD exists (no missing anchor)."""
+        """Require both optional local identity and requirements documents."""
         identity_exists = (self._root / _IDENTITY_DOC).exists()
         prd_exists = (self._root / _PRD_DOC).exists()
         satisfied: list[str] = []

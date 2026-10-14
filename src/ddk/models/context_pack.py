@@ -23,7 +23,6 @@ class ContextChunk(DDKBaseModel):
 class ContextPack(DDKBaseModel):
     """Deterministic context pack built for a generation node (CODEGEN-03).
 
-    See docs/design/24-context-pack-determinism.md §6.1 ContextPackManifest.
     MAX_FILES=6, MAX_LINES=300, P1-P5 priority ordering.
     """
 

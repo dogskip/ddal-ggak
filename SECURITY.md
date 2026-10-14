@@ -38,7 +38,7 @@ If you discover a security vulnerability in ddalggak, please report it responsib
 - `.env` files are excluded from version control via `.gitignore`.
 - The `.env.example` file contains placeholder values only.
 
-### LLM Context Protection (no secrets leave the machine)
+### LLM Context Protection
 
 Source code is sent to the LLM provider to generate/normalize code. Two defense layers
 prevent credential leakage into that context (`services/context_pack_builder.py`):
@@ -57,7 +57,7 @@ prevent credential leakage into that context (`services/context_pack_builder.py`
 - Every call is bounded by a configurable timeout (default 120s) with exponential
   backoff on rate-limit / server errors.
 
-### Sandbox Execution
+### Legacy image-run execution (`ddk run` / `ddk demo`)
 
 - Generated code is copied into a disposable `TempDirSandbox`; unsafe external/absolute
   symlinks are excluded while safe relative in-repo symlinks are preserved.
@@ -72,8 +72,32 @@ prevent credential leakage into that context (`services/context_pack_builder.py`
 `TempDirSandbox` is workspace isolation, not an OS/container security boundary. It does
 not deny host filesystem reads by an intentionally malicious package script, disable
 network access, or impose CPU/memory limits. Run validation only for repositories and
-dependency scripts you trust. Container/worktree policy described in design documents is
-not wired into the current runtime.
+dependency scripts you trust.
+
+### Existing-change execution (`ddk change`)
+
+Default `isolated` verification uses separate app/checker containers on a local Docker daemon,
+immutable preinstalled images, no external network, no host port or Docker socket, read-only system
+files, dropped capabilities, seccomp and CPU/memory/process/time limits. Chromium runs headless
+with its sandbox enabled. Missing isolation or environment evidence blocks verification rather
+than falling back to host execution. `trusted-local` requires an explicit user grant and runs
+project commands with user permissions; MCP does not expose that grant.
+
+The local daemon and checker image are trusted. Writable source copies have no separate disk quota,
+so isolation is not whole-host protection from malicious code. Actual host/framework coverage and
+all input constraints are described in the [verified-change guide](docs/VERIFIED-CHANGES.md).
+
+Managed apply requires exact run/change hashes, unchanged originals, local storage and quiescence
+confirmation. Recovery handles interrupted owned transactions while preserving external changes.
+Legacy `--force`, `--allow-blocked` and whole-repository `ddk rollback` are disabled. A passing
+verification is not a security audit of the application.
+
+### Publication boundaries
+
+Internal plans/reviews, launch drafts and raw execution evidence are excluded from Git and source
+distributions; runtime schemas and synthetic fixtures remain public. Default change exports omit
+sensitive evidence, but review every artifact before sharing. Ignore rules do not erase old commits
+or replace secret scanning. If a credential was committed, revoke it and assess history separately.
 
 ### Dependency Security
 

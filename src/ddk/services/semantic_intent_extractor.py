@@ -12,7 +12,6 @@ from ddk.models.input import CaseInput
 from ddk.models.intent import IntentGraph
 from ddk.services.images import encode_design_image
 
-# System prompt from docs/design/16-prompt-design.md §1
 _SYSTEM_PROMPT = """You are an expert UI analyst. Your job is to analyze UI
 screenshots or mockups and extract a precise structural representation of the
 interface.

@@ -1,6 +1,6 @@
 """ContextPackBuilder — deterministic context packaging (CODEGEN-03).
 
-Algorithm from docs/design/24-context-pack-determinism.md:
+Deterministic selection rules:
 - sort_key = (priority_rank, relation_rank, line_bucket, normalized_path)
 - MAX_FILES=6, MAX_LINES=300
 - P1~P5 priority hierarchy
@@ -112,7 +112,6 @@ class _Candidate:
 class ContextPackBuilder:
     """Builds deterministic ContextPack with P1-P5 priority, MAX_FILES=6, MAX_LINES=300.
 
-    Algorithm from docs/design/24-context-pack-determinism.md.
     No LLM calls — pure deterministic algorithm.
     """
 

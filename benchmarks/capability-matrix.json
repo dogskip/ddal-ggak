@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "source_of_truth": "docs/design/28-gsd-superset-matrix.md",
+  "source_of_truth": "benchmarks/README.md",
   "note": "Machine-readable mirror of the GSD capability map. Evidence paths are repo-relative and resolved at verify time. Resolution yields mapped/partial/pending only; filesystem existence is not behavioral proof and cannot independently authorize parity, superset, or superiority claims.",
   "families": [
     {

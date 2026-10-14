@@ -108,16 +108,17 @@ ddk apply --dry-run    # a table: create / update / unchanged / conflict / rejec
 ddk apply              # write the files
 ```
 
-`ddk apply` refuses a case that is not `ready` (override with `--allow-blocked`). It writes a file
-only if the repository still holds the version the run started from, or nothing yet. If any file was
-edited since, or a path is unsafe (outside the repository, a secret file, tool configuration), **nothing**
-is written; fix it or pass `--force` for conflicts. Every file it replaces is first copied to
-`.ddk/cases/<id>/artifacts/replaced/`.
+`ddk apply` refuses cases that are not `ready`. It writes only where the repository still holds the
+version the run started from, or no file yet. Any conflict or unsafe path stops all writes. Replaced
+files are copied to `.ddk/cases/<id>/artifacts/replaced/`. Review both versions before resolving a
+conflict; `--force` and `--allow-blocked` are compatibility options that now exit with code 2.
 
-To undo an apply, use git (`git restore`, `git stash`) or copy the files back from that folder.
-`ddk rollback --case-id C-001 --attempt 1` resets the repository to the commit that was checked out
-when that fix attempt began (`git reset --hard`, then `git clean -fd`, so untracked files go too). It
-refuses when there are uncommitted changes unless you pass `--force`, which discards **all** of them.
+`ddk rollback` also exits with code 2: whole-repository resets are disabled. For an existing-change
+case, use the separate [verified-change workflow](VERIFIED-CHANGES.md): `change export` provides a
+review package, `change apply` records its owned transaction, and `change recover` handles an
+interrupted transaction after checking current file contents. It does not undo legacy image-run
+applies or completed transactions. Preserve your own Git changes and review the backups when
+reconciling a legacy apply.
 
 ## 5. Steering a run
 
@@ -179,8 +180,8 @@ that needs them renders without them, and the comparison sees that.
 (pictures included, nothing fetched from the web), so it can be sent to a colleague as it is.
 
 Besides `.ddk/`, a run creates one git ref per repair round, `refs/ddk/fix/<case>/attempt-N`, pointing
-at the commit that was checked out; this is what `ddk rollback` goes back to. A repository without
-history gets none.
+at the commit that was checked out. These are historical checkpoints, not permission to reset the
+repository; `ddk rollback` is disabled. A repository without history gets none.
 
 ## 8. When it goes wrong
 
@@ -218,7 +219,11 @@ ddk install --detect       # which AI coding tools were found
 ddk install --claude       # or --cursor, --codex, --gemini, --opencode, --copilot, --kiro, --all
 ```
 
-This adds `/ddk:design` (or the tool's equivalent) and registers `ddk serve`, an MCP server with the
-tools `design_new`, `preflight` and `ddk_version`. The image-to-code loop is not exposed through MCP
-yet. Any agent with a shell tool can run `ddk run <image> --json` and read `release_decision` and `report` from
-the output.
+This adds `/ddk:design` (or the tool's equivalent) and registers `ddk serve` with five tools:
+`design_new`, `preflight`, `ddk_version`, `ddk_verify` and `ddk_status`. Existing-change verification
+requires prepared fixed inputs and isolated execution; MCP does not expose apply, recovery or
+trusted-local execution. See the [verified-change guide](VERIFIED-CHANGES.md).
+
+Image-to-code remains CLI-only. An agent with a shell tool can run `ddk run <image> --json` and read
+`release_decision` and `report`. Planned capabilities and completion criteria are in the
+[roadmap](../ROADMAP.md).

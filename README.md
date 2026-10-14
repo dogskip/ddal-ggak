@@ -123,9 +123,9 @@ Know the limits before trusting a green result:
 | `ddk demo` | The whole loop on a built-in page, no API key |
 | `ddk run <image>…` | Generate, check, compare, repair, decide |
 | `ddk report` | Write the evidence report of a case (`--open` shows it) |
-| `ddk apply` | Write the files of a `ready` case into the repository (`--dry-run`, `--force`, `--allow-blocked`) |
+| `ddk apply` | Apply a legacy image-run `ready` case; `--dry-run` previews it; conflicts block writes |
 | `ddk status`, `ddk certify` | The saved state and verdict of a case |
-| `ddk rollback` | Reset the repository to the git checkpoint of a repair round (`git reset --hard`; read the user guide first) |
+| `ddk change verify/status/export/apply/recover` | Verify existing changes against fixed criteria, inspect evidence, export, apply and recover owned changes |
 | `ddk doctor` | Check Python, uv, API key, Node.js, git, Chromium (`--install-browser` downloads it) |
 | `ddk design new "<idea>"` | Design Studio: turn an idea into design documents |
 | `ddk install --all` | Register `/ddk:design` and the MCP server with Claude Code, Cursor, Codex, Gemini CLI and others |
@@ -163,34 +163,55 @@ the project's scripts, `tsconfig.json` and ESLint configuration (npm, pnpm, yarn
 recognised). The page is previewed with the project's own Vite, Next.js or Astro; other setups can still
 be generated and checked, but need `--no-visual` because they cannot be compared in a browser.
 
+## Verify an existing change
+
+`ddk change` checks an explicit baseline and candidate against an approved case and fixed inputs,
+without a model or API key. It records requirements, command/test/browser results, environment hashes
+and the evidence behind `ready`, `blocked` or `manual-review`.
+
+The default `isolated` execution uses separate app and checker containers on a local Docker daemon,
+with prebuilt immutable images. Missing isolation or an environment mismatch blocks the run; it never
+falls back to host execution or installs dependencies. Explicit `--trusted-local` runs trusted project
+commands with your own permissions. Neither mode proves that an entire application is defect-free.
+
+See the [verified-change guide](docs/VERIFIED-CHANGES.md) for required inputs, execution limits and
+managed apply/recovery. This is a separate path from the image-generation loop above. Legacy
+`--force`, `--allow-blocked` and whole-repository `ddk rollback` are disabled.
+
 ## Agents and MCP
 
-`ddk install --all` adds the `/ddk:design` command and an MCP server to the AI coding tools it finds.
-Both cover **Design Studio** (idea to design documents). The image-to-code loop is CLI-only today; an
-agent can call `ddk run <image> --json` from its shell tool and read the report path from the result.
+`ddk install --all` adds `/ddk:design` and registers `ddk serve` with supported AI coding tools.
+The server exposes `design_new`, `preflight`, `ddk_version`, `ddk_verify` and `ddk_status`.
+Existing-change verification uses the same service and saved records as the CLI, permits only isolated
+execution through MCP, and does not expose apply or recovery. Image-to-code remains CLI-only:
+`ddk run <image> --json` returns the verdict and report path.
 
 ## Status
 
-Beta. The loop is exercised end to end by `ddk demo` and by a test suite of 1,600+ tests that use
-scripted model replies and, optionally, a real browser. How good the code is on your designs depends on
-the model and on the design, and the real-model path has seen far less use than the demo: expect rough
-edges and please [open an issue](https://github.com/dogskip/ddal-ggak/issues) with the report of a bad
-case. Not there yet: image-to-code through MCP, preview servers beyond Vite, Next.js and Astro, and
-comparing more than one image.
+Beta. Automated coverage includes 2,200+ ordinary tests, opt-in headless browser E2E and real local
+Docker acceptance tests. Recorded model replies prove the demo flow, not real-model quality on your
+project. Actual isolated acceptance has covered macOS ARM64 with OrbStack and a static Node fixture;
+other hosts and real Vite/Next.js repositories still need direct evidence.
+
+Next: repair and reverify under one request budget, easier case preparation, common test-report
+formats and broader real-project validation. These are planned, not shipped; see the
+[roadmap and acceptance criteria](ROADMAP.md). Share a sanitized failing case in an
+[issue](https://github.com/dogskip/ddal-ggak/issues); raw reports can contain private project data.
 
 ## Develop
 
 ```bash
 git clone https://github.com/dogskip/ddal-ggak && cd ddal-ggak
-uv sync --extra dev
-uv run pytest -m "not playwright"                  # no network, no browser
-uv run ruff check . && uv run ruff format --check . && uv run pyright
+uv sync --frozen --extra dev
+uv run pytest -m "not playwright and not docker"  # no network, no browser
+uv run ruff check src/ tests/ scripts/ && uv run ruff format --check src/ tests/ scripts/ && uv run pyright
 DDK_E2E=1 uv run pytest tests/e2e -m playwright    # real npm and Chromium
 uv run python scripts/make_readme_assets.py       # rebuild the pictures above
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), the [user guide](docs/USER-GUIDE.md), the
-[changelog](CHANGELOG.md) and the [design documents](docs/design/00-document-inventory.md).
+[changelog](CHANGELOG.md) and the [roadmap](ROADMAP.md). Public development uses `main`; internal
+plans and raw evidence remain local and are excluded from Git and source distributions.
 
 ## License
 

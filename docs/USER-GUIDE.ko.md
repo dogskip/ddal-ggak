@@ -103,15 +103,16 @@ ddk apply --dry-run    # 파일별 표: 새 파일 / 수정 / 변경 없음 / �
 ddk apply              # 파일 적용
 ```
 
-`ddk apply` 는 `ready` 가 아닌 case 를 거부합니다(`--allow-blocked` 로 무시할 수 있습니다). 실행을 시작한
-때의 버전이 저장소에 그대로 있거나 아직 없는 파일만 기록합니다. 그 뒤에 직접 고친 파일이 있거나 안전하지
-않은 경로(저장소 밖, 비밀 파일, 도구 설정)가 있으면 **아무것도** 기록하지 않습니다. 해결하거나, 충돌이라면
-`--force` 를 붙이세요. 교체되는 파일은 먼저 `.ddk/cases/<id>/artifacts/replaced/` 에 복사됩니다.
+`ddk apply`는 `ready`가 아닌 case를 거부합니다. 실행 시작 시점의 버전이 그대로 있거나 아직 없는
+파일만 반영합니다. 충돌이나 안전하지 않은 경로가 하나라도 있으면 중단합니다. 교체 파일의 사본은
+`.ddk/cases/<id>/artifacts/replaced/`에 보관합니다. 양쪽 변경을 검토해 충돌을 해결하세요.
+`--force`와 `--allow-blocked`는 호환 옵션으로만 유지하며 종료 값 2로 중단합니다.
 
-적용을 되돌리려면 git(`git restore`, `git stash`)을 사용하거나 그 폴더에서 파일을 복사해 오세요.
-`ddk rollback --case-id C-001 --attempt 1` 은 해당 수정 회차가 시작될 때 체크아웃되어 있던 커밋으로
-저장소를 되돌립니다(`git reset --hard` 다음에 `git clean -fd` 이므로 추적하지 않는 파일도 사라집니다).
-커밋하지 않은 변경이 있으면 거부하며, `--force` 를 붙이면 그 변경을 **모두** 버립니다.
+`ddk rollback`도 종료 값 2로 중단합니다. 저장소 전체 초기화는 제공하지 않습니다.
+기존 변경 case는 별도의 [기존 변경 검사 절차](VERIFIED-CHANGES.ko.md)를 사용합니다.
+`change export`로 검토 자료를 생성하고, `change apply`로 반영 기록을 보관하며,
+`change recover`로 중단된 반영을 현재 파일과 대조해 복구합니다. 기존 이미지 실행의 반영이나
+완료된 반영을 취소하는 기능은 아닙니다. 기존 반영을 정리할 때는 자신의 Git 변경과 사본을 보존하세요.
 
 ## 5. 실행 조절
 
@@ -171,7 +172,8 @@ ddk apply              # 파일 적용
 아무것도 가져오지 않으므로 그대로 동료에게 보내도 됩니다.
 
 `.ddk/` 말고도, 실행은 수정 회차마다 git ref 하나(`refs/ddk/fix/<case>/attempt-N`)를 만들어 그때 체크아웃된
-커밋을 가리킵니다. `ddk rollback` 이 되돌아가는 곳이 여기입니다. 이력이 없는 저장소에는 만들어지지 않습니다.
+커밋을 가리킵니다. 이 참조는 과거 점검 기록이며 전체 초기화 권한이 아닙니다. `ddk rollback`은
+중단됩니다. 이력이 없는 저장소에는 생성하지 않습니다.
 
 ## 8. 문제가 생겼을 때
 
@@ -209,6 +211,11 @@ ddk install --detect       # 찾아낸 AI 코딩 도구 목록
 ddk install --claude       # 또는 --cursor, --codex, --gemini, --opencode, --copilot, --kiro, --all
 ```
 
-`/ddk:design`(또는 해당 도구의 같은 기능)을 추가하고, `design_new`, `preflight`, `ddk_version` 도구가 있는
-MCP 서버 `ddk serve` 를 등록합니다. 이미지에서 코드까지의 절차는 아직 MCP 로 제공하지 않습니다. 셸 도구가 있는
-에이전트라면 `ddk run <이미지> --json` 을 실행해 출력에서 `release_decision` 과 `report` 를 읽으면 됩니다.
+`/ddk:design`과 MCP 서버 `ddk serve`를 등록합니다. 도구는 `design_new`, `preflight`,
+`ddk_version`, `ddk_verify`, `ddk_status`입니다. 기존 변경 검사는 고정 입력과 격리 실행을 요구하며,
+MCP는 반영·복구·trusted-local 실행을 공개하지 않습니다.
+[기존 변경 사용 설명서](VERIFIED-CHANGES.ko.md)를 참고하세요.
+
+이미지 생성은 CLI에서 실행합니다. 셸 도구가 있다면 `ddk run <이미지> --json`을 호출하고
+`release_decision`과 `report`를 조회합니다. 예정 기능과 완료 조건은 [후속 계획](../ROADMAP.ko.md)에
+있습니다.

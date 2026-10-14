@@ -8,7 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking safety change:** legacy `ddk apply --force`, `--allow-blocked` and whole-repository
+  `ddk rollback` now refuse execution. Resolve conflicts explicitly; managed `ddk change recover`
+  handles interrupted owned applies, not arbitrary undo.
+- Public development is consolidated on `main`. Internal plans, design/review notes, launch drafts
+  and raw execution evidence stay local and are no longer tracked; prior Git history is retained.
+- Runtime contract schema now lives in `src/ddk/assets/verified-change/`; synthetic contract examples
+  live in `tests/fixtures/verified-change/`. Source/wheel checks reject internal material and verify
+  required assets. The public docs and roadmap distinguish shipped behavior from next priorities.
+
 ### Added
+
+#### Existing-change verification
+
+- `ddk change verify/status/export/apply/recover`: fixed cases, explicit baseline/candidate,
+  requirement mapping, bounded records/evidence, managed apply and interruption recovery.
+- Default isolated local Docker app/checker execution with immutable images, environment checks,
+  independent headless browser observations, output accounting and owned-container cleanup.
+  Explicit trusted-local CLI execution is a separate assurance; there is no automatic fallback.
+- MCP `ddk_verify` and `ddk_status` use the same service and storage, with isolated-only execution.
+  The [guide](docs/VERIFIED-CHANGES.md) states required inputs and actual acceptance limits;
+  automatic repair/reverification remains [planned](ROADMAP.md).
 
 #### The loop that checks itself: design image → code → real browser → repair → verdict
 - **Screenshot comparison in a real browser.** The built app is served on loopback and opened in
@@ -34,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `artifacts/visual/round-N/`.
 - **`ddk apply`**: copies the files of a `ready` case into the repository only where the repository
   still holds the version the run started from; conflicts and unsafe paths stop everything; replaced
-  files are backed up in the case folder (`--dry-run`, `--force`, `--allow-blocked`).
+  files are backed up in the case folder (`--dry-run` previews writes; force options are disabled).
 - **First run without friction.** `ddk run <image>` works without `-p`; a Chrome, Edge or Chromium
   that is already installed is used when Playwright has none; `ddk doctor --install-browser` downloads
   Playwright's headless Chromium, `ddk demo` offers it on a terminal, and `ddk run` stops before any

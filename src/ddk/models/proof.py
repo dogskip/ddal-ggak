@@ -1,12 +1,8 @@
 """Proof Program domain models — the executable form of the Claim Gate.
 
-These models turn ``docs/design/27-identity-positioning.md`` (Claim Gate) and
-``docs/design/28-gsd-superset-matrix.md`` (capability matrix) from prose into
-machine-checkable evidence. The whole point is the *evidence-gated* posture:
-a claim about GSD parity / superset / superiority is only ``allowed`` when the
-required artifacts actually resolve on disk and the gate conditions hold.
-
-See ``ddk.services.proof_ledger`` for the verifier and gate logic.
+Evidence paths establish declared mappings. Comparative behavior claims require
+independent verification; see ``benchmarks/README.md`` and
+``ddk.services.proof_ledger`` for current limits.
 """
 
 from __future__ import annotations
@@ -18,15 +14,15 @@ from pydantic import Field, computed_field
 
 from ._base import DDKBaseModel
 
-# GSD lineage classification of a capability family (doc 28 §상태 정의).
+# Relationship between a capability family and its comparison baseline.
 Classification = Literal["inherit", "elevate", "new"]
 # Evidence-derived proof state of a family.
 ProofState = Literal["pending", "partial", "mapped", "proved"]
-# Claim taxonomy from doc 27 §Claim 종류.
+# Claim categories.
 ClaimType = Literal["identity", "parity", "superset", "superiority", "release", "standards"]
 # What a piece of evidence is.
 EvidenceKind = Literal["code", "test", "report", "artifact", "doc", "benchmark"]
-# Maturity ladder from doc 27 §Maturity Ladder.
+# Evidence maturity levels.
 MaturityLevel = Literal["P-0", "P-1", "P-2", "P-3", "P-4"]
 
 

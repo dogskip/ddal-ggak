@@ -1,86 +1,120 @@
-# 기존 변경 검사와 안전한 반영
+# Verify existing changes and apply them safely
 
-새 명령은 `ddk change` 아래에 있다. 기존 `run`, `status`, `apply`, `demo` 명령과 구분한다. 검사 전용 경로는 모델·API 키·이미지 입력이 필요하지 않다. 화면 기준이 있는 검사만 이미지를 요구한다.
+[한국어](VERIFIED-CHANGES.ko.md) · [Roadmap](../ROADMAP.md)
 
-기본 `isolated`는 로컬 Docker의 앱·검사 작업을 분리해 실행한다. 고정한 이미지가 이미 설치돼 있어야 하며 실행기·보호 설정·실제 환경을 확인하지 못하면 `isolation_unavailable`이다. 검사 중 이미지 내려받기·의존성 설치·사용자 환경 실행으로 자동 대체하지 않는다. 명시적으로 선택하는 `trusted-local`은 사용자 권한으로 프로젝트 명령을 실행하며 OS 격리를 제공하지 않는다.
+`ddk change` is separate from legacy `run`, `status`, `apply` and `demo`. Verification needs neither
+a model nor an API key. Images are required only for visual criteria.
 
-## 준비할 자료
+## Prepare the inputs
 
-승인된 case 정의, 고정 입력 폴더, 명시적인 기준·후보 폴더, 변경 파일별 요구 ID가 필요하다. `case.json`과 `inputs/`를 함께 보관하면 입력 폴더를 생략할 수 있다. 정의와 필드 제약은 [자료 계약](design/35-verified-change-storage.md)과 [JSON Schema](design/verified-change/contract.schema.json)를 사용한다.
+Supply an approved case, fixed inputs, explicit baseline and candidate directories, and a mapping
+of changed paths to approved requirement IDs. With `case.json` beside `inputs/`, the input-directory
+option can be omitted. The [JSON Schema](../src/ddk/assets/verified-change/contract.schema.json) and
+[valid/invalid examples](../tests/fixtures/verified-change/contract-examples.json) define the records;
+runtime semantic validation additionally checks their relationships.
 
-- 기준은 case가 고정한 프로그램 파일과 보호 파일의 내용·권한에 일치해야 한다.
-- 후보는 범위 안의 프로그램 파일 생성·수정만 허용한다. 삭제·이동·권한 변경·시험·기준·의존성 변경은 거부한다.
-- 프로젝트의 시험·의존성 잠금 파일 등은 `--project-inputs`의 JSON 파일에 프로젝트 경로와 고정 입력 경로의 대응을 명시한다.
-- `--change-requirements`는 변경 경로를 승인한 요구 ID 배열에 대응한다. 도구가 요구 관계나 Git 기준을 추정하지 않는다.
+The baseline must match fixed source/protected files in content and permissions. Candidate changes
+may create or modify in-scope source files; deletion, relocation, permissions, tests, criteria and
+dependency changes are rejected. `--project-inputs` maps protected project paths to fixed input paths;
+`--change-requirements` maps changed paths to approved requirement-ID arrays. Nothing infers approval
+or the Git baseline.
 
-고정 입력에는 Environment와 `criteria/execution.json`이 포함된다. 실행계획도 criteria 입력으로 고정하며, 아래 키 외의 값은 허용하지 않는다.
+Fixed inputs include an Environment record and `criteria/execution.json`, itself a criteria input.
+The plan accepts exactly these fields:
 
-| 키 | 값과 의미 |
-|---|---|
+| Field | Meaning |
+| --- | --- |
 | `format` | `verified-evaluator/1` |
-| `environment_path` | 고정 Environment 파일의 상대 경로 |
-| `criteria_paths` | 실행계획 자신과 모든 검사 정의가 포함된 기준 파일 목록 |
-| `environment_paths` | 환경 파일 목록 |
-| `preview_argv` | 화면을 제공할 명령 배열. 전체 인자 하나인 `{port}`만 치환하며 명령 검사만 있으면 빈 배열 가능 |
-| `frozen_time` | 시간대가 있는 ISO 8601 고정 시각 |
-| `browser_executable` | 명시적 절대 경로 또는 기본 탐색을 사용할 `null` |
-| `visual_references` | 경로·화면 크기·환경 객체 SHA·`mask_sha256:null`의 배열. 화면 비교가 없으면 빈 배열 |
+| `environment_path` | Relative path to the fixed Environment file |
+| `criteria_paths` | All criteria files, including this plan |
+| `environment_paths` | Environment file list |
+| `preview_argv` | Command array; only a complete `{port}` argument is substituted; empty for command-only checks |
+| `frozen_time` | Fixed timezone-aware ISO 8601 time |
+| `browser_executable` | Absolute executable path or `null` for discovery |
+| `visual_references` | Path, viewport, Environment-object SHA and `mask_sha256: null`; empty without visual checks |
 
-입력 목록의 SHA·크기·권한을 실제 파일과 대조한다. case의 환경 SHA는 환경 **파일 목록**의 해시이며, 화면 기준의 환경 SHA는 Environment **객체**의 해시다. 두 값을 바꾸어 사용하지 않는다. 기준·환경 파일 목록을 바꾸면 새 case가 필요하다.
+Hashes, sizes and permissions are checked against actual files. The case environment hash identifies
+the environment **file manifest**; a visual reference identifies the Environment **object**.
 
-## 격리 환경 준비와 확인
+## Execution and assurance
 
-앱 이미지에는 고정한 Node·의존성이, 검사 이미지에는 Python 3.12 이상·Playwright·해당 Chromium·Pillow·jsonschema·fontconfig가 필요하다. 검사 이미지의 고정 예시는 [Dockerfile](../tools/verified-checker/Dockerfile)에 있다. 이미지 준비는 검사와 별도 작업이다. 준비한 이미지의 `docker image inspect` 결과 `Id`에서 `sha256:`을 제외한 값을 Environment의 두 이미지 SHA에 기록한다. 태그나 원격 Docker 주소는 허용하지 않는다.
+Default `isolated` uses separate app and checker containers on a local Docker daemon with prebuilt
+immutable images. Missing protection/runtime support gives `isolation_unavailable`. There is no image
+pull, dependency installation or host fallback. Explicit `verify --trusted-local` runs trusted project
+commands with user permissions and no OS isolation; the case must also request that assurance.
+A stored case alone never grants execution, and an isolated case cannot be downgraded.
 
-실행은 원본 대신 소유한 사본을 사용한다. 앱은 `/workspace`만 공유하고 검사 기준·관찰 자료·Docker 소켓을 받지 않는다. 검사 작업은 읽기 전용 `/criteria`와 결과를 보관할 `/results`만 공유하며 앱 파일을 받지 않는다. 두 작업은 외부 연결이 없는 같은 통신 영역에서 루프백으로 통신한다. 화면 제공 명령의 `{port}`는 내부 `4173`으로 치환하며 사용자 장비에 포트를 공개하지 않는다. 화면 검사마다 새 앱·검사 작업과 새 브라우저 문맥을 사용한다. 명령 검사는 앱 작업 안에서만 실행한다.
+The app receives a writable source copy. The checker receives read-only criteria and writable results,
+without source. They share a network namespace without external access, using internal port 4173 and
+no published host port or Docker socket. Read-only system files, dropped capabilities, Chromium-compatible
+seccomp and CPU/memory/process/time limits apply. Chromium is headless with its sandbox enabled.
 
-검사 코드는 사용 중인 ddalggak에서 별도로 복사해 읽기 전용으로 제공한다. 프로젝트의 Python 모듈·시작 파일·시험 출력으로 검사 코드를 교체하지 않는다. 전달한 검사 코드 목록의 SHA와 실제 실행 제한 확인 자료도 결과에 보관한다.
+The app image needs the fixed Node runtime and dependencies. The checker needs Python 3.12+,
+Playwright, matching Chromium, Pillow, jsonschema and fontconfig; see the example
+[Dockerfile](../tools/verified-checker/Dockerfile). Prepare images separately. Record each local
+`docker image inspect` `Id` without `sha256:` in Environment. Tags and remote endpoints are rejected.
 
-| Environment 값 | 실제 대조 대상 |
-|---|---|
-| `runtime_name`, `runtime_version`, `endpoint_kind` | `docker`, 로컬 실행기의 ServerVersion, `local` |
-| 앱·검사 이미지 SHA | 로컬 이미지 조회 및 생성한 작업의 실제 Image |
-| OS·장비·Python·Playwright | 검사 이미지 안에서 조회한 값 |
-| Node·패키지 도구 버전 | 앱 이미지 안에서 조회한 값. 버전 앞의 `v`는 Node에 포함하지 않음 |
-| `lockfile_sha256` | 사본 최상위의 package-lock.json·pnpm-lock.yaml·yarn.lock·bun.lock·bun.lockb 중 정확히 하나의 전체 SHA |
-| 브라우저 버전·실행 파일 SHA | 실제 보호 설정을 적용해 실행한 Chromium과 실행 파일 |
-| `font_manifest_sha256` | `fc-list --format '%{file}\\n'`의 고유 파일 경로를 정렬한 `{path,sha256}` 배열의 canonical JSON SHA |
-| `policy_sha256` | 자원·공유 경로·통신·권한·로그·seccomp 정책을 포함하는 `verified-isolation/1`의 SHA |
+Runtime checks compare immutable image IDs, Docker ServerVersion, OS/architecture, Python, Node,
+package-manager, Playwright and browser versions, browser executable SHA, font manifest, protected
+lockfile bytes and isolation policy SHA. `ddk.adapters.verified_isolation.POLICY_SHA256` and
+`ddk.adapters.verified_worker.font_manifest` define the policy/font calculations. Expectations are
+never updated to match a run. Lockfile equality does not prove the image was built from that lockfile;
+prepared dependencies remain a trusted input.
 
-정책 SHA는 `ddk.adapters.verified_isolation.POLICY_SHA256`, 글꼴 목록의 계산은 `ddk.adapters.verified_worker.font_manifest`가 정본이다. 기준을 실행 결과에 맞춰 자동 갱신하지 않는다. 버전·해시 불일치는 통과할 수 없다. 잠금 파일 대조는 고정한 파일과의 일치를 뜻하며 이미지의 의존성을 자동 설치하거나 잠금 파일에서 재구성했다는 증거는 아니다. 앱 이미지는 그 의존성이 준비된 신뢰하는 입력이어야 한다.
+Docker logging is disabled. Attached output is bounded and charged cumulatively across baseline and
+candidate. Missing, excessive or unknown accounting stops further checks. Cancellation/timeouts remove
+only owned containers and verify their absence. Source-copy content, permissions and file lists are
+checked after termination. Unconfirmed cleanup, evidence retrieval or integrity cannot yield `ready`.
 
-작업 생성·정책 확인·환경 대조·명령·화면 준비는 같은 검사 시간 제한을 사용한다. 앱 출력은 생성 직후부터 수집하고 앱·검사 작업이 종료된 뒤 확정한다. UTF-8 출력은 기준·후보에 걸쳐 합산하며 누락·초과·미정 상태에서 후속 검사를 실행하지 않는다. 취소·시간 초과에서도 소유한 작업을 제거하고 실제 부재를 조회한다. 정리·자료 회수·사본 대조를 확인하지 못하면 ready를 제공하지 않는다.
+The local daemon and checker image are trusted. Writable source copies have no separate disk quota;
+this is not whole-host protection from malicious programs. Actual acceptance covers macOS ARM64,
+OrbStack Linux and a static Node fixture. Other hosts and real Vite/Next.js projects need direct evidence.
 
-로컬 Docker 실행기와 선택한 검사 이미지는 신뢰하는 실행 기반이다. 앱의 쓰기 가능한 사본에는 별도의 디스크 용량 할당이 없으므로 이 기능을 악성 프로그램에 대한 장비 전체 보호로 해석하지 않는다. 현재 실제 확인 환경은 macOS ARM64와 OrbStack의 Linux 작업, 고정 Node 정적 시험 앱이다. 다른 실행기·장비·Vite·Next.js의 실제 지원은 별도 실행 근거가 필요하다.
+`command` executes fixed `command_argv` without shell evaluation. `test` currently requires one JSON
+object with integer `executed_count`, `failed_count`, `skipped_count`. Missing, malformed, zero-test
+or skipped reports cannot pass. Project reports are identified as `project-report`, separate from
+independent browser observations. Arbitrary Vitest/Jest formats and executable `policy` criteria are
+not supported yet.
 
-`command` 검사는 고정한 `command_argv`를 셸 평가 없이 실행한다. `test`의 현재 수집 형식은 단일 JSON 객체의 정수 `executed_count`, `failed_count`, `skipped_count`다. 시험 0개·해석 불가·누락·건너뜀을 통과로 처리하지 않는다. 시험 프로그램의 보고는 `project-report`이며 독립 브라우저 관찰과 구분한다. 임의 Vitest·Jest 보고 형식이 모두 지원된다고 안내하지 않는다. `policy` 종류의 실제 평가는 아직 미지원이다.
+## Commands and results
 
-## 명령과 결과
+Use `ddk change <command> --help` for complete options.
 
-| 명령 | 주요 입력 | 동작 |
-|---|---|---|
-| `ddk change verify` | `--case` 또는 `--case-id`, `--baseline`, `--candidate`, `--run-id`, 필요 시 두 대응 파일 | 고정 기준과 후보 검사. `--case`는 정의 가져오기도 수행 |
-| `ddk change status` | `--run-id` | 완료·대기 기록과 자료 검증 후 조회. 작업을 재시작하거나 저장소를 생성하지 않음 |
-| `ddk change export` | `--run-id`, 새 ZIP 파일인 `--destination` | 검토용 JSON과 허용된 자료 내보내기. 기존 파일을 덮어쓰지 않음 |
-| `ddk change apply` | case/run ID, run·변경 SHA, `--confirm-local-storage`, `--confirm-quiescence` | ready 결과만 관리된 반영. 기본 요구 보장은 isolated |
-| `ddk change recover` | `--apply-id`, 로컬·동일 호스트·다른 작업 중지 확인 | 소유자가 종료한 반영을 현재 상태와 대조해 복구. 외부 변경은 보존 |
+| Command | Main inputs | Behavior |
+| --- | --- | --- |
+| `verify` | `--case` or `--case-id`, `--baseline`, `--candidate`, optional `--run-id` and mappings | Check fixed criteria; `--case` also imports the definition |
+| `status` | `--run-id` | Validate and inspect saved state; never restart work or create a repository |
+| `export` | `--run-id`, new ZIP `--destination` | Export review JSON and permitted evidence without overwriting an existing archive |
+| `apply` | Case/run IDs, run/change hashes, `--confirm-local-storage`, `--confirm-quiescence` | Managed apply of a ready result; default required assurance is isolated |
+| `recover` | `--apply-id`, local-storage, same-host and quiescence confirmations | Recover interrupted work after its owner ends; compare current contents and preserve external changes |
 
-각 명령의 `--repo`는 기록과 원본 반영 대상 저장소다. `--json`은 stdout에 JSON 결과만 제공하며 진행·진단은 stderr에 출력한다. 기본 종료 값은 ready=0, blocked/manual-review=1, 입력·실행 불가=2, 취소=130이다. `--run-id`를 생략하면 UUID를 생성한다. 동일 요청의 같은 ID는 저장된 상태 조회이며, 다른 입력에 같은 ID를 사용하면 충돌이다.
+`--repo` identifies record storage and the apply target. `--json` writes JSON only to stdout, with
+diagnostics on stderr. Exit codes: ready 0; blocked/manual-review 1; invalid input/unavailable 2;
+cancellation 130. An omitted run ID gets a UUID. The same ID and request reads saved state; different
+inputs with the same ID conflict.
 
-개인 환경 실행은 `verify --trusted-local`로 별도 선택해야 한다. case도 trusted-local을 요구해야 하며 isolated case의 요구 수준을 낮출 수 없다. 원본·후보·명령·상한을 검토한 사용자의 선택이며, 저장된 case 자체가 실행 권한은 아니다.
+Default exports exclude sensitive originals, model responses, screenshots and logs.
+`--include-sensitive` explicitly includes them and is not a public-sharing safety guarantee. Reports
+contain verdict, assurance, checks, hashes and action codes without raw provider errors.
 
-기본 ZIP은 민감한 원문·모델 응답·화면 자료·로그를 제외한다. `--include-sensitive`는 해당 자료를 포함할 명시적 선택이며 공개 안전성 보증이 아니다. 보고서에는 판정·보장 수준·검사 결과·변경 해시·조치 코드를 제공한다. 제공자 응답이나 실행 오류 원문은 기본 보고서에 복사하지 않는다.
+Export and apply are separate. Apply rechecks source existence, regular-file status, contents and
+permissions. Uncertain state remains `unknown`. Forced overwrite and whole-repository reset are
+unavailable; failed cleanup/persistence never becomes success. Recovery handles interrupted owned
+transactions, not arbitrary undo of completed transactions or legacy image-run applies.
 
-`apply`는 export와 별개다. ready라도 원본의 존재·일반 파일 여부·내용·권한이 변경되었으면 반영하지 않는다. 불확정 상태는 `unknown`으로 유지하며 강제 덮어쓰기나 Git 전체 초기화를 제공하지 않는다. 실제 정리·저장 확인을 실패했으면 성공으로 표시하지 않는다.
+## MCP and current limits
 
-## MCP
+`ddk serve` exposes `ddk_verify` and `ddk_status` alongside `design_new`, `preflight` and `ddk_version`.
+They share CLI services/contracts/storage. Verification is isolated-only; apply, recovery, installation,
+export and trusted-local grants are not exposed. Status reports stored assurance without upgrading it.
 
-기존 `ddk serve`의 stdio 서버가 `ddk_verify`, `ddk_status`를 제공한다. CLI와 같은 서비스·계약·저장을 사용한다. 첫 검사 도구는 isolated만 허용하며 trusted-local·반영·복구·설치·내보내기 권한을 공개하지 않는다. `ddk_status`는 실제 저장된 보장 수준을 그대로 표시한다.
+Required-check failure is a normal blocked result. Invalid input and unavailable execution are tool
+errors; persisted run IDs remain inspectable. Testing covers SDK 1.28.1 and negotiated revision
+2025-11-25, not every client or later revision. Tool annotations do not replace authorization; see the
+[MCP tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools).
+Oversized, excessively nested, duplicate-key or invalid UTF-8 requests terminate stdio without
+manufacturing successful replies or deleting saved runs.
 
-필수 검사 실패는 정상 도구 결과의 blocked다. 잘못된 입력과 실행 불가는 도구 오류이며, 보존된 실행 ID는 상태 도구로 조회할 수 있다. 첫 구현은 잠긴 SDK 1.28.1 및 실제 협상한 규약 판의 시험 범위만 주장한다. 도구 설명·표시는 승인이나 보안을 대신하지 않는다. [공식 MCP 도구 규약](https://modelcontextprotocol.io/specification/2025-11-25/server/tools).
-
-원문 크기·깊이·중복 키·UTF-8 규칙에 맞지 않는 stdio 요청은 연결을 종료한다. 임의 요청 ID로 성공 응답을 만들지 않으며, 이미 보존한 실행 결과를 삭제하지 않는다.
-
-## 현재 한계
-
-새 경로의 자동 수정·재검사, 일반 시험 도구별 보고 수집, 처음 기준을 준비하는 안내 자동화는 미완료다. 기존 `ddk demo`의 기록된 모델 응답과 새 모델 없는 검사는 각각의 근거를 사용한다. Node 정적 시험 앱의 실제 동작 확인을 실제 Vite·Next.js 저장소 전체의 지원 증거로 확대하지 않는다. 검사 통과는 지정한 기준의 결과이며 앱 전체의 무결함·제품 우위·GitHub 별 수를 뜻하지 않는다.
+Automatic repair/reverification, common test-report adapters and guided case preparation are unfinished.
+The legacy demo uses recorded model responses; this path verifies explicit changes without a model.
+Passing fixed criteria does not prove a defect-free app, product superiority or GitHub popularity.

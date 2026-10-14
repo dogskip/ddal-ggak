@@ -15,14 +15,6 @@ import pytest
 from ddk.services.proof_ledger import ClaimGate, MatrixLoadError, ProofLedger
 
 
-def _repo_root() -> Path:
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        if (parent / "pyproject.toml").exists():
-            return parent
-    raise RuntimeError("repo root not found")
-
-
 def _write_matrix(root: Path, families: list[dict]) -> None:
     (root / "benchmarks").mkdir(parents=True, exist_ok=True)
     (root / "benchmarks" / "capability-matrix.json").write_text(
@@ -257,10 +249,10 @@ class TestBaselineStatus:
 
 
 class TestRealRepoMatrix:
-    """Verify the shipped matrix against the live repo — the integration check."""
+    """Verify real shipped artifacts without optional internal evidence."""
 
-    def test_real_matrix_is_internally_consistent(self) -> None:
-        report = ProofLedger(_repo_root()).verify()
+    def test_real_matrix_is_internally_consistent(self, public_evidence_repo: Path) -> None:
+        report = ProofLedger(public_evidence_repo).verify()
         unmapped = [
             f.id
             for f in report.families
@@ -268,16 +260,18 @@ class TestRealRepoMatrix:
         ]
         assert unmapped == [], f"unmapped capability families: {unmapped}"
         assert report.total_families >= 12
-        assert _claim(report, "identity").allowed is True
+        assert _claim(report, "identity").allowed is False
+        assert all(not ref.exists for ref in _claim(report, "identity").evidence)
         assert _claim(report, "superset").allowed is False
         assert _claim(report, "superiority").allowed is False
         assert report.maturity_level == "P-0"
 
-    def test_all_families_mapped_but_behavior_claims_still_gated(self) -> None:
-        report = ProofLedger(_repo_root()).verify()
+    def test_public_gaps_do_not_authorize_behavior_claims(self, public_evidence_repo: Path) -> None:
+        report = ProofLedger(public_evidence_repo).verify()
         by_id = {f.id: f for f in report.families}
         assert by_id["standards-compliance-audit"].state == "mapped"
-        assert by_id["operator-model"].state == "mapped"
-        assert report.mapped == report.total_families
+        assert by_id["operator-model"].state == "partial"
+        assert by_id["standards-design-docs"].state == "partial"
+        assert report.mapped == report.total_families - 2
         assert report.proved == 0
         assert _claim(report, "superiority").allowed is False

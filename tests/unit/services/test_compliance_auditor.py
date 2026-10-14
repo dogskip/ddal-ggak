@@ -10,14 +10,6 @@ import pytest
 from ddk.services.compliance_auditor import CatalogLoadError, ComplianceAuditor
 
 
-def _repo_root() -> Path:
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        if (parent / "pyproject.toml").exists():
-            return parent
-    raise RuntimeError("repo root not found")
-
-
 def _write_catalog(root: Path, clauses: list[dict]) -> None:
     (root / "benchmarks").mkdir(parents=True, exist_ok=True)
     (root / "benchmarks" / "standards-catalog.json").write_text(
@@ -117,18 +109,25 @@ class TestWriteMatrix:
 
 
 class TestRealCatalog:
-    """The shipped catalog must audit honestly against the live repo."""
+    """The shipped catalog must expose absent internal evidence as gaps."""
 
-    def test_real_catalog_has_coverage_and_honest_gaps(self) -> None:
-        report = ComplianceAuditor(_repo_root()).audit()
+    def test_public_catalog_reports_unpublished_evidence_as_gaps(
+        self, public_evidence_repo: Path
+    ) -> None:
+        report = ComplianceAuditor(public_evidence_repo).audit()
         assert report.total >= 14
-        assert report.mapped >= 10
-        # Honesty: the catalog includes artifacts the project genuinely lacks.
-        assert report.gaps >= 1, "catalog must surface real gaps, not rubber-stamp"
-        assert 0.0 < report.coverage < 1.0
+        assert report.mapped == 0
+        assert report.gaps == report.total - 1
+        assert report.partial == 1
+        security = next(c for c in report.clauses if c.clause == "Security")
+        assert security.status == "partial"
+        assert [ref.path for ref in security.artifacts if ref.exists] == [
+            "src/ddk/security/redact.py"
+        ]
+        assert report.coverage == 0.0
         assert "ISO/IEC 25010:2023" in report.standards
 
-    def test_compatibility_clause_is_a_real_gap(self) -> None:
-        report = ComplianceAuditor(_repo_root()).audit()
+    def test_compatibility_clause_is_a_real_gap(self, public_evidence_repo: Path) -> None:
+        report = ComplianceAuditor(public_evidence_repo).audit()
         compat = [c for c in report.clauses if c.clause == "Compatibility"]
         assert compat and compat[0].status == "gap"

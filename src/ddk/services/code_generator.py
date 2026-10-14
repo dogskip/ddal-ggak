@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
 from ddk.adapters.llm.parsing import parse_llm_json
@@ -33,9 +33,13 @@ from ddk.models.generation import (
 )
 from ddk.models.intent import IntentGraph
 from ddk.models.repo import RepoProfile
-from ddk.security.repo_paths import UnsafeRepositoryPathError, normalize_repo_relative_path
-from ddk.security.secret_paths import is_secret_path
-from ddk.services.file_blocks import is_protected_path, language_of, parse_file_blocks
+from ddk.security.repo_paths import (
+    UnsafeRepositoryPathError,
+    ensure_distinct_paths,
+    normalize_change_path,
+    read_source,
+)
+from ddk.services.file_blocks import language_of, parse_file_blocks
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +236,11 @@ def _usable_files(answer: str, node_id: str, repo_root: Path | None) -> list[Gen
         if path is None or not content.strip():
             logger.warning("Node %s: skipped file %r from the model answer", node_id, raw_path)
             continue
-        existing = _existing(repo_root, path)
+        try:
+            existing = _existing(repo_root, path)
+        except (OSError, ValueError):
+            logger.warning("Node %s: refused unsafe or unreadable original %r", node_id, path)
+            continue
         produced.append(
             GeneratedFile(
                 path=path,
@@ -243,6 +251,10 @@ def _usable_files(answer: str, node_id: str, repo_root: Path | None) -> list[Gen
                 original_content=existing,
             )
         )
+    try:
+        ensure_distinct_paths([generated.path for generated in produced])
+    except UnsafeRepositoryPathError as exc:
+        raise GenerationError(f"Node {node_id}: model file paths collide") from exc
     return produced
 
 
@@ -254,22 +266,24 @@ def _read_answer(answer: str) -> list[tuple[str, str]]:
         data: Any = parse_llm_json(answer)
     except Exception:  # noqa: BLE001
         return []
-    entries: Any = data.get("files") if isinstance(data, dict) else None
+    entries: object = cast(dict[str, object], data).get("files") if isinstance(data, dict) else None
     if not isinstance(entries, list):
         return []
     pairs: list[tuple[str, str]] = []
-    for entry in entries:  # pyright: ignore[reportUnknownVariableType]
-        if isinstance(entry, dict) and isinstance(entry.get("path"), str):  # pyright: ignore[reportUnknownMemberType]
-            pairs.append((entry["path"], str(entry.get("content", ""))))  # pyright: ignore[reportUnknownArgumentType,reportUnknownMemberType]
+    for entry in cast(list[object], entries):
+        if not isinstance(entry, dict):
+            continue
+        item = cast(dict[str, object], entry)
+        path, content = item.get("path"), item.get("content")
+        if isinstance(path, str) and isinstance(content, str):
+            pairs.append((path, content))
     return pairs
 
 
 def _clean_path(raw: str) -> str | None:
     try:
-        path = normalize_repo_relative_path(raw.strip())
+        path = normalize_change_path(raw)
     except UnsafeRepositoryPathError:
-        return None
-    if is_secret_path(path) or is_protected_path(path):
         return None
     return path
 
@@ -277,8 +291,7 @@ def _clean_path(raw: str) -> str | None:
 def _existing(repo_root: Path | None, path: str) -> str | None:
     if repo_root is None:
         return None
-    target = repo_root / path
     try:
-        return target.read_text(encoding="utf-8")[:_ORIGINAL_CHARS] if target.is_file() else None
-    except (OSError, UnicodeDecodeError):
+        return read_source(repo_root, path).decode("utf-8")[:_ORIGINAL_CHARS]
+    except FileNotFoundError:
         return None

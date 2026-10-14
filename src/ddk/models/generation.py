@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator
 
-from ddk.security.repo_paths import normalize_repo_relative_path
+from ddk.security.repo_paths import ensure_distinct_paths, normalize_change_path
 
 from ._base import DDKBaseModel
 
@@ -22,7 +22,7 @@ class GenerationNode(DDKBaseModel):
     @field_validator("target_path")
     @classmethod
     def _normalize_target_path(cls, value: str) -> str:
-        return normalize_repo_relative_path(value)
+        return normalize_change_path(value)
 
 
 class GenerationPlan(DDKBaseModel):
@@ -37,7 +37,9 @@ class GenerationPlan(DDKBaseModel):
     @field_validator("target_files")
     @classmethod
     def _normalize_target_files(cls, values: list[str]) -> list[str]:
-        return [normalize_repo_relative_path(value) for value in values]
+        normalized = [normalize_change_path(value) for value in values]
+        ensure_distinct_paths(normalized)
+        return normalized
 
 
 class GeneratedFile(DDKBaseModel):
@@ -52,7 +54,7 @@ class GeneratedFile(DDKBaseModel):
     @field_validator("path")
     @classmethod
     def _normalize_path(cls, value: str) -> str:
-        return normalize_repo_relative_path(value)
+        return normalize_change_path(value)
 
 
 class GeneratedArtifactSet(DDKBaseModel):
@@ -67,17 +69,22 @@ class GeneratedArtifactSet(DDKBaseModel):
     changed_paths: list[str] = Field(default_factory=list)
     trace: dict[str, Any] = Field(default_factory=dict)
 
+    @field_validator("files")
+    @classmethod
+    def _distinct_files(cls, values: list[GeneratedFile]) -> list[GeneratedFile]:
+        ensure_distinct_paths([value.path for value in values])
+        return values
+
     @field_validator("file_map")
     @classmethod
     def _normalize_file_map(cls, values: dict[str, str]) -> dict[str, str]:
-        normalized = {
-            normalize_repo_relative_path(path): content for path, content in values.items()
-        }
-        if len(normalized) != len(values):
-            raise ValueError("file_map contains paths that collide after normalization")
+        normalized = {normalize_change_path(path): content for path, content in values.items()}
+        ensure_distinct_paths(list(normalized))
         return normalized
 
     @field_validator("changed_paths")
     @classmethod
     def _normalize_changed_paths(cls, values: list[str]) -> list[str]:
-        return [normalize_repo_relative_path(value) for value in values]
+        normalized = [normalize_change_path(value) for value in values]
+        ensure_distinct_paths(normalized)
+        return normalized

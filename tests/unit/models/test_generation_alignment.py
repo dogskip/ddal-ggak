@@ -73,13 +73,13 @@ class TestGeneratedFileDesignSpecFields:
         with pytest.raises(ValidationError):
             GeneratedFile(path=path, content="code", source_node_id="n1")
 
-    def test_normalizes_windows_separators(self) -> None:
-        generated = GeneratedFile(
-            path="src\\components\\Button.tsx",
-            content="code",
-            source_node_id="n1",
-        )
-        assert generated.path == "src/components/Button.tsx"
+    def test_rejects_windows_separators(self) -> None:
+        with pytest.raises(ValidationError):
+            GeneratedFile(
+                path="src\\components\\Button.tsx",
+                content="code",
+                source_node_id="n1",
+            )
 
 
 class TestGenerationPlanPaths:

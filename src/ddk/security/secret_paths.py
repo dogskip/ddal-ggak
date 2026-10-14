@@ -44,46 +44,40 @@ _SECRET_SUFFIXES: tuple[str, ...] = (
 
 # Path components that mark a secret directory anywhere in the path.
 _SECRET_DIR_PARTS: frozenset[str] = frozenset(
-    {".ssh", ".aws", ".gnupg", ".gcloud", "gcloud", "secrets"}
-)
-
-# ``.env.<x>`` variants that are safe templates (committed by convention).
-_SAFE_ENV_SUFFIXES: tuple[str, ...] = (
-    ".example",
-    ".sample",
-    ".template",
-    ".dist",
-    ".defaults",
-    ".local.example",
+    {
+        ".git",
+        ".ddk",
+        ".ddk-home",
+        ".codex",
+        ".config",
+        ".claude",
+        ".gemini",
+        ".opencode",
+        ".ssh",
+        ".aws",
+        ".gnupg",
+        ".gcloud",
+        "gcloud",
+        "secrets",
+        ".docker",
+    }
 )
 
 
 def is_secret_path(rel_path: str) -> bool:
     """True if *rel_path* (repo-relative) likely contains credentials.
 
-    Conservative by design: a security guard prefers a false exclusion over
-    leaking a secret. Safe ``.env`` templates (``.env.example`` …) are allowed.
+    Private inputs, tool-owned data and every ``.env*`` spelling are excluded.
+    This predicate also handles directory entries before a recursive copy.
     """
     norm = rel_path.replace("\\", "/").strip("/")
     if not norm:
         return False
-    parts = norm.split("/")
-    name = parts[-1]
-    lower = name.lower()
-
-    # Secret directory anywhere in the path (e.g. config/.aws/credentials).
-    if any(part.lower() in _SECRET_DIR_PARTS for part in parts[:-1]):
-        return True
-    # Docker registry auth.
-    if ".docker" in parts[:-1] and lower == "config.json":
-        return True
-
-    # .env and .env.<env>, but not .env.example / .env.sample / …
-    if lower == ".env":
-        return True
-    if lower.startswith(".env.") and not lower.endswith(_SAFE_ENV_SUFFIXES):
-        return True
-
-    if lower in _SECRET_FILENAMES:
-        return True
-    return lower.endswith(_SECRET_SUFFIXES)
+    parts = [part.lower() for part in norm.split("/")]
+    return any(
+        part in _SECRET_DIR_PARTS
+        or part in _SECRET_FILENAMES
+        or part.startswith(".env")
+        or part.endswith(_SECRET_SUFFIXES)
+        for part in parts
+    )

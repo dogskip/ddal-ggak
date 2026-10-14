@@ -12,6 +12,9 @@ from ddk.security.secret_paths import is_secret_path
     [
         ".env",
         ".env.production",
+        ".env.example",
+        ".env.sample",
+        ".env.template",
         ".env.local",
         "config/.env",
         "apps/web/.env.staging",
@@ -41,9 +44,6 @@ def test_secret_paths_detected(path: str) -> None:
         "package.json",
         "README.md",
         "tsconfig.json",
-        ".env.example",
-        ".env.sample",
-        ".env.template",
         "config.json",  # only secret under .docker/
         "docs/keynote.md",  # contains 'key' but not a key file
         "",

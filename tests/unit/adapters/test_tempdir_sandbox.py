@@ -72,7 +72,7 @@ class TestTempDirSandbox:
         await sandbox.cleanup()
 
     @pytest.mark.asyncio
-    async def test_create_preserves_safe_relative_internal_symlinks(self, tmp_path: Path) -> None:
+    async def test_create_excludes_relative_internal_symlinks(self, tmp_path: Path) -> None:
         source = tmp_path / "source"
         source.mkdir()
         (source / "target.txt").write_text("ok", encoding="utf-8")
@@ -81,8 +81,9 @@ class TestTempDirSandbox:
         sandbox = TempDirSandbox()
         work_dir = await sandbox.create(source_path=source)
 
-        assert (work_dir / "link.txt").is_symlink()
-        assert (work_dir / "link.txt").read_text(encoding="utf-8") == "ok"
+        assert not (work_dir / "link.txt").is_symlink()
+        assert not (work_dir / "link.txt").exists()
+        assert (work_dir / "target.txt").read_text(encoding="utf-8") == "ok"
         await sandbox.cleanup()
 
     @pytest.mark.asyncio
@@ -148,7 +149,7 @@ class TestSandboxCopyExclusions:
         await sandbox.cleanup()
 
     @pytest.mark.asyncio
-    async def test_secret_files_stay_out_but_env_templates_come_along(self, tmp_path: Path) -> None:
+    async def test_all_env_files_and_secret_files_stay_out(self, tmp_path: Path) -> None:
         source = tmp_path / "source"
         self._seed(source)
 
@@ -158,7 +159,7 @@ class TestSandboxCopyExclusions:
         assert not (work_dir / ".env").exists()
         assert not (work_dir / ".env.local").exists()
         assert not (work_dir / "keys" / "server.pem").exists()
-        assert (work_dir / ".env.example").exists()
+        assert not (work_dir / ".env.example").exists()
         await sandbox.cleanup()
 
     @pytest.mark.asyncio
@@ -171,6 +172,6 @@ class TestSandboxCopyExclusions:
 
         assert not (work_dir / "dist").exists()
         assert (work_dir / "src" / "dist" / "util.ts").exists()
-        assert (work_dir / "node_modules" / "react" / "index.js").exists()
+        assert not (work_dir / "node_modules").exists()
         assert (work_dir / "package.json").exists()
         await sandbox.cleanup()

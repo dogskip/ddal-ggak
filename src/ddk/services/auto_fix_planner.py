@@ -31,9 +31,13 @@ from ddk.models.fix import FixAttempt
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
 from ddk.models.validation import FailureRecord
 from ddk.models.visual import VisualRegressionReport
-from ddk.security.repo_paths import UnsafeRepositoryPathError, normalize_repo_relative_path
-from ddk.security.secret_paths import is_secret_path
-from ddk.services.file_blocks import FILE_HEADER, is_protected_path, language_of, strip_fence
+from ddk.security.repo_paths import (
+    UnsafeRepositoryPathError,
+    ensure_distinct_paths,
+    normalize_change_path,
+    resolve_change_path,
+)
+from ddk.services.file_blocks import FILE_HEADER, language_of, strip_fence
 from ddk.services.images import encode_for_model
 
 _MAX_FILES_PER_ATTEMPT = 4
@@ -357,7 +361,12 @@ class AutoFixPlanner:
         )
         response = await self.llm.complete(messages, config)
 
-        main, extras = _parse_answer(response.content)
+        if response.truncated:
+            return _Repair(note=f"{path}: rejected model answer (truncated response)")
+        try:
+            main, extras = _parse_answer(response.content)
+        except UnsafeRepositoryPathError:
+            return _Repair(note=f"{path}: rejected model answer (extra file paths collide)")
         problem = _vet(old, main)
         if problem == "unchanged":
             return _Repair(note=f"{path}: model returned the file unchanged")
@@ -386,14 +395,19 @@ class AutoFixPlanner:
     def _accept_extra(self, raw_path: str, content: str, working: dict[str, str]) -> str | None:
         """Return the normalised path of an extra file the model may add, else ``None``."""
         try:
-            path = normalize_repo_relative_path(raw_path.strip())
+            path = normalize_change_path(raw_path)
+            ensure_distinct_paths([*working, path])
         except UnsafeRepositoryPathError:
             return None
-        if is_secret_path(path) or is_protected_path(path) or not content.strip():
+        if not content.strip():
             return None
-        if path in working or self._repo_root is None or (self._repo_root / path).exists():
+        if path in working or self._repo_root is None:
             return None
-        return path
+        try:
+            target = resolve_change_path(self._repo_root, path)
+        except UnsafeRepositoryPathError:
+            return None
+        return None if target.exists() else path
 
 
 @dataclass
@@ -565,11 +579,12 @@ def _describe(failure: FailureRecord) -> str:
 def _parse_answer(text: str) -> tuple[str, dict[str, str]]:
     """Split the model answer into the main file and any ``=== FILE: path ===`` extras."""
     headers = list(FILE_HEADER.finditer(text))
+    ensure_distinct_paths([header["path"] for header in headers])
     main = text[: headers[0].start()] if headers else text
     extras: dict[str, str] = {}
     for index, header in enumerate(headers):
         end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
-        extras[header["path"].strip()] = strip_fence(text[header.end() : end].lstrip("\n"))
+        extras[header["path"]] = strip_fence(text[header.end() : end].lstrip("\n"))
     return strip_fence(main), extras
 
 

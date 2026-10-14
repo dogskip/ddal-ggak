@@ -53,11 +53,10 @@ def test_raw_secret_absent_from_entire_pack(tmp_path: Path) -> None:
     assert _FAKE_KEY not in blob
 
 
-def test_safe_env_template_still_allowed(tmp_path: Path) -> None:
+def test_env_templates_are_excluded_from_automatic_context(tmp_path: Path) -> None:
     _seed_repo(tmp_path)
     pack = ContextPackBuilder().build(target_files=["src/App.tsx"], repo_path=tmp_path)
-    # .env.example is a safe template and may be included (no secret value in it).
-    assert ".env" not in {c.path for c in pack.chunks}  # the real one is gone
+    assert not {".env", ".env.example"}.intersection(c.path for c in pack.chunks)
 
 
 def test_symlinked_file_outside_repository_is_never_read(tmp_path: Path) -> None:

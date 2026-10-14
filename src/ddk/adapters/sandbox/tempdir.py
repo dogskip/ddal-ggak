@@ -5,19 +5,19 @@ from __future__ import annotations
 import asyncio
 import os
 import shutil
+import stat
 import tempfile
 import time
 from pathlib import Path
 
-from ddk.security.secret_paths import is_secret_path
+from ddk.security.repo_paths import (
+    UnsafeRepositoryPathError,
+    normalize_source_path,
+    read_source,
+)
 
 from .base import CommandResult
 from .policy import ALLOWED_COMMANDS, is_command_allowed, is_env_allowed
-
-# Never copied, at any depth.
-_EXCLUDED_ANYWHERE = frozenset({".git", ".ddk", ".ddk-home", "__pycache__"})
-# Build output and caches; dropped only at the repository root.
-_EXCLUDED_AT_ROOT = frozenset({"dist", ".next", ".turbo", "coverage", ".venv"})
 
 
 class TempDirSandbox:
@@ -28,41 +28,46 @@ class TempDirSandbox:
 
     async def create(self, source_path: Path) -> Path:
         """Create a temporary sandbox and copy source files into it."""
+        if source_path.is_symlink():
+            raise UnsafeRepositoryPathError(f"repository root is a symlink: {source_path}")
         self._sandbox_path = Path(tempfile.mkdtemp(prefix="ddk-sandbox-"))
         if source_path.exists():
             source_root = source_path.resolve()
 
-            def ignore_unsafe_symlinks(directory: str, names: list[str]) -> list[str]:
+            def ignore_unsafe_paths(directory: str, names: list[str]) -> list[str]:
                 ignored: list[str] = []
-                relative_dir = Path(directory).relative_to(source_path)
+                relative_dir = Path(directory).relative_to(source_root)
                 for name in names:
                     candidate = Path(directory) / name
                     relative = (relative_dir / name).as_posix()
-                    if (
-                        name in _EXCLUDED_ANYWHERE
-                        or (relative_dir == Path() and name in _EXCLUDED_AT_ROOT)
-                        or is_secret_path(relative)
-                    ):
-                        ignored.append(name)
-                        continue
-                    if not candidate.is_symlink():
-                        continue
                     try:
-                        target = candidate.readlink()
-                        resolved_target = candidate.resolve(strict=False)
-                    except OSError:
-                        ignored.append(name)
-                        continue
-                    if target.is_absolute() or not resolved_target.is_relative_to(source_root):
+                        normalize_source_path(relative)
+                        info = candidate.lstat()
+                        unsafe_type = not (
+                            stat.S_ISDIR(info.st_mode)
+                            or (stat.S_ISREG(info.st_mode) and info.st_nlink == 1)
+                        )
+                    except (UnsafeRepositoryPathError, OSError):
+                        unsafe_type = True
+                    if unsafe_type:
                         ignored.append(name)
                 return ignored
 
+            def copy_regular(source: str, destination: str) -> str:
+                source_file = Path(source)
+                relative = source_file.relative_to(source_root).as_posix()
+                content = read_source(source_root, relative)
+                Path(destination).write_bytes(content)
+                shutil.copystat(source_file, destination, follow_symlinks=False)
+                return destination
+
             shutil.copytree(
-                source_path,
+                source_root,
                 self._sandbox_path,
                 dirs_exist_ok=True,
                 symlinks=True,
-                ignore=ignore_unsafe_symlinks,
+                ignore=ignore_unsafe_paths,
+                copy_function=copy_regular,
             )
         return self._sandbox_path
 

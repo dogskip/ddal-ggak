@@ -19,7 +19,7 @@ from typing import Literal
 
 from ddk.models.context_pack import ContextChunk, ContextPack
 from ddk.security.redact import redact_string
-from ddk.security.secret_paths import is_secret_path
+from ddk.security.repo_paths import read_source
 
 MAX_FILES = 6
 MAX_LINES = 300
@@ -183,17 +183,7 @@ class ContextPackBuilder:
             if file_path.is_symlink() or not file_path.is_file():
                 continue
 
-            rel = str(file_path.relative_to(repo_path)).replace("\\", "/")
-
-            # Exclude node_modules, __pycache__, and .git
-            if any(part in rel for part in ("node_modules/", "__pycache__/", ".git/")):
-                continue
-            if "node_modules" in rel.split("/") or "__pycache__" in rel.split("/"):
-                continue
-
-            # SECURITY: never read secret files into LLM context (defense layer 1).
-            if is_secret_path(rel):
-                continue
+            rel = file_path.relative_to(repo_path).as_posix()
 
             # Exclude binary files by extension
             if file_path.suffix.lower() in _BINARY_EXTENSIONS:
@@ -201,8 +191,8 @@ class ContextPackBuilder:
 
             # Read file content (skip unreadable files)
             try:
-                content = file_path.read_text(encoding="utf-8", errors="strict")
-            except (UnicodeDecodeError, OSError):
+                content = read_source(repo_path, rel).decode("utf-8")
+            except (ValueError, OSError):
                 continue
 
             # SECURITY: scrub inline credentials before they reach the LLM (layer 2).

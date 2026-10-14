@@ -153,9 +153,13 @@ class RunBudget:
         prepared_run: Record,
         *,
         clock_ns: Callable[[], int] = time.monotonic_ns,
+        started_ns: int | None = None,
     ) -> RunBudget:
-        started = clock_ns()
-        started_utc = datetime.now(UTC)
+        now = clock_ns()
+        started = now if started_ns is None else started_ns
+        if type(started) is not int or not 0 <= started <= now:
+            raise BudgetError("monotonic_clock_invalid")
+        started_utc = datetime.now(UTC) - timedelta(microseconds=(now - started) // 1000)
         if prepared_run.get("operation") not in {"repair", "generation"} or prepared_run.get(
             "model_calls"
         ):
@@ -168,15 +172,20 @@ class RunBudget:
         value._run_id = record["run_id"]
         value._case = store.case(record["case_id"])
         value._clock_ns = clock_ns
-        value._last_ns = started
+        value._last_ns = now
         value._deadline_ns = started + value._case["limits"]["run_timeout_ms"] * 1_000_000
         value._started_ns = started
         value._started_utc = started_utc
         value._code_sha256 = hashlib.sha256(
-            read_regular(Path(__file__), MAX_RECORD_BYTES)
+            read_regular(Path(__file__).resolve(strict=True), MAX_RECORD_BYTES)
         ).hexdigest()
         value._poisoned = False
         return value
+
+    @property
+    def deadline_ns(self) -> int:
+        """The fixed deadline shared by preparation, provider and verification."""
+        return self._deadline_ns
 
     @property
     def record(self) -> Record:

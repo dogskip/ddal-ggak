@@ -654,3 +654,23 @@ async def test_deadline_expired_during_history_audit_does_not_create_reservation
         await call(budget, run)
     assert store.pending_run(run["run_id"])["model_calls"] == []
     assert not (store.base_path / f"locks/model/{run['case_id']}.lock").exists()
+
+
+async def test_preparation_time_cannot_reset_the_request_deadline(prepared):
+    store, run = setup(prepared, run_timeout_ms=10)
+    budget = RunBudget.start(store, run, clock_ns=lambda: 20_000_000, started_ns=0)
+    with pytest.raises(BudgetError, match="run_timeout"):
+        await call(budget, run)
+    assert budget.record["model_calls"] == []
+
+
+def test_installed_module_alias_resolves_before_hashing_trusted_code(prepared, monkeypatch):
+    import ddk.services.verified_budget as module
+
+    store, run = setup(prepared)
+    actual = Path(module.__file__).resolve()
+    alias = prepared[0] / "installed-package"
+    alias.symlink_to(actual.parent, target_is_directory=True)
+    monkeypatch.setattr(module, "__file__", str(alias / actual.name))
+    budget = RunBudget.start(store, run)
+    assert budget.record["run_id"] == run["run_id"]

@@ -362,6 +362,9 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                 held += call["reserved_micro_usd"]
         if record["decision"] in {"ready", "manual-review"}:
             limits = case["limits"]
+            require(
+                all(call["state"] == "settled" for call in record["model_calls"]), "cost_unknown"
+            )
             require(all(record["integrity"].values()), "integrity_not_complete")
             require(
                 record["status"] == "completed" and record["finished_at"] is not None,

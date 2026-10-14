@@ -13,8 +13,10 @@ from ddk.security.file_access import read_regular
 from ddk.security.repo_paths import normalize_source_path
 from ddk.services.artifact_applier import ArtifactApplier
 from ddk.services.durable_files import atomic_write, ensure_directory
+from ddk.services.verified_budget import VerifiedPrice
 from ddk.services.verified_change_engine import Evaluator, VerifiedChangeEngine
 from ddk.services.verified_change_store import VerifiedChangeStore
+from ddk.services.verified_repair import RepairProvider, VerifiedRepairEngine
 
 
 class VerifiedChangeService:
@@ -54,16 +56,8 @@ class VerifiedChangeService:
         trusted_local_approved: bool = False,
     ) -> Record:
         case = self.store.case(case_id)
-        if trusted_local_approved and case["assurance_required"] != "trusted-local":
-            raise ValueError("assurance_mismatch")
-        if not trusted_local_approved and case["assurance_required"] == "trusted-local":
-            raise ValueError("trusted_local_confirmation_required")
+        evaluator = self._approved_evaluator(case, trusted_local_approved)
         self.store.initialize()
-        evaluator = self._evaluator
-        if evaluator is None:
-            from ddk.adapters.verified_evaluator import VerifiedEvaluator  # noqa: PLC0415
-
-            evaluator = VerifiedEvaluator(trusted_local_approved=trusted_local_approved)
         return await VerifiedChangeEngine(self.store, evaluator).verify(
             case_id,
             baseline=baseline,
@@ -71,6 +65,56 @@ class VerifiedChangeService:
             run_id=run_id,
             project_inputs=project_inputs,
             change_requirements=change_requirements,
+        )
+
+    def _approved_evaluator(self, case: Record, approved: bool) -> Evaluator:
+        if approved and case["assurance_required"] != "trusted-local":
+            raise ValueError("assurance_mismatch")
+        if not approved and case["assurance_required"] == "trusted-local":
+            raise ValueError("trusted_local_confirmation_required")
+        if self._evaluator is not None:
+            return self._evaluator
+        from ddk.adapters.verified_evaluator import VerifiedEvaluator  # noqa: PLC0415
+
+        return VerifiedEvaluator(trusted_local_approved=approved)
+
+    async def repair(
+        self,
+        source_run_id: str,
+        *,
+        baseline: Path,
+        candidate: Path,
+        run_id: str,
+        price: VerifiedPrice,
+        input_limit: int,
+        output_limit: int,
+        provider: RepairProvider,
+        provider_approved: bool = False,
+        trusted_local_approved: bool = False,
+        project_inputs: Mapping[str, str] | None = None,
+    ) -> Record:
+        """Repair only after explicit provider and execution grants."""
+        if not provider_approved:
+            raise ValueError("provider_confirmation_required")
+        if (
+            type(input_limit) is not int
+            or input_limit < 1
+            or type(output_limit) is not int
+            or not 1 <= output_limit <= 128_000
+        ):
+            raise ValueError("provider_token_limit_invalid")
+        source = self.store.run(source_run_id)
+        case = self.store.case(source["case_id"])
+        evaluator = self._approved_evaluator(case, trusted_local_approved)
+        return await VerifiedRepairEngine(self.store, evaluator, provider).repair(
+            source_run_id,
+            baseline=baseline,
+            candidate=candidate,
+            run_id=run_id,
+            price=price,
+            input_limit=input_limit,
+            output_limit=output_limit,
+            project_inputs=project_inputs,
         )
 
     def status(self, run_id: str) -> Record:

@@ -111,6 +111,8 @@ class VerifiedChangeStore:
     def _contexts(
         self, record: Record, visited: frozenset[str] = frozenset()
     ) -> tuple[Record, Record]:
+        if len(visited) >= 32:
+            raise ContractError("source_run_depth")
         case = self.case(record["case_id"])
         cases = {case["case_id"]: case}
         runs: Record = {}

@@ -83,14 +83,14 @@ class Evaluator(Protocol):
     async def evaluate(self, request: EvaluationRequest) -> EvaluationOutcome: ...
 
 
-class _StoppedError(ValueError):
+class VerificationStoppedError(ValueError):
     def __init__(self, code: str, target: str = "") -> None:
         super().__init__(code)
         self.code = code
         self.target = target
 
 
-def _now() -> str:
+def record_time() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
@@ -146,7 +146,7 @@ class VerifiedChangeEngine:
         frozen: tuple[SnapshotFile, ...] = ()
         changes: list[Record] = []
         artifacts: list[EvaluationArtifact] = []
-        input_issue: _StoppedError | None = None
+        input_issue: VerificationStoppedError | None = None
         candidate_hash: str | None = None
         stop = cancelled or (lambda: False)
 
@@ -155,7 +155,7 @@ class VerifiedChangeEngine:
 
         try:
             if baseline is None or candidate is None:
-                raise _StoppedError("ambiguous_baseline")
+                raise VerificationStoppedError("ambiguous_baseline")
             frozen = self._fixed_inputs(case)
             baseline_snapshot = capture_source(
                 baseline,
@@ -173,10 +173,10 @@ class VerifiedChangeEngine:
                 case, baseline_snapshot, candidate_snapshot, frozen, bindings, links
             )
         except SnapshotCancelledError:
-            input_issue = _StoppedError("cancelled" if stop() else "run_timeout")
+            input_issue = VerificationStoppedError("cancelled" if stop() else "run_timeout")
         except SnapshotError as error:
-            input_issue = _StoppedError("snapshot_changed", str(error))
-        except _StoppedError as error:
+            input_issue = VerificationStoppedError("snapshot_changed", str(error))
+        except VerificationStoppedError as error:
             input_issue = error
         request.update(
             baseline_tree_sha256=baseline_snapshot.tree_sha256 if baseline_snapshot else None,
@@ -208,9 +208,9 @@ class VerifiedChangeEngine:
                 if stop():
                     return self._cancel(record)
                 if time.monotonic_ns() >= deadline:
-                    raise _StoppedError("run_timeout")
+                    raise VerificationStoppedError("run_timeout")
                 if self.evaluator is None:
-                    raise _StoppedError("isolation_unavailable")
+                    raise VerificationStoppedError("isolation_unavailable")
                 assert tree is not None
                 limits = copy.deepcopy(case["limits"])
                 limits["max_output_bytes"] = remaining_output_bytes
@@ -236,16 +236,16 @@ class VerifiedChangeEngine:
                     or outcome.output_bytes < 0
                     or outcome.output_bytes > remaining_output_bytes
                 ):
-                    raise _StoppedError("output_limit")
+                    raise VerificationStoppedError("output_limit")
                 remaining_output_bytes -= outcome.output_bytes
                 self._phase_result(case, phase, outcome, tree)
                 if self.store.case(case_id) != case:
-                    raise _StoppedError("criteria_changed")
+                    raise VerificationStoppedError("criteria_changed")
             return self._finish(record, case, started, payloads)
         except asyncio.CancelledError:
             self._cancel(record)
             raise
-        except _StoppedError as error:
+        except VerificationStoppedError as error:
             return self._finish(record, case, started, payloads, error)
 
     def _fixed_inputs(self, case: Record) -> tuple[SnapshotFile, ...]:
@@ -259,7 +259,7 @@ class VerifiedChangeEngine:
                 len(payload) != item["size_bytes"]
                 or hashlib.sha256(payload).hexdigest() != item["sha256"]
             ):
-                raise _StoppedError(
+                raise VerificationStoppedError(
                     "criteria_changed" if item["role"] == "criteria" else "protected_input_changed",
                     item["path"],
                 )
@@ -278,7 +278,7 @@ class VerifiedChangeEngine:
                 if item["role"] == role
             ]
             if not selected or manifest_digest(selected) != case[key]:
-                raise _StoppedError(issue)
+                raise VerificationStoppedError(issue)
         return tuple(
             file
             for file, item in zip(files, case["inputs"], strict=True)
@@ -303,32 +303,34 @@ class VerifiedChangeEngine:
             for path, input_path in bindings.items():
                 normalize_source_path(path)
                 if path in source or input_path not in fixed:
-                    raise _StoppedError("ambiguous_baseline", path)
+                    raise VerificationStoppedError("ambiguous_baseline", path)
             ensure_distinct_paths(list(source) + list(bindings))
         except ValueError as error:
-            if isinstance(error, _StoppedError):
+            if isinstance(error, VerificationStoppedError):
                 raise
-            raise _StoppedError("ambiguous_baseline", str(error)) from error
+            raise VerificationStoppedError("ambiguous_baseline", str(error)) from error
         expected = set(source) | set(bindings)
         if set(before) != expected:
-            raise _StoppedError("ambiguous_baseline", ",".join(sorted(set(before) ^ expected)))
+            raise VerificationStoppedError(
+                "ambiguous_baseline", ",".join(sorted(set(before) ^ expected))
+            )
         for path, item in before.items():
             expected_input = inputs[bindings.get(path, path)]
             if any(
                 getattr(item, key) != expected_input[key]
                 for key in ["sha256", "mode", "size_bytes"]
             ):
-                raise _StoppedError("baseline_mismatch", path)
+                raise VerificationStoppedError("baseline_mismatch", path)
         if manifest_digest(before[path] for path in source) != case["baseline_tree_sha256"]:
-            raise _StoppedError("baseline_mismatch")
+            raise VerificationStoppedError("baseline_mismatch")
         for path, input_path in bindings.items():
             if path not in after or after[path].manifest_entry() != before[path].manifest_entry():
                 role = inputs[input_path]["role"]
-                raise _StoppedError(
+                raise VerificationStoppedError(
                     "criteria_changed" if role == "criteria" else "protected_input_changed", path
                 )
         if set(source) - set(after):
-            raise _StoppedError(
+            raise VerificationStoppedError(
                 "source_delete_unsupported", ",".join(sorted(set(source) - set(after)))
             )
         source_after = {path: item for path, item in after.items() if path not in bindings}
@@ -340,25 +342,25 @@ class VerifiedChangeEngine:
                 or not requirement_ids
                 or not set(requirement_ids) <= requirements
             ):
-                raise _StoppedError("invalid_change_requirements", path)
+                raise VerificationStoppedError("invalid_change_requirements", path)
         changes: list[Record] = []
         artifacts: list[EvaluationArtifact] = []
         for path, item in source_after.items():
             previous = before.get(path)
             if previous is not None and previous.mode != item.mode:
-                raise _StoppedError("source_mode_changed", path)
+                raise VerificationStoppedError("source_mode_changed", path)
             if previous is not None and previous.sha256 == item.sha256:
                 continue
             if path not in case["scope_paths"]:
-                raise _StoppedError("outside_change_scope", path)
+                raise VerificationStoppedError("outside_change_scope", path)
             try:
                 normalize_change_path(path)
             except ValueError as error:
-                raise _StoppedError("protected_change", path) from error
+                raise VerificationStoppedError("protected_change", path) from error
             if previous is None and item.mode != 0o644:
-                raise _StoppedError("source_mode_changed", path)
+                raise VerificationStoppedError("source_mode_changed", path)
             if path not in links:
-                raise _StoppedError("ambiguous_change_requirements", path)
+                raise VerificationStoppedError("ambiguous_change_requirements", path)
             ident = f"source-{len(changes):04d}"
             artifacts.append(
                 EvaluationArtifact(ident, "source", "artifacts/source/" + path, item.content)
@@ -376,7 +378,7 @@ class VerifiedChangeEngine:
                 }
             )
         if len(changes) > case["limits"]["max_changed_files"]:
-            raise _StoppedError("change_limit")
+            raise VerificationStoppedError("change_limit")
         return manifest_digest(source_after.values()), changes, artifacts
 
     @staticmethod
@@ -387,7 +389,7 @@ class VerifiedChangeEngine:
         candidate_hash: str | None,
         changes: list[Record],
     ) -> Record:
-        now = _now()
+        now = record_time()
         return {
             "record_type": "run",
             "schema_version": "verified-change/1",
@@ -446,12 +448,12 @@ class VerifiedChangeEngine:
         try:
             while not task.done():
                 if request.cancelled():
-                    raise _StoppedError(
+                    raise VerificationStoppedError(
                         "run_timeout" if time.monotonic_ns() >= request.deadline_ns else "cancelled"
                     )
                 remaining = (request.deadline_ns - time.monotonic_ns()) / 1_000_000_000
                 if remaining <= 0:
-                    raise _StoppedError("run_timeout")
+                    raise VerificationStoppedError("run_timeout")
                 await asyncio.wait({task}, timeout=min(0.02, remaining))
             outcome = task.result()
             return outcome
@@ -465,8 +467,8 @@ class VerifiedChangeEngine:
                 task.add_done_callback(
                     lambda finished: None if finished.cancelled() else finished.exception()
                 )
-            if isinstance(error, Exception) and not isinstance(error, _StoppedError):
-                raise _StoppedError("evaluation_failed") from error
+            if isinstance(error, Exception) and not isinstance(error, VerificationStoppedError):
+                raise VerificationStoppedError("evaluation_failed") from error
             raise
 
     @staticmethod
@@ -476,24 +478,27 @@ class VerifiedChangeEngine:
         phase: str,
         outcome: EvaluationOutcome,
         payloads: dict[str, bytes],
+        *,
+        round_no: int = 0,
+        source_runs: Record | None = None,
     ) -> None:
         candidate = copy.deepcopy(record)
         if any(
-            result.get("phase") != phase or result.get("round_no") != 0
+            result.get("phase") != phase or result.get("round_no") != round_no
             for result in outcome.results
         ):
-            raise _StoppedError("invalid_evaluation_result")
+            raise VerificationStoppedError("invalid_evaluation_result")
         candidate["results"].extend(copy.deepcopy(outcome.results))
         candidate["artifacts"].extend(artifact.record() for artifact in outcome.artifacts)
         if (
             sum(item["size_bytes"] for item in candidate["artifacts"])
             > case["limits"]["max_artifact_bytes"]
         ):
-            raise _StoppedError("artifact_limit")
+            raise VerificationStoppedError("artifact_limit")
         try:
-            validate_record(candidate, {case["case_id"]: case}, {})
+            validate_record(candidate, {case["case_id"]: case}, source_runs or {})
         except ContractError as error:
-            raise _StoppedError("invalid_evaluation_result", str(error)) from error
+            raise VerificationStoppedError("invalid_evaluation_result", str(error)) from error
         record.update(candidate)
         for artifact in outcome.artifacts:
             payloads[artifact.path] = artifact.content
@@ -519,17 +524,17 @@ class VerifiedChangeEngine:
         case: Record, phase: str, outcome: EvaluationOutcome, expected_tree: str
     ) -> None:
         if outcome.input_tree_sha256 != expected_tree:
-            raise _StoppedError("candidate_mismatch")
+            raise VerificationStoppedError("candidate_mismatch")
         if not outcome.cleanup_complete:
-            raise _StoppedError("cleanup_failed")
+            raise VerificationStoppedError("cleanup_failed")
         if outcome.environment_sha256 != case["environment_sha256"]:
-            raise _StoppedError("environment_gap")
+            raise VerificationStoppedError("environment_gap")
         if outcome.evaluator_sha256 != case["evaluator_sha256"]:
-            raise _StoppedError("criteria_changed")
+            raise VerificationStoppedError("criteria_changed")
         if outcome.assurance not in {"isolated", "trusted-local"} or (
             case["assurance_required"] == "isolated" and outcome.assurance != "isolated"
         ):
-            raise _StoppedError("isolation_unavailable")
+            raise VerificationStoppedError("isolation_unavailable")
         mapped = {result["check_id"]: result for result in outcome.results}
         for check in case["checks"]:
             if not check["required"]:
@@ -553,14 +558,14 @@ class VerifiedChangeEngine:
                     result["status"] == "passed" and result["exit_code"] != 0
                 )
                 if invalid_observation or invalid_test or invalid_command:
-                    raise _StoppedError(
+                    raise VerificationStoppedError(
                         "baseline_failed"
                         if phase == "baseline"
                         else "required_evidence_incomplete",
                         check["check_id"],
                     )
             if result is None or result["status"] not in acceptable:
-                raise _StoppedError(
+                raise VerificationStoppedError(
                     "baseline_failed" if phase == "baseline" else "required_check_failed",
                     check["check_id"],
                 )
@@ -571,16 +576,20 @@ class VerifiedChangeEngine:
         case: Record,
         started: int,
         payloads: Mapping[str, bytes],
-        issue: _StoppedError | None = None,
+        issue: VerificationStoppedError | None = None,
+        *,
+        source_runs: Record | None = None,
     ) -> Record:
         if issue is not None and issue.code == "cancelled":
             return self._cancel(record)
         record["status"] = "completed"
-        record["finished_at"] = _now()
+        record["finished_at"] = record_time()
         record["duration_ms"] = (time.monotonic_ns() - started) // 1_000_000
         record["decision"] = "blocked" if issue else "ready"
-        if record["rounds"]:
-            record["rounds"][0]["finished_at"] = record["finished_at"]
+        latest = record["latest_round"]
+        for item in record["rounds"]:
+            if item["round_no"] == latest and item["finished_at"] is None:
+                item["finished_at"] = record["finished_at"]
         if issue:
             record["actions"].append(_action(issue.code, issue.target))
             if issue.code == "cleanup_failed":
@@ -589,7 +598,7 @@ class VerifiedChangeEngine:
             mapped = {
                 item["check_id"]: item
                 for item in record["results"]
-                if item["phase"] == "candidate" and item["round_no"] == 0
+                if item["phase"] == "candidate" and item["round_no"] == latest
             }
             for check in case["checks"]:
                 if (
@@ -600,7 +609,7 @@ class VerifiedChangeEngine:
                     record["actions"].append(_action("advisory_check_failed", check["check_id"]))
         if not issue:
             try:
-                validate_record(record, {case["case_id"]: case}, {})
+                validate_record(record, {case["case_id"]: case}, source_runs or {})
             except ContractError as error:
                 record["decision"] = "blocked"
                 record["actions"].append(_action("required_evidence_incomplete", str(error)))
@@ -609,7 +618,7 @@ class VerifiedChangeEngine:
     def _cancel(self, record: Record) -> Record:
         record["status"] = "cancelled"
         record["decision"] = None
-        record["finished_at"] = _now()
+        record["finished_at"] = record_time()
         record["integrity"]["cleanup_complete"] = False
         record["actions"].append(_action("cancelled"))
         self.store.save_pending(record)

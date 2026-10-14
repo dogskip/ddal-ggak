@@ -49,6 +49,10 @@ class ClaudeAdapter:
         """Reset the accumulated cost counter (e.g. between pipeline runs)."""
         self._accumulated_cost = 0.0
 
+    async def close(self) -> None:
+        """Release this adapter's HTTP client."""
+        await self._client.close()
+
     def _check_cost_cap(self) -> None:
         """Raise CostCapExceededError if the cap has already been reached."""
         if self._accumulated_cost >= self._cost_cap_usd:
@@ -116,6 +120,24 @@ class ClaudeAdapter:
         response: anthropic.types.Message = await self._invoke(**kwargs)
         _raise_if_declined(response)
         return self._to_response(model, response, _extract_text(response))
+
+    async def complete_bounded(
+        self, messages: list[Message], *, model: str, max_tokens: int
+    ) -> LLMResponse:
+        """Make one attempt with the exact output limit authorized by the caller."""
+        if type(max_tokens) is not int or not 1 <= max_tokens <= 128_000:
+            raise ValueError("provider_output_limit_invalid")
+        self._check_cost_cap()
+        system, rest = _split_messages(messages)
+        kwargs = self._request(model, LLMCallConfig(model=model), system, rest)
+        kwargs["max_tokens"] = max_tokens
+        response = await self._invoke(**kwargs)
+        observed_model = getattr(response, "model", None)
+        return self._to_response(
+            observed_model if isinstance(observed_model, str) else "",
+            response,
+            _extract_text(response),
+        )
 
     async def complete_structured(
         self,

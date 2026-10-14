@@ -20,7 +20,9 @@ from ddk.security.file_access import read_regular
 from .app import app
 
 if TYPE_CHECKING:
+    from ddk.services.verified_budget import ProviderResult
     from ddk.services.verified_change_service import VerifiedChangeService
+    from ddk.services.verified_repair import RepairProvider, RepairRequest
 
 change_app = typer.Typer(
     help="Verify existing changes, inspect evidence, export, apply, or recover.",
@@ -43,6 +45,30 @@ def _service(repository: Path) -> VerifiedChangeService:
     from ddk.services.verified_change_service import VerifiedChangeService  # noqa: PLC0415
 
     return VerifiedChangeService(repository)
+
+
+def _repair_provider() -> RepairProvider:
+    from ddk.adapters.llm.claude import ClaudeAdapter
+    from ddk.adapters.verified_repair_provider import ClaudeRepairProvider
+
+    from .common import get_config
+
+    config = get_config()
+    if not config.anthropic_api_key:
+        raise ValueError("provider_api_key_required")
+
+    async def provider(request: RepairRequest) -> ProviderResult:
+        client = ClaudeAdapter(api_key=config.anthropic_api_key)
+        try:
+            return await ClaudeRepairProvider(client)(request)
+        finally:
+            await client.close()
+
+    return provider
+
+
+async def _replay_provider(request: RepairRequest) -> ProviderResult:
+    raise ValueError("request_replay_execution_forbidden")
 
 
 def _mapping(path: Path | None, *, arrays: bool = False) -> Record | None:
@@ -181,6 +207,66 @@ def verify(
         )
 
     _execute(as_json, execute, identifiers=identifiers)
+
+
+@change_app.command(help="Repair an explicit saved candidate under one fixed request budget.")
+def repair(
+    source_run_id: str = typer.Option(..., "--source-run-id", help="Completed source run UUID."),
+    baseline: Path = typer.Option(..., "--baseline", help="Unchanged approved baseline directory."),
+    candidate: Path = typer.Option(
+        ..., "--candidate", help="Exact source-run candidate directory."
+    ),
+    price: Path = typer.Option(..., "--price", help="Caller-verified maximum-price JSON."),
+    input_token_limit: int = typer.Option(..., "--input-token-limit", min=1, max=2**53 - 1),
+    output_token_limit: int = typer.Option(..., "--output-token-limit", min=1, max=128000),
+    confirm_provider: bool = typer.Option(
+        False,
+        "--confirm-provider",
+        help="Approve sending redacted scoped source to Anthropic and incurring API charges.",
+    ),
+    trusted_local: bool = typer.Option(
+        False, "--trusted-local", help="Approve host execution for a trusted-local case."
+    ),
+    project_inputs: Path | None = typer.Option(None, "--project-inputs"),
+    run_id: str | None = typer.Option(None, "--run-id", help="Stable repair request UUID."),
+    repo: Path = typer.Option(Path("."), "--repo"),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    selected = run_id or str(uuid4())
+
+    def execute() -> Record:
+        from ddk.services.verified_budget import VerifiedPrice
+
+        if not confirm_provider:
+            raise ValueError("provider_confirmation_required")
+        data = decode_json(read_regular(price, MAX_RECORD_BYTES))
+        try:
+            pricing = VerifiedPrice(**data)
+        except TypeError as error:
+            raise ValueError("price_invalid") from error
+        service = _service(repo)
+        provider = (
+            _replay_provider
+            if service.store.path_for("run", selected).exists()
+            else _repair_provider()
+        )
+        return asyncio.run(
+            service.repair(
+                source_run_id,
+                baseline=baseline,
+                candidate=candidate,
+                run_id=selected,
+                price=pricing,
+                input_limit=input_token_limit,
+                output_limit=output_token_limit,
+                provider=provider,
+                provider_approved=True,
+                trusted_local_approved=trusted_local,
+                project_inputs=_mapping(project_inputs),
+            )
+        )
+
+    _execute(as_json, execute, identifiers={"run_id": selected, "source_run_id": source_run_id})
 
 
 @change_app.command(help="Read a saved run without restarting it.")

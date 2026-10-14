@@ -115,7 +115,7 @@ def test_change_commands_have_their_own_namespace():
     assert result.exit_code == 0, result.output
     for command in ("verify", "status", "export", "apply", "recover"):
         assert command in result.output
-    assert "repair" not in result.output
+    assert "repair" in result.output
 
 
 def test_verify_forwards_explicit_inputs_and_keeps_json_clean(tmp_path, service):

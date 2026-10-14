@@ -144,3 +144,12 @@ class TestTruncationFlag:
         )
 
         assert result.truncated is expected
+
+
+async def test_close_releases_the_owned_http_client():
+    from unittest.mock import AsyncMock
+
+    adapter = ClaudeAdapter(api_key="test-key")
+    adapter._client = AsyncMock()
+    await adapter.close()
+    adapter._client.close.assert_awaited_once()

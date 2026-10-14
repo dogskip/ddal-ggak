@@ -171,3 +171,24 @@ async def test_a_reply_that_hit_the_token_limit_is_flagged() -> None:
     )
 
     assert (result.content, result.truncated) == ("cut", True)
+
+
+async def test_budgeted_wire_keeps_exact_cap_and_observed_usage():
+    from ddk.adapters.verified_repair_provider import ClaudeRepairProvider
+    from tests.unit.adapters.test_verified_repair_provider import request
+
+    sent = []
+    text = _block(0, {"type": "text", "text": ""}, {"type": "text_delta", "text": '{"files":[]}'})
+    sse = _stream([text]).replace(
+        '"input_tokens": 25, "output_tokens": 1',
+        '"input_tokens": 25, "output_tokens": 1, "cache_creation_input_tokens": 0, '
+        '"cache_read_input_tokens": 0',
+    )
+    adapter = _adapter(sse, sent)
+    result = await ClaudeRepairProvider(adapter)(request())
+    assert len(sent) == 1
+    assert sent[0]["max_tokens"] == 512
+    assert result.usage.input_tokens == 25
+    assert result.usage.output_tokens == 15
+    assert result.usage.extra_micro_usd == 0
+    await adapter.close()

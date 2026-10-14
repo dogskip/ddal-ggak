@@ -238,3 +238,21 @@ class TestProviderErrors:
 
         with pytest.raises(LLMResponseError, match=r"claude-nope.*DDK_LLM_MODEL"):
             await adapter.complete(_messages(), LLMCallConfig(model="claude-nope"))
+
+
+async def test_budgeted_completion_keeps_exact_reserved_output_limit():
+    adapter, client = _adapter(reply(_text("proposal")))
+    result = await adapter.complete_bounded(_messages(), model="claude-sonnet-5-5", max_tokens=512)
+    assert result.content == "proposal"
+    assert len(client.requests) == 1
+    assert client.requests[0]["max_tokens"] == 512
+    assert "tools" not in client.requests[0]
+    assert result.input_tokens >= 0
+
+
+async def test_budgeted_completion_uses_the_observed_model_identity():
+    observed = reply(_text("proposal"))
+    observed.model = "claude-haiku-4-5"
+    adapter, _ = _adapter(observed)
+    result = await adapter.complete_bounded(_messages(), model="claude-sonnet-5-5", max_tokens=512)
+    assert result.model == "claude-haiku-4-5"

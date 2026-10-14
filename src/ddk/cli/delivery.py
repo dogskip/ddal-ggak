@@ -11,7 +11,6 @@ from rich.panel import Panel
 from rich.table import Table
 
 from ddk.adapters.chromium_browser import BrowserUnavailableError
-from ddk.adapters.local_git import LocalGitAdapter
 from ddk.i18n import t
 from ddk.models.input import CaseInput
 from ddk.services.artifact_applier import ArtifactApplier, FileChange
@@ -60,7 +59,7 @@ def run(
     install: bool = typer.Option(
         False,
         "--install",
-        help=t("node_modules가 없으면 샌드박스에서 의존성 설치 (--ignore-scripts)"),
+        help=t("일시 사본에 의존성 설치 (--ignore-scripts); 원본 의존성은 복사하지 않습니다"),
     ),
     visual: bool | None = typer.Option(
         None,
@@ -270,18 +269,23 @@ def apply(
         None, "--case-id", help=t("적용할 case ID (기본: 가장 최근)")
     ),
     repo: Path = typer.Option(Path("."), "--repo", help=t("대상 저장소 폴더")),
-    dry_run: bool = typer.Option(False, "--dry-run", help=t("파일을 쓰지 않고 계획만 보여줍니다")),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help=t("파일 변경 없이 반영 계획을 표시합니다")
+    ),
     force: bool = typer.Option(
         False,
         "--force",
-        help=t("실행 뒤에 바뀐 파일도 덮어씁니다 (이전 내용은 case 폴더에 보관)"),
+        help=t("호환 옵션: 사용하면 내보내기 안내와 함께 중단합니다"),
     ),
     allow_blocked: bool = typer.Option(
-        False, "--allow-blocked", help=t("판정이 ready가 아니어도 적용합니다")
+        False, "--allow-blocked", help=t("호환 옵션: 사용하면 내보내기 안내와 함께 중단합니다")
     ),
     as_json: bool = typer.Option(False, "--json", help=t("JSON으로 출력")),
 ) -> None:
     """Write the files of a verified case into the repository."""
+    if force or allow_blocked:
+        err_console.print(t("❌ 강제 반영은 제공하지 않습니다. 내보내기 후 충돌을 해결하세요."))
+        raise typer.Exit(2)
     case_path = resolve_case_path(repo, case_id)
     store = CaseArtifactStore(case_path)
     try:
@@ -290,16 +294,14 @@ def apply(
     except (OSError, ValueError) as exc:
         err_console.print(t("❌ case 결과를 읽을 수 없습니다: {error}", error=exc))
         raise typer.Exit(1) from exc
-    if decision.decision != "ready" and not allow_blocked:
+    if decision.decision != "ready":
         err_console.print(
             t(
                 "❌ 판정이 ready가 아니라서 적용하지 않습니다 (현재: {decision}).",
                 decision=decision.decision,
             )
         )
-        err_console.print(
-            t("   원인은 `ddk status`로 확인하세요. 그래도 적용하려면 --allow-blocked 를 붙입니다.")
-        )
+        err_console.print(t("   `ddk status`로 원인을 확인한 후 변경을 내보내세요."))
         raise typer.Exit(1)
 
     repo_path = repo.resolve()
@@ -307,7 +309,7 @@ def apply(
     changes = applier.plan(artifacts, repo_path)
     rejected = [c for c in changes if c.action == "rejected"]
     conflicts = [c for c in changes if c.action == "conflict"]
-    blocked = bool(rejected) or (bool(conflicts) and not force)
+    blocked = bool(rejected) or bool(conflicts)
     written: list[FileChange] = []
     if not dry_run and not blocked:
         written = applier.write(
@@ -335,9 +337,9 @@ def apply(
     if rejected:
         err_console.print(t("❌ 쓸 수 없는 경로가 있어 아무것도 적용하지 않았습니다."))
         raise typer.Exit(1)
-    if conflicts and not force:
+    if conflicts:
         err_console.print(t("❌ 실행 뒤에 바뀐 파일이 있어 아무것도 적용하지 않았습니다."))
-        err_console.print(t("   덮어쓰려면 --force 를 붙입니다 (이전 내용은 case 폴더에 보관)."))
+        err_console.print(t("   변경을 내보낸 뒤 현재 파일과 충돌을 해결하세요."))
         raise typer.Exit(1)
 
 
@@ -358,35 +360,17 @@ def _print_changes(changes: list[FileChange], *, dry_run: bool) -> None:
     console.print(table)
 
 
-@app.command(help=t("지정한 case/attempt의 git 점검점으로 되돌립니다."))
+@app.command(help=t("이전 복구 명령의 중단 사유와 안전한 대안을 표시합니다."))
 def rollback(
     attempt_number: int = typer.Option(..., "--attempt", min=1, help=t("복구할 fix attempt 번호")),
     case_id: str = typer.Option(..., "--case-id", help=t("복구할 case ID")),
     repo: Path = typer.Option(Path("."), "--repo", help=t("대상 저장소 폴더")),
-    force: bool = typer.Option(False, "--force", help=t("미커밋 변경사항을 버리고 강제 롤백")),
+    force: bool = typer.Option(
+        False, "--force", help=t("호환 옵션: 사용하면 내보내기 안내와 함께 중단합니다")
+    ),
 ) -> None:
-    """Restore the repository to the checkpoint of a fix attempt."""
-    from ddk.exceptions import DirtyWorkingTreeError  # noqa: PLC0415
-    from ddk.services.rollback_controller import RollbackController  # noqa: PLC0415
-
-    controller = RollbackController(git=LocalGitAdapter(), repo_path=repo.resolve())
-    try:
-        asyncio.run(
-            controller.rollback_to_latest(
-                case_id=case_id, attempt_number=attempt_number, force=force
-            )
-        )
-    except DirtyWorkingTreeError as exc:
-        err_console.print(t("❌ rollback 실패: 미커밋 변경사항이 있습니다 — {error}", error=exc))
-        err_console.print(t("   --force 플래그를 사용하면 변경사항을 버리고 강제 롤백합니다."))
-        raise typer.Exit(1) from exc
-    except ValueError as exc:
-        err_console.print(t("❌ rollback 실패: {error}", error=exc))
-        raise typer.Exit(1) from exc
-    console.print(
-        t(
-            "[green]✅ rollback 완료[/green] {case_id} attempt-{attempt}",
-            case_id=case_id,
-            attempt=attempt_number,
-        )
+    """Reject whole-repository resets and point to owned application recovery."""
+    err_console.print(
+        t("❌ Git 전체 초기화 복구는 제공하지 않습니다. 관리된 반영 기록으로 복구하세요.")
     )
+    raise typer.Exit(2)

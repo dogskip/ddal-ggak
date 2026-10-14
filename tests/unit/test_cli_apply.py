@@ -68,13 +68,13 @@ def test_case_that_is_not_ready_is_refused(tmp_path: Path) -> None:
     assert not (tmp_path / "src/Card.tsx").exists()
 
 
-def test_blocked_case_can_be_applied_on_request(tmp_path: Path) -> None:
+def test_blocked_case_cannot_bypass_the_decision(tmp_path: Path) -> None:
     _finished_case(tmp_path, decision="blocked")
 
     result = _apply(tmp_path, "--allow-blocked")
 
-    assert result.exit_code == 0, result.output  # type: ignore[attr-defined]
-    assert (tmp_path / "src/Card.tsx").exists()
+    assert result.exit_code == 2, result.output  # type: ignore[attr-defined]
+    assert not (tmp_path / "src/Card.tsx").exists()
 
 
 def test_dry_run_writes_nothing(tmp_path: Path) -> None:
@@ -87,7 +87,7 @@ def test_dry_run_writes_nothing(tmp_path: Path) -> None:
     assert not (tmp_path / "src/Card.tsx").exists()
 
 
-def test_a_conflict_stops_everything_until_forced(tmp_path: Path) -> None:
+def test_a_conflict_stops_everything_including_force(tmp_path: Path) -> None:
     files = [
         GeneratedFile(
             path="src/App.tsx", content="new\n", source_node_id="n", original_content="old\n"
@@ -106,10 +106,10 @@ def test_a_conflict_stops_everything_until_forced(tmp_path: Path) -> None:
 
     forced = _apply(tmp_path, "--force")
 
-    assert forced.exit_code == 0, forced.output  # type: ignore[attr-defined]
-    assert (tmp_path / "src/App.tsx").read_text() == "new\n"
-    assert (case_path / "artifacts/replaced/src/App.tsx").read_text() == "my edit\n"
-    assert (tmp_path / "src/Card.tsx").exists()
+    assert forced.exit_code == 2, forced.output  # type: ignore[attr-defined]
+    assert (tmp_path / "src/App.tsx").read_text() == "my edit\n"
+    assert not (case_path / "artifacts/replaced/src/App.tsx").exists()
+    assert not (tmp_path / "src/Card.tsx").exists()
 
 
 def test_json_output_lists_every_file(tmp_path: Path) -> None:

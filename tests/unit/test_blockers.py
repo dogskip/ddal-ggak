@@ -11,11 +11,12 @@ import json
 import os
 import textwrap
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import typer
 
+from ddk.adapters.llm.base import LLMResponse
 from ddk.adapters.local_git import LocalGitAdapter
 from ddk.adapters.null_playwright import NullPlaywrightAdapter
 from ddk.adapters.sandbox.tempdir import TempDirSandbox
@@ -256,9 +257,7 @@ class TestB4AutoFixApplication:
     @pytest.mark.asyncio
     async def test_r09_llm_applies_response(self):
         llm = AsyncMock()
-        mock_response = MagicMock()
-        mock_response.content = "fixed content here"
-        llm.complete.return_value = mock_response
+        llm.complete.return_value = LLMResponse(content="fixed content here", model="fake")
         planner = AutoFixPlanner(llm)
 
         artifacts = GeneratedArtifactSet(
@@ -293,12 +292,12 @@ class TestB4AutoFixApplication:
 
 
 # ──────────────────────────────────────────────
-# B5: Rollback Untracked Cleanup
+# B5: Unowned Recovery Rejection
 # ──────────────────────────────────────────────
 
 
-class TestB5RollbackCleanup:
-    """rollback_to must clean untracked files."""
+class TestB5RollbackPreservation:
+    """A checkpoint reference grants no permission to delete user files."""
 
     @pytest.fixture
     def git_repo(self, tmp_path: Path):
@@ -318,7 +317,7 @@ class TestB5RollbackCleanup:
         return repo
 
     @pytest.mark.asyncio
-    async def test_rollback_cleans_untracked(self, git_repo: Path):
+    async def test_rollback_preserves_untracked(self, git_repo: Path):
 
         # Create checkpoint
         adapter = LocalGitAdapter()
@@ -329,16 +328,12 @@ class TestB5RollbackCleanup:
         (git_repo / "generated.ts").write_text("generated code")
         assert (git_repo / "generated.ts").exists()
 
-        # Rollback
-        await adapter.rollback_to(git_repo, ref, force=True)
-
-        # Untracked file should be cleaned
-        assert not (git_repo / "generated.ts").exists(), (
-            "rollback_to must clean untracked files with git clean"
-        )
+        with pytest.raises(ValueError, match="rollback_disabled"):
+            await adapter.rollback_to(git_repo, ref, force=True)
+        assert (git_repo / "generated.ts").read_text() == "generated code"
 
     @pytest.mark.asyncio
-    async def test_rollback_cleans_untracked_directories(self, git_repo: Path):
+    async def test_rollback_preserves_untracked_directories(self, git_repo: Path):
         adapter = LocalGitAdapter()
         ref = "refs/ddk/test/checkpoint"
         await adapter.create_checkpoint(git_repo, ref)
@@ -348,8 +343,9 @@ class TestB5RollbackCleanup:
         (git_repo / "src" / "component.tsx").write_text("export default () => <div/>;")
         assert (git_repo / "src" / "component.tsx").exists()
 
-        await adapter.rollback_to(git_repo, ref, force=True)
-        assert not (git_repo / "src").exists(), "rollback_to must clean untracked directories"
+        with pytest.raises(ValueError, match="rollback_disabled"):
+            await adapter.rollback_to(git_repo, ref, force=True)
+        assert (git_repo / "src/component.tsx").read_text() == "export default () => <div/>;"
 
 
 # ──────────────────────────────────────────────

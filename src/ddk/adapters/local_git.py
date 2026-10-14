@@ -8,15 +8,6 @@ from typing import Any, cast
 
 from git import Repo
 
-from ddk.exceptions import DirtyWorkingTreeError
-
-_WORKSPACE_DIR = ".ddk"
-
-
-def _outside_workspace(path: str) -> bool:
-    """Whether ``path`` lies outside the ``.ddk/`` workspace folder."""
-    return Path(path).parts[:1] != (_WORKSPACE_DIR,)
-
 
 class LocalGitAdapter:
     """Git adapter using GitPython for reads and subprocess for writes."""
@@ -76,34 +67,8 @@ class LocalGitAdapter:
         return head_sha
 
     async def rollback_to(self, repo_path: Path, ref_name: str, *, force: bool = False) -> None:
-        """Reset the repository to the given checkpoint ref.
-
-        Args:
-            repo_path: Absolute path to the repository root.
-            ref_name: Git ref (e.g. ``refs/ddk/fix/case-1/attempt-2``) to restore.
-            force: If ``True``, proceed even when the working tree is dirty,
-                   discarding any uncommitted changes.  Default is ``False``.
-
-        Raises:
-            ValueError: If ``ref_name`` does not exist in the repository.
-            DirtyWorkingTreeError: If the working tree has uncommitted changes
-                or untracked files (outside ``.ddk/``) and ``force`` is ``False``.
-        """
-        await self._run_git(repo_path, "rev-parse", "--verify", ref_name)
-        if not force:
-            tree = self.status(repo_path)
-            modified = [p for p in tree.get("modified", []) if _outside_workspace(p)]
-            staged = [p for p in tree.get("staged", []) if _outside_workspace(p)]
-            untracked = [p for p in tree.get("untracked", []) if _outside_workspace(p)]
-            if modified or staged or untracked:
-                raise DirtyWorkingTreeError(
-                    repo_path=repo_path,
-                    modified=modified,
-                    staged=staged,
-                    untracked=untracked,
-                )
-        await self._run_git(repo_path, "reset", "--hard", ref_name)
-        await self._run_git(repo_path, "clean", "-fd", "-e", _WORKSPACE_DIR)
+        """Preserve user files; recovery requires an owned file-application record."""
+        raise ValueError("rollback_disabled: export changes or recover an owned application")
 
     async def _run_git(self, repo_path: Path, *args: str) -> str:
         """Execute a git subprocess command and return stdout."""

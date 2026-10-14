@@ -108,7 +108,7 @@ def test_write_creates_directories_and_files(tmp_path: Path) -> None:
     assert (tmp_path / "src/ui/Card.tsx").read_text() == "card\n"
 
 
-def test_write_skips_unchanged_and_rejected_files(tmp_path: Path) -> None:
+def test_rejected_file_blocks_the_entire_batch(tmp_path: Path) -> None:
     (tmp_path / "a.ts").write_text("same\n")
     applier = ArtifactApplier()
     changes = applier.plan(
@@ -118,7 +118,9 @@ def test_write_skips_unchanged_and_rejected_files(tmp_path: Path) -> None:
 
     written = applier.write(changes, tmp_path)
 
-    assert [c.path for c in written] == ["b.ts"]
+    assert written == []
+    assert not (tmp_path / "b.ts").exists()
+    assert (tmp_path / "a.ts").read_text() == "same\n"
     assert not (tmp_path.parent / "evil.ts").exists()
 
 
@@ -133,17 +135,17 @@ def test_conflicts_are_not_overwritten_without_force(tmp_path: Path) -> None:
     assert (tmp_path / "a.ts").read_text() == "my edit\n"
 
 
-def test_forced_overwrite_keeps_the_replaced_version(tmp_path: Path) -> None:
+def test_forced_overwrite_is_rejected_without_changing_files(tmp_path: Path) -> None:
     (tmp_path / "a.ts").write_text("my edit\n")
     backup = tmp_path / "backup"
     applier = ArtifactApplier()
     changes = applier.plan(_set(_file("a.ts", "new\n", original="old\n")), tmp_path)
 
-    written = applier.write(changes, tmp_path, force=True, backup_dir=backup)
+    with pytest.raises(ValueError, match="force_disabled"):
+        applier.write(changes, tmp_path, force=True, backup_dir=backup)
 
-    assert [c.path for c in written] == ["a.ts"]
-    assert (tmp_path / "a.ts").read_text() == "new\n"
-    assert (backup / "a.ts").read_text() == "my edit\n"
+    assert (tmp_path / "a.ts").read_text() == "my edit\n"
+    assert not backup.exists()
 
 
 def test_update_also_keeps_the_replaced_version(tmp_path: Path) -> None:

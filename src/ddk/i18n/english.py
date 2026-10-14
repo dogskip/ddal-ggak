@@ -3,6 +3,25 @@
 from __future__ import annotations
 
 ENGLISH: dict[str, str] = {
+    "❌ 강제 반영은 제공하지 않습니다. 내보내기 후 충돌을 해결하세요.": (
+        "❌ Forced application is disabled. Export the changes and resolve the conflict."
+    ),
+    "❌ Git 전체 초기화 복구는 제공하지 않습니다. 관리된 반영 기록으로 복구하세요.": (
+        "❌ Whole-repository reset is disabled. Recover using an owned application record."
+    ),
+    "이전 복구 명령의 중단 사유와 안전한 대안을 표시합니다.": (
+        "Explain why legacy rollback is disabled and show the safe alternative."
+    ),
+    "   변경을 내보낸 뒤 현재 파일과 충돌을 해결하세요.": (
+        "   Export the changes and resolve conflicts with the current files."
+    ),
+    "   `ddk status`로 원인을 확인한 후 변경을 내보내세요.": (
+        "   Check the cause with `ddk status`, then export the changes."
+    ),
+    "호환 옵션: 사용하면 내보내기 안내와 함께 중단합니다": (
+        "Compatibility option: stop with export guidance"
+    ),
+    "파일 변경 없이 반영 계획을 표시합니다": ("Show the application plan without changing files"),
     # --- application and global options
     "딸깍 — 디자인 이미지에서 코드를 생성하고, 실제 브라우저로 화면을 비교하고, "
     "자동 수정과 증거 기반 판정을 거칩니다.": (
@@ -47,8 +66,9 @@ ENGLISH: dict[str, str] = {
     "대상 저장소 폴더": "Target repository folder",
     "명시적 case ID": "Case ID to use",
     "JSON으로 출력": "Print JSON",
-    "node_modules가 없으면 샌드박스에서 의존성 설치 (--ignore-scripts)": (
-        "Install dependencies in the sandbox when node_modules is missing (--ignore-scripts)"
+    "일시 사본에 의존성 설치 (--ignore-scripts); 원본 의존성은 복사하지 않습니다": (
+        "Install dependencies in the disposable copy (--ignore-scripts); "
+        "source dependencies are not copied"
     ),
     "렌더링 화면과 디자인 이미지 비교 (기본: 켜짐). --no-visual 은 비교를 면제합니다.": (
         "Compare the rendered page with the design image (default: on). "
@@ -77,18 +97,9 @@ ENGLISH: dict[str, str] = {
         "Write the generated files of a verified case into the repository."
     ),
     "적용할 case ID (기본: 가장 최근)": "Case ID to apply (default: latest)",
-    "파일을 쓰지 않고 계획만 보여줍니다": "Show the plan without writing any file",
-    "실행 뒤에 바뀐 파일도 덮어씁니다 (이전 내용은 case 폴더에 보관)": (
-        "Also overwrite files that changed after the run (the old content is kept in the "
-        "case folder)"
-    ),
-    "판정이 ready가 아니어도 적용합니다": "Apply even when the verdict is not ready",
     "❌ case 결과를 읽을 수 없습니다: {error}": "❌ Cannot read the case result: {error}",
     "❌ 판정이 ready가 아니라서 적용하지 않습니다 (현재: {decision}).": (
         "❌ Not applied: the verdict is not ready (now: {decision})."
-    ),
-    "   원인은 `ddk status`로 확인하세요. 그래도 적용하려면 --allow-blocked 를 붙입니다.": (
-        "   Run `ddk status` to see why. Add --allow-blocked to apply anyway."
     ),
     "[green]✅ {count}개 파일을 적용했습니다[/green]": "[green]✅ Applied {count} file(s)[/green]",
     "❌ 쓸 수 없는 경로가 있어 아무것도 적용하지 않았습니다.": (
@@ -96,9 +107,6 @@ ENGLISH: dict[str, str] = {
     ),
     "❌ 실행 뒤에 바뀐 파일이 있어 아무것도 적용하지 않았습니다.": (
         "❌ Nothing applied: some files changed after the run."
-    ),
-    "   덮어쓰려면 --force 를 붙입니다 (이전 내용은 case 폴더에 보관).": (
-        "   Add --force to overwrite them (the old content is kept in the case folder)."
     ),
     "새 파일": "new",
     "수정": "modified",
@@ -110,22 +118,8 @@ ENGLISH: dict[str, str] = {
     "작업": "Action",
     "비고": "Note",
     # --- rollback
-    "지정한 case/attempt의 git 점검점으로 되돌립니다.": (
-        "Restore the repository to the git checkpoint of a case attempt."
-    ),
     "복구할 fix attempt 번호": "Fix attempt to restore",
     "복구할 case ID": "Case ID to restore",
-    "미커밋 변경사항을 버리고 강제 롤백": "Discard uncommitted changes and roll back anyway",
-    "❌ rollback 실패: 미커밋 변경사항이 있습니다 — {error}": (
-        "❌ Rollback failed: there are uncommitted changes — {error}"
-    ),
-    "   --force 플래그를 사용하면 변경사항을 버리고 강제 롤백합니다.": (
-        "   Use --force to discard them and roll back anyway."
-    ),
-    "❌ rollback 실패: {error}": "❌ Rollback failed: {error}",
-    "[green]✅ rollback 완료[/green] {case_id} attempt-{attempt}": (
-        "[green]✅ Rollback complete[/green] {case_id} attempt-{attempt}"
-    ),
     # --- demo
     "API 키 없이 전체 절차를 체험합니다: 디자인 → 코드 → 화면 비교 → 자동 수정 → 판정.": (
         "Try the whole loop without an API key: design → code → screenshot comparison → "

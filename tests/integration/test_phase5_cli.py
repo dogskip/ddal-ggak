@@ -98,35 +98,19 @@ def test_cli_run_status_and_certify_roundtrip(tmp_path: Path) -> None:
     assert "evidence_pack" in certify_payload
 
 
-def test_cli_rollback_delegates_to_checkpoint_ref(tmp_path: Path) -> None:
-    class FakeGitAdapter:
-        def __init__(self) -> None:
-            self.calls: list[tuple[Path, str]] = []
-
-        async def rollback_to(self, repo_path: Path, ref_name: str, *, force: bool = False) -> None:
-            self.calls.append((repo_path, ref_name))
-
-    fake_git = FakeGitAdapter()
-    with patch("ddk.cli.delivery.LocalGitAdapter", new=lambda: fake_git):
-        result = runner.invoke(
-            app,
-            [
-                "rollback",
-                "--repo",
-                str(tmp_path),
-                "--case-id",
-                "C-123",
-                "--attempt",
-                "2",
-            ],
-        )
-
-    assert result.exit_code == 0, result.stdout
-    assert fake_git.calls == [(tmp_path.resolve(), "refs/ddk/fix/C-123/attempt-2")]
+def test_cli_rollback_rejects_unowned_recovery_without_touching_files(tmp_path: Path) -> None:
+    target = tmp_path / "user.txt"
+    target.write_bytes(b"user content")
+    result = runner.invoke(
+        app,
+        ["rollback", "--repo", str(tmp_path), "--case-id", "C-123", "--attempt", "2"],
+    )
+    assert result.exit_code == 2, result.output
+    assert "Git 전체 초기화" in result.output
+    assert target.read_bytes() == b"user content"
 
 
-def test_cli_rollback_restores_real_git_checkpoint(tmp_path: Path) -> None:
-    """CLI rollback should restore tracked files to the saved checkpoint ref."""
+def test_cli_rollback_preserves_real_git_state_even_with_force(tmp_path: Path) -> None:
     repo_path = tmp_path / "repo"
     _init_git_repo(repo_path)
     tracked_file = repo_path / "tracked.txt"
@@ -135,7 +119,10 @@ def test_cli_rollback_restores_real_git_checkpoint(tmp_path: Path) -> None:
     asyncio.run(controller.create_checkpoint(case_id="C-456", attempt_number=1))
 
     tracked_file.write_text("changed\n", encoding="utf-8")
-    assert tracked_file.read_text(encoding="utf-8") == "changed\n"
+    untracked = repo_path / "user.txt"
+    untracked.write_bytes(b"untracked content")
+    before_status = _run_git(repo_path, "status", "--porcelain")
+    before_head = _run_git(repo_path, "rev-parse", "HEAD")
 
     result = runner.invoke(
         app,
@@ -151,8 +138,11 @@ def test_cli_rollback_restores_real_git_checkpoint(tmp_path: Path) -> None:
         ],
     )
 
-    assert result.exit_code == 0, result.stdout
-    assert tracked_file.read_text(encoding="utf-8") == "original\n"
+    assert result.exit_code == 2, result.output
+    assert tracked_file.read_text(encoding="utf-8") == "changed\n"
+    assert untracked.read_bytes() == b"untracked content"
+    assert _run_git(repo_path, "status", "--porcelain") == before_status
+    assert _run_git(repo_path, "rev-parse", "HEAD") == before_head
     assert _run_git(repo_path, "rev-parse", "--verify", "refs/ddk/fix/C-456/attempt-1")
 
 

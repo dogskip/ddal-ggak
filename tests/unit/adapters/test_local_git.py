@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from ddk.adapters.local_git import LocalGitAdapter
-from ddk.exceptions import DirtyWorkingTreeError
 
 
 class TestLocalGitAdapter:
@@ -77,7 +76,7 @@ class TestLocalGitAdapter:
         adapter = LocalGitAdapter()
 
         with (
-            patch.object(adapter, "_run_git", new_callable=AsyncMock),
+            patch.object(adapter, "_run_git", new_callable=AsyncMock) as run_git,
             patch.object(
                 adapter,
                 "status",
@@ -87,6 +86,7 @@ class TestLocalGitAdapter:
                     "untracked": [],
                 },
             ),
-            pytest.raises(DirtyWorkingTreeError),
+            pytest.raises(ValueError, match="rollback_disabled"),
         ):
             await adapter.rollback_to(repo_path=Path("/tmp/repo"), ref_name="refs/ddk/test")
+        run_git.assert_not_awaited()

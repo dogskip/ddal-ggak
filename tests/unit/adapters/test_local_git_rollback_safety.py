@@ -48,29 +48,31 @@ class TestUntrackedFilesAreProtected:
         draft = git_repo / "my-draft.md"
         draft.write_text("작성 중인 문서")
 
-        with pytest.raises(DirtyWorkingTreeError) as exc_info:
+        with pytest.raises(ValueError, match="rollback_disabled"):
             await adapter.rollback_to(git_repo, _REF)
 
-        assert exc_info.value.untracked == ["my-draft.md"]
-        assert "my-draft.md" in str(exc_info.value)
         assert draft.read_text() == "작성 중인 문서"
 
-    async def test_force_still_removes_untracked_files(self, git_repo: Path) -> None:
+    async def test_force_preserves_untracked_files(self, git_repo: Path) -> None:
         adapter = await _checkpoint(git_repo)
         generated = git_repo / "generated.ts"
         generated.write_text("export {}")
 
-        await adapter.rollback_to(git_repo, _REF, force=True)
+        with pytest.raises(ValueError, match="rollback_disabled"):
+            await adapter.rollback_to(git_repo, _REF, force=True)
 
-        assert not generated.exists()
+        assert generated.read_text() == "export {}"
 
 
 class TestWorkspaceIsNeverDeleted:
-    async def test_ddk_workspace_alone_does_not_block_rollback(self, git_repo: Path) -> None:
+    async def test_ddk_workspace_is_preserved_when_rollback_is_refused(
+        self, git_repo: Path
+    ) -> None:
         adapter = await _checkpoint(git_repo)
         report = _seed_workspace(git_repo)
 
-        await adapter.rollback_to(git_repo, _REF)
+        with pytest.raises(ValueError, match="rollback_disabled"):
+            await adapter.rollback_to(git_repo, _REF)
 
         assert report.exists()
 
@@ -79,20 +81,22 @@ class TestWorkspaceIsNeverDeleted:
         report = _seed_workspace(git_repo)
         (git_repo / "generated.ts").write_text("export {}")
 
-        await adapter.rollback_to(git_repo, _REF, force=True)
+        with pytest.raises(ValueError, match="rollback_disabled"):
+            await adapter.rollback_to(git_repo, _REF, force=True)
 
         assert report.exists()
-        assert not (git_repo / "generated.ts").exists()
+        assert (git_repo / "generated.ts").read_text() == "export {}"
 
-    async def test_tracked_edit_is_reverted_on_force(self, git_repo: Path) -> None:
+    async def test_tracked_edit_is_preserved_even_with_force(self, git_repo: Path) -> None:
         adapter = await _checkpoint(git_repo)
         (git_repo / "file.txt").write_text("edited")
 
-        with pytest.raises(DirtyWorkingTreeError):
+        with pytest.raises(ValueError, match="rollback_disabled"):
             await adapter.rollback_to(git_repo, _REF)
-        await adapter.rollback_to(git_repo, _REF, force=True)
+        with pytest.raises(ValueError, match="rollback_disabled"):
+            await adapter.rollback_to(git_repo, _REF, force=True)
 
-        assert (git_repo / "file.txt").read_text() == "initial"
+        assert (git_repo / "file.txt").read_text() == "edited"
 
 
 class TestDirtyWorkingTreeErrorShape:

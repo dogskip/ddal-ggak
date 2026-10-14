@@ -25,6 +25,8 @@ jobs:
         run: uv run ruff check src/ tests/ scripts/
       - name: Ruff format check
         run: uv run ruff format --check src/ tests/ scripts/
+      - name: Strict mypy type check
+        run: uv run mypy src/ddk
       - name: Pyright type check
         run: uv run pyright src/
 

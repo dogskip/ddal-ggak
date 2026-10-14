@@ -223,3 +223,19 @@ async def test_failed_worker_start_stops_later_checks_even_if_container_policy_p
     assert len(isolation.requests) == 1
     assert outcome.environment_sha256 is None
     assert all(row["status"] == "unavailable" for row in outcome.results)
+
+
+def test_worker_bundle_imports_with_only_its_declared_modules(tmp_path):
+    import subprocess
+    import sys
+
+    from ddk.adapters.isolated_evaluator import write_worker_bundle
+
+    write_worker_bundle(tmp_path)
+    code = (
+        "import sys;sys.path.insert(0,"
+        + repr(str(tmp_path / "worker"))
+        + ");from ddk.adapters.verified_worker import main"
+    )
+    result = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, timeout=10)
+    assert result.returncode == 0, result.stderr

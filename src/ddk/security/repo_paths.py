@@ -9,7 +9,17 @@ from pathlib import Path
 
 from ddk.security.secret_paths import is_secret_path
 
-_NON_SOURCE_DIR_PARTS = frozenset({"node_modules", ".venv", "__pycache__"})
+_NON_SOURCE_DIR_PARTS = frozenset(
+    {
+        "node_modules",
+        ".venv",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".pyright",
+    }
+)
 _BUILD_OUTPUT_DIRS = frozenset({"dist", ".next", ".turbo", "coverage"})
 
 _WINDOWS_DRIVE = re.compile(r"^[A-Za-z]:")

@@ -184,6 +184,22 @@
           "minItems": 1,
           "maxItems": 1000,
           "description": "연결한 검사 ID"
+        },
+        "allow_delete": {
+          "type": "boolean",
+          "default": false
+        },
+        "allowed_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+            "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+          },
+          "minItems": 1,
+          "maxItems": 1000
         }
       },
       "required": [
@@ -267,6 +283,23 @@
           "minimum": 1,
           "maximum": 3600000,
           "description": "검사 최대 시간"
+        },
+        "allow_skipped": {
+          "type": "boolean",
+          "default": false
+        },
+        "report_adapter": {
+          "type": "string",
+          "enum": [
+            "ddk-json",
+            "pytest-json",
+            "junit-xml",
+            "vitest-json",
+            "jest-json",
+            "playwright-json",
+            "none"
+          ],
+          "default": "ddk-json"
         }
       },
       "required": [
@@ -450,6 +483,20 @@
         },
         "limits": {
           "$ref": "#/$defs/Limits"
+        },
+        "source_origin": {
+          "type": "string",
+          "enum": [
+            "directory",
+            "git_ref",
+            "git_worktree",
+            "design_pkg"
+          ]
+        },
+        "git_base_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
         }
       },
       "required": [
@@ -637,7 +684,8 @@
           "type": "string",
           "enum": [
             "create",
-            "update"
+            "update",
+            "delete"
           ],
           "description": "변경 종류"
         },
@@ -654,9 +702,16 @@
           ]
         },
         "after_sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$",
-          "description": "전체 SHA256"
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "전체 SHA256"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "before_mode": {
           "anyOf": [
@@ -672,16 +727,30 @@
           ]
         },
         "after_mode": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 511,
-          "description": "새 권한"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 511,
+              "description": "새 권한"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "after_artifact_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 128,
-          "description": "새 파일 자료 ID"
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "새 파일 자료 ID"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "requirement_ids": {
           "type": "array",
@@ -728,7 +797,8 @@
             "source",
             "patch",
             "price",
-            "data"
+            "data",
+            "ax_snapshot"
           ],
           "description": "자료 종류"
         },
@@ -1385,9 +1455,16 @@
           ]
         },
         "after_sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$",
-          "description": "전체 SHA256"
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "전체 SHA256"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "before_mode": {
           "anyOf": [
@@ -1403,10 +1480,17 @@
           ]
         },
         "after_mode": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 511,
-          "description": "새 권한"
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 511,
+              "description": "새 권한"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "backup_path": {
           "anyOf": [
@@ -1423,11 +1507,18 @@
           ]
         },
         "staged_path": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 1024,
-          "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
-          "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "pattern": "^(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\u0000).+$",
+              "description": "기준 디렉터리 안의 상대 경로; 실제 경계는 별도 검사"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "state": {
           "type": "string",
@@ -1551,6 +1642,19 @@
           "minItems": 0,
           "maxItems": 1000,
           "description": "복구와 충돌 조치"
+        },
+        "target_run_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "description": "UUID v4 식별자"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1633,7 +1737,10 @@
             "expect-text",
             "expect-count",
             "expect-url",
-            "snapshot"
+            "snapshot",
+            "expect-ax-tree",
+            "expect-ax-role",
+            "expect-no-console-error"
           ],
           "description": "허용된 화면 동작"
         },

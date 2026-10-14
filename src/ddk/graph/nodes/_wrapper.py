@@ -13,7 +13,9 @@ from collections.abc import Callable
 from typing import Any, Optional
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.config import CONFIG_KEY_RUNTIME  # pyright: ignore[reportPrivateImportUsage]
+from langgraph._internal._constants import (
+    CONFIG_KEY_RUNTIME,  # pyright: ignore[reportPrivateImportUsage]
+)
 
 _RUNTIME_CONFIG_KEYS = (
     CONFIG_KEY_RUNTIME,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -17,12 +18,12 @@ class LocalGitAdapter:
         repo = Repo(repo_path)
         modified = [
             str(item.a_path)
-            for item in cast(list[Any], list(repo.index.diff(None)))
+            for item in cast(Sequence[Any], list(repo.index.diff(None)))
             if getattr(item, "a_path", None) is not None
         ]
         staged = [
             str(item.a_path)
-            for item in cast(list[Any], list(repo.index.diff("HEAD")))
+            for item in cast(Sequence[Any], list(repo.index.diff("HEAD")))
             if getattr(item, "a_path", None) is not None
         ]
         untracked = list(repo.untracked_files)
@@ -35,14 +36,14 @@ class LocalGitAdapter:
     def diff(self, repo_path: Path, ref: str | None = None) -> str:
         """Return a diff string for the repository."""
         repo = Repo(repo_path)
-        return repo.git.diff(ref) if ref is not None else repo.git.diff()
+        return cast(str, repo.git.diff(ref) if ref is not None else repo.git.diff())
 
     def log(self, repo_path: Path, max_count: int = 10) -> list[dict[str, str]]:
         """Return recent commits as structured dictionaries."""
         repo = Repo(repo_path)
         return [
             {"hexsha": commit.hexsha, "message": commit.message.strip()}
-            for commit in cast(list[Any], list(repo.iter_commits(max_count=max_count)))
+            for commit in cast(Sequence[Any], list(repo.iter_commits(max_count=max_count)))
         ]
 
     async def create_worktree(self, repo_path: Path, worktree_path: Path, branch: str) -> None:

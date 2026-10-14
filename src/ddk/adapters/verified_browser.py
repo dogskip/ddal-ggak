@@ -44,6 +44,7 @@ from ddk.models.verified_change import (
     relative_url,
     validate_record,
 )
+from ddk.security.redact import redact_string
 
 _MAX_IMAGE_PIXELS = 16_777_216
 _MAX_OBSERVATION_BYTES = 10 * 1024 * 1024
@@ -367,7 +368,15 @@ async def _step(
         await page.goto(_approved_url(step["value"], origin), wait_until="load", timeout=timeout)
     elif action == "expect-url":
         await expect(page).to_have_url(_approved_url(step["value"], origin), timeout=timeout)
+    elif action == "expect-ax-tree":
+        await expect(selected or page.locator("body")).to_match_aria_snapshot(
+            step["value"], timeout=timeout
+        )
+    elif action == "expect-no-console-error":
+        if any(item["code"] in {"console_error", "page_error"} for item in observation.errors):
+            raise AssertionError("console_error")
     elif action == "snapshot":
+        await _ax(page, publish, step["step_id"])
         reference = references[step["reference_path"]]
         image = await (selected or page).screenshot(
             animations="disabled", caret="hide", timeout=timeout
@@ -397,7 +406,7 @@ async def _step(
             await selected.fill(step["value"], timeout=timeout)
         elif action == "press":
             await selected.press(step["value"], timeout=timeout)
-        elif action == "expect-visible":
+        elif action in {"expect-visible", "expect-ax-role"}:
             await expect(selected).to_be_visible(timeout=timeout)
         elif action == "expect-text":
             await expect(selected).to_have_text(step["value"], timeout=timeout, use_inner_text=True)
@@ -412,6 +421,26 @@ async def _step(
     observation.steps.append(step["step_id"])
 
 
+async def _ax(page: Page, publish: Any, step_id: str = "final") -> None:
+    snapshot = await page.locator("body").aria_snapshot(timeout=500)
+    styles = await page.locator("body").evaluate(
+        "element => Array.from(element.querySelectorAll('*')).slice(0,100).map(e => {"
+        "const s=getComputedStyle(e),r=e.getBoundingClientRect();return {tag:e.tagName,"
+        "display:s.display,color:s.color,fontSize:s.fontSize,width:r.width,height:r.height}})"
+    )
+    publish(
+        "ax_snapshot",
+        canonical_json(
+            {
+                "format": "playwright-aria/1",
+                "step_id": step_id,
+                "snapshot": redact_string(snapshot),
+                "styles": styles,
+            }
+        ),
+    )
+
+
 def _publish(
     output_dir: Path, artifacts: list[Record], kind: str, payload: bytes, limit: int
 ) -> None:
@@ -421,7 +450,9 @@ def _publish(
         raise ValueError("unsafe_output_directory")
     output_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     artifact_id = uuid.uuid4().hex
-    name = artifact_id + (".json" if kind == "data" else ".png")
+    name = artifact_id + (
+        ".ax.json" if kind == "ax_snapshot" else ".json" if kind == "data" else ".png"
+    )
     directory = os.open(output_dir, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         descriptor = os.open(
@@ -500,6 +531,7 @@ async def run_flow(
     observation = _Observation()
     artifacts: list[Record] = []
     resources: list[Any] = []
+    pages: list[Page] = []
     status = "unavailable"
     reason: str | None = None
     cancelled: asyncio.CancelledError | None = None
@@ -533,6 +565,7 @@ async def run_flow(
                 headless=True,
                 chromium_sandbox=True,
                 executable_path=binary,
+                args=["--hide-scrollbars", "--mute-audio", "--force-color-profile=srgb"],
                 timeout=max(1, (deadline - time.monotonic_ns()) / 1_000_000),
             )
             resources.append(browser)
@@ -550,6 +583,7 @@ async def run_flow(
             )
             resources.append(context)
             page = await context.new_page()
+            pages.append(page)
             page.on("console", observation.console)
             page.on("pageerror", lambda error: observation.record("page_error", str(error)))
             page.on("request", lambda request: observation.pending.add(request))
@@ -588,7 +622,7 @@ async def run_flow(
                 await observation.changed.wait()
             if not artifacts:
                 publish("screenshot", await page.screenshot(animations="disabled", caret="hide"))
-            status = (
+            status: Literal["passed", "failed", "unavailable"] = (
                 "unavailable"
                 if any(item["code"] == "redirect_unavailable" for item in observation.errors)
                 else "failed"
@@ -618,6 +652,12 @@ async def run_flow(
             reason = reason[:128] or "browser_unavailable"
         observation.record(reason or "browser_unavailable", f"{type(error).__name__}: {error}")
     finally:
+        if pages and not pages[-1].is_closed():
+            try:
+                async with asyncio.timeout(min(1, settings.cleanup_timeout_ms / 1000)):
+                    await _ax(pages[-1], publish)
+            except Exception:
+                status, reason = "unavailable", "ax_snapshot_unavailable"
         observation.closing = True
         cleanup_complete, interrupted = await _cleanup(
             resources, min(10_000, max(1, settings.cleanup_timeout_ms))
@@ -665,3 +705,8 @@ async def run_flow(
     }
     validate_fragment(result, "CheckResult")
     return BrowserRun(result, artifacts, cleanup_complete)
+
+
+BrowserObservation = _Observation
+gate_request = _gate
+block_socket = _block_socket

@@ -46,6 +46,9 @@ ALLOWED_COMMANDS: frozenset[str] = frozenset(
         "tsc",
         "vite",
         "git",
+        "python",
+        "python3",
+        "pytest",
     }
 )
 

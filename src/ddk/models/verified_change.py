@@ -64,6 +64,66 @@ def record_digest(record: object) -> str:
     return hashlib.sha256(canonical_json(record)).hexdigest()
 
 
+def object_record(value: object) -> Record:
+    """Validate a JSON object at an untrusted nested boundary."""
+    _inspect(value)
+    if not isinstance(value, dict):
+        raise ContractError("record_object_required")
+    return cast(Record, value)
+
+
+def object_records(value: object) -> list[Record]:
+    if not isinstance(value, list):
+        raise ContractError("record_array_required")
+    return [object_record(item) for item in cast(list[object], value)]
+
+
+def string_values(value: object) -> list[str]:
+    if not isinstance(value, list):
+        raise ContractError("string_array_required")
+    items = cast(list[object], value)
+    if any(not isinstance(item, str) for item in items):
+        raise ContractError("string_array_required")
+    return cast(list[str], items)
+
+
+def application_changes(case: Record, run: Record, target: Record | None = None) -> list[Record]:
+    """Derive the complete target-to-final plan from sealed baseline and run records."""
+    baseline = {
+        i["path"]: (i["sha256"], i["mode"]) for i in case["inputs"] if i["role"] == "source"
+    }
+    final = {c["path"]: (c["after_sha256"], c["after_mode"]) for c in run["changes"]}
+    previous = (
+        {c["path"]: (c["after_sha256"], c["after_mode"]) for c in target["changes"]}
+        if target
+        else {}
+    )
+    answer: list[Record] = []
+    for path in sorted(set(final) | set(previous)):
+        before_hash, before_mode = previous.get(path, baseline.get(path, (None, None)))
+        after_hash, after_mode = final.get(path, baseline.get(path, (None, None)))
+        action = (
+            "unchanged"
+            if (before_hash, before_mode) == (after_hash, after_mode)
+            else "delete"
+            if after_hash is None
+            else "create"
+            if before_hash is None
+            else "update"
+        )
+        answer.append(
+            {
+                "path": path,
+                "action": action,
+                "before_sha256": before_hash,
+                "before_mode": before_mode,
+                "after_sha256": after_hash,
+                "after_mode": after_mode,
+            }
+        )
+    return answer
+
+
 def _pairs(items: list[tuple[str, Any]]) -> Record:
     result: Record = {}
     for key, value in items:
@@ -227,6 +287,11 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
         )
         require(all(safe_path(path) for path in inputs), "unsafe_input")
         for requirement in record["requirements"]:
+            require(
+                set(requirement.get("allowed_paths", record["scope_paths"]))
+                <= set(record["scope_paths"]),
+                "requirement_scope_mismatch",
+            )
             unique(requirement["check_ids"], "duplicate_requirement_link")
             for check_id in requirement["check_ids"]:
                 require(check_id in checks, "orphan_check")
@@ -287,14 +352,15 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                 "orphan_change_requirement",
             )
             exists = change["before_sha256"] is not None and change["before_mode"] is not None
+            deleting = change["action"] == "delete"
             require(
                 exists
-                if change["action"] == "update"
+                if change["action"] in {"update", "delete"}
                 else change["before_sha256"] is None and change["before_mode"] is None,
                 "change_before_state",
             )
             baseline = baseline_inputs.get(change["path"])
-            if change["action"] == "update":
+            if change["action"] in {"update", "delete"}:
                 require(
                     baseline is not None
                     and baseline["sha256"] == change["before_sha256"]
@@ -303,15 +369,35 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                 )
             else:
                 require(baseline is None, "create_existing_baseline")
-            if exists:
-                require(change["after_mode"] == change["before_mode"], "mode_changed")
-            else:
-                require(change["after_mode"] == 420, "new_file_mode")
-            artifact = artifacts.get(change["after_artifact_id"])
+            linked = [
+                r for r in case["requirements"] if r["requirement_id"] in change["requirement_ids"]
+            ]
             require(
-                artifact is not None and artifact["sha256"] == change["after_sha256"],
-                "after_artifact_mismatch",
+                all(change["path"] in r.get("allowed_paths", case["scope_paths"]) for r in linked),
+                "outside_requirement_scope",
             )
+            if deleting:
+                require(
+                    bool(linked) and all(r.get("allow_delete", False) for r in linked),
+                    "delete_not_approved",
+                )
+                require(
+                    all(
+                        change[k] is None
+                        for k in ("after_sha256", "after_mode", "after_artifact_id")
+                    ),
+                    "delete_after_state",
+                )
+            else:
+                require(
+                    change["after_mode"] == (change["before_mode"] if exists else 420),
+                    "mode_changed" if exists else "new_file_mode",
+                )
+                artifact = artifacts.get(change["after_artifact_id"])
+                require(
+                    artifact is not None and artifact["sha256"] == change["after_sha256"],
+                    "after_artifact_mismatch",
+                )
         if record["operation"] == "verify":
             require(all(item["round_no"] == 0 for item in record["rounds"]), "verify_round")
             require(not record["model_calls"], "verify_called_model")
@@ -415,7 +501,7 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                     require(
                         (candidate["executed_count"] or 0) > 0
                         and candidate["failed_count"] == 0
-                        and candidate["skipped_count"] == 0,
+                        and (candidate["skipped_count"] == 0 or check.get("allow_skipped", False)),
                         "zero_or_incomplete_test",
                     )
                 if check["role"] == "preserve":
@@ -434,7 +520,9 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                         require(
                             (baseline["executed_count"] or 0) > 0
                             and baseline["failed_count"] == 0
-                            and baseline["skipped_count"] == 0,
+                            and (
+                                baseline["skipped_count"] == 0 or check.get("allow_skipped", False)
+                            ),
                             "baseline_test_not_executed",
                         )
             require(
@@ -465,7 +553,20 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
             require(record["case_id"] == run["case_id"], "apply_case_mismatch")
             require(record["run_sha256"] == record_digest(run), "apply_run_hash")
             require(record["changes_sha256"] == record_digest(run["changes"]), "apply_changes_hash")
-            changes = {c["path"]: c for c in run["changes"]}
+            target_id = record.get("target_run_id")
+            target = runs.get(target_id) if target_id is not None else None
+            if target_id is not None:
+                require(
+                    target_id in {run["run_id"], run["source_run_id"]}
+                    and target is not None
+                    and target["case_id"] == run["case_id"],
+                    "application_source_not_bound",
+                )
+            case = cases.get(run["case_id"])
+            require(case is not None, "orphan_apply_case")
+            if case is None:
+                return errors
+            changes = {c["path"]: c for c in application_changes(case, run, target)}
             require(
                 set(changes) == {e["path"] for e in record["entries"]}, "apply_entries_mismatch"
             )
@@ -475,11 +576,18 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                     require(
                         all(
                             entry[k] == change[k]
-                            for k in ["before_sha256", "after_sha256", "before_mode", "after_mode"]
+                            for k in ("before_sha256", "before_mode", "after_sha256", "after_mode")
                         ),
                         "apply_entry_state",
                     )
-                require(safe_path(entry["staged_path"]), "unsafe_staged_path")
+                require(
+                    (
+                        entry["staged_path"] is None
+                        if change and change["after_sha256"] is None
+                        else entry["staged_path"] is not None and safe_path(entry["staged_path"])
+                    ),
+                    "unsafe_staged_path",
+                )
                 if entry["before_sha256"] is not None:
                     require(
                         entry["backup_path"] is not None and safe_path(entry["backup_path"]),
@@ -517,6 +625,12 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                     step["rgb_tolerance"] is not None and step["max_mismatch_ppm"] is not None,
                     "snapshot_threshold_missing",
                 )
+            elif action == "expect-ax-tree":
+                require(
+                    isinstance(step["value"], str) and bool(step["value"]), "step_value_missing"
+                )
+            elif action == "expect-no-console-error":
+                require(step["selector"] is None, "unused_selector")
             else:
                 require(step["selector"] is not None, "selector_missing")
                 if action in {"fill", "press", "expect-text"}:
@@ -525,7 +639,14 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
                     require(bool(step["value"]), "empty_press")
                 if action == "expect-count":
                     require(step["count"] is not None, "step_count_missing")
-            if action not in {"goto", "expect-url", "fill", "press", "expect-text"}:
+            if action not in {
+                "goto",
+                "expect-url",
+                "fill",
+                "press",
+                "expect-text",
+                "expect-ax-tree",
+            }:
                 require(step["value"] is None, "unused_step_value")
             if action != "expect-count":
                 require(step["count"] is None, "unused_step_count")

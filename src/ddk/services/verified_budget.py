@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import copy
 import hashlib
+import re
 import stat
 import time
 import uuid
@@ -104,8 +105,12 @@ def _verify_price(price: VerifiedPrice, evaluator_sha256: str) -> None:
         url = urlsplit(price.source_url)
         verified = datetime.fromisoformat(price.verified_at.replace("Z", "+00:00"))
         valid = (
-            price.provider == "anthropic"
-            and price.model in known_model_names()
+            (
+                price.provider == "anthropic"
+                and price.model in known_model_names()
+                or price.provider in {"openai-compatible", "claude-cli", "codex-cli"}
+                and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_./:-]{0,127}", price.model) is not None
+            )
             and all(
                 _integer(value)
                 for value in (

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ddk.adapters.llm.base import LLMAdapter, LLMCallConfig, Message
 from ddk.models.config import DEFAULT_LIGHT_MODEL
@@ -70,7 +70,7 @@ class RepoConventionScanner:
         if not path.exists():
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
         except (json.JSONDecodeError, OSError):
             return {}
 
@@ -78,7 +78,7 @@ class RepoConventionScanner:
         if not path.exists():
             return {}
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
         except (json.JSONDecodeError, OSError):
             return {}
 
@@ -87,7 +87,7 @@ class RepoConventionScanner:
             p = repo_path / name
             if p.exists():
                 try:
-                    return json.loads(p.read_text(encoding="utf-8"))
+                    return cast(dict[str, Any], json.loads(p.read_text(encoding="utf-8")))
                 except (json.JSONDecodeError, OSError):
                     pass
         return {}

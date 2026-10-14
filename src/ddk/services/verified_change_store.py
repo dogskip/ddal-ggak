@@ -13,6 +13,7 @@ from ddk.models.verified_change import (
     MAX_RECORD_BYTES,
     ContractError,
     Record,
+    application_changes,
     canonical_json,
     decode_json,
     safe_path,
@@ -22,6 +23,7 @@ from ddk.models.verified_change import (
 from ddk.security.file_access import parent_descriptor
 from ddk.security.repo_paths import ensure_distinct_paths
 from ddk.services.durable_files import atomic_write, ensure_directory, read_regular
+from ddk.services.source_snapshot import SnapshotFile
 
 _ID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
 _DIRECTORIES = {"case": "cases", "run": "runs", "apply": "applies"}
@@ -130,7 +132,7 @@ class VerifiedChangeStore:
             raise ContractError("run_record_required")
         cases, runs = self._contexts(record, visited)
         validate_record(record, cases, runs)
-        return cases[record["case_id"]]
+        return dict(cases[record["case_id"]])
 
     def _run(self, run_id: str, visited: frozenset[str] = frozenset()) -> Record:
         record, _ = self._metadata(self.path_for("run", run_id) / "run.json")
@@ -188,6 +190,9 @@ class VerifiedChangeStore:
             directory / "inputs", record["inputs"], inputs, record["limits"]["max_file_bytes"]
         )
         atomic_write(directory / "case.json", canonical_json(record), exclusive=True)
+        from ddk.services.verified_index import sync_index
+
+        sync_index(self, "upsert_case", record)
         return self.case(case_id)
 
     @staticmethod
@@ -216,6 +221,9 @@ class VerifiedChangeStore:
             os.fsync(parent_fd)
         ensure_directory(directory / ".pending")
         atomic_write(directory / ".pending/run.json", canonical_json(record), exclusive=True)
+        from ddk.services.verified_index import sync_index
+
+        sync_index(self, "upsert_run", record)
         return self.pending_run(record["run_id"]), True
 
     @staticmethod
@@ -272,6 +280,9 @@ class VerifiedChangeStore:
         atomic_write(
             self.path_for("run", record["run_id"]) / ".pending/run.json", canonical_json(record)
         )
+        from ddk.services.verified_index import sync_index
+
+        sync_index(self, "upsert_run", record)
 
     def stage_artifacts(self, record: Record, payloads: Mapping[str, bytes]) -> None:
         case = self._validate_run(record)
@@ -318,6 +329,9 @@ class VerifiedChangeStore:
         )
         self._verify_artifacts(record, case)
         atomic_write(directory / "run.json", canonical_json(record), exclusive=True)
+        from ddk.services.verified_index import sync_index
+
+        sync_index(self, "upsert_run", record)
         return self.run(record["run_id"])
 
     @staticmethod
@@ -374,41 +388,93 @@ class VerifiedChangeStore:
                     raise ContractError("immutable_stored_file")
         cls._verify_files(directory, items, max_bytes)
 
+    def application_sources(
+        self, run: Record, target_run_id: str | None = None, *, final: bool = False
+    ) -> dict[str, SnapshotFile | None]:
+        case = self.case(run["case_id"])
+        if target_run_id is not None and target_run_id not in {run["run_id"], run["source_run_id"]}:
+            raise ContractError("application_source_not_bound")
+        target = self.run(target_run_id) if target_run_id is not None else None
+        if target is not None and target["case_id"] != run["case_id"]:
+            raise ContractError("application_source_case_mismatch")
+        plan = application_changes(case, run, target)
+        if final:
+            target = run
+        baseline = {i["path"]: i for i in case["inputs"] if i["role"] == "source"}
+        changes = {c["path"]: c for c in target["changes"]} if target is not None else {}
+        artifacts = {a["artifact_id"]: a for a in target["artifacts"]} if target is not None else {}
+        answer: dict[str, SnapshotFile | None] = {}
+        for change in plan:
+            path = change["path"]
+            if path in changes:
+                row = changes[path]
+                if row["after_sha256"] is None:
+                    answer[path] = None
+                    continue
+                artifact = artifacts[row["after_artifact_id"]]
+                assert target is not None
+                content = read_regular(
+                    self.path_for("run", target["run_id"]) / artifact["path"],
+                    artifact["size_bytes"],
+                )
+                answer[path] = SnapshotFile(
+                    path, content, row["after_sha256"], row["after_mode"], len(content)
+                )
+            elif path in baseline:
+                row = baseline[path]
+                content = read_regular(
+                    self.path_for("case", case["case_id"]) / "inputs" / path, row["size_bytes"]
+                )
+                answer[path] = SnapshotFile(path, content, row["sha256"], row["mode"], len(content))
+            else:
+                answer[path] = None
+        return answer
+
     def _validate_apply(self, record: Record) -> None:
         validate_structure(record)
         if record["record_type"] != "apply":
             raise ContractError("apply_record_required")
         run = self.run(record["run_id"])
         case = self.case(record["case_id"])
-        validate_record(record, {case["case_id"]: case}, {run["run_id"]: run})
+        contexts = {run["run_id"]: run}
+        if record.get("target_run_id") is not None:
+            contexts[record["target_run_id"]] = self.run(record["target_run_id"])
+        validate_record(record, {case["case_id"]: case}, contexts)
         directory = self.path_for("apply", record["apply_id"])
-        sources = {item["path"]: item for item in case["inputs"]}
-        artifacts = {item["artifact_id"]: item for item in run["artifacts"]}
-        changes = {item["path"]: item for item in run["changes"]}
+        sources = self.application_sources(run, record.get("target_run_id"))
+        finals = self.application_sources(run, record.get("target_run_id"), final=True)
         saved: list[Record] = []
         for entry in record["entries"]:
-            change = changes[entry["path"]]
-            staged = artifacts[change["after_artifact_id"]]
-            if not entry["staged_path"].startswith("staged/"):
-                raise ContractError("staged_namespace_required")
-            saved.append(
-                {
-                    "path": entry["staged_path"],
-                    "sha256": entry["after_sha256"],
-                    "size_bytes": staged["size_bytes"],
-                }
-            )
+            if entry["after_sha256"] is None:
+                if entry["staged_path"] is not None:
+                    raise ContractError("delete_staged_not_null")
+            else:
+                staged = finals[entry["path"]]
+                if staged is None:
+                    raise ContractError("staged_source_missing")
+                if not entry["staged_path"].startswith("staged/"):
+                    raise ContractError("staged_namespace_required")
+                saved.append(
+                    {
+                        "path": entry["staged_path"],
+                        "sha256": entry["after_sha256"],
+                        "size_bytes": staged.size_bytes,
+                    }
+                )
             if entry["before_sha256"] is None:
                 if entry["backup_path"] is not None:
                     raise ContractError("unexpected_create_backup")
             else:
                 if not entry["backup_path"].startswith("before/"):
                     raise ContractError("backup_namespace_required")
+                source = sources[entry["path"]]
+                if source is None:
+                    raise ContractError("backup_source_missing")
                 saved.append(
                     {
                         "path": entry["backup_path"],
                         "sha256": entry["before_sha256"],
-                        "size_bytes": sources[entry["path"]]["size_bytes"],
+                        "size_bytes": source.size_bytes,
                     }
                 )
         ensure_distinct_paths([item["path"] for item in saved])
@@ -423,7 +489,9 @@ class VerifiedChangeStore:
             else None
         )
         if existing is not None:
-            if any(existing[key] != record[key] for key in _APPLY_KEYS):
+            if any(existing[key] != record[key] for key in _APPLY_KEYS) or existing.get(
+                "target_run_id"
+            ) != record.get("target_run_id"):
                 raise ContractError("request_conflict")
             old_entries = {
                 entry["path"]: {k: v for k, v in entry.items() if k != "state"}
@@ -433,6 +501,8 @@ class VerifiedChangeStore:
                 entry["path"]: {k: v for k, v in entry.items() if k != "state"}
                 for entry in record["entries"]
             }
+            if existing.get("target_run_id") != record.get("target_run_id"):
+                raise ContractError("request_conflict")
             if old_entries != new_entries:
                 raise ContractError("request_conflict")
             if not _APPLY_TRANSITIONS[existing["state"]]:
@@ -448,6 +518,9 @@ class VerifiedChangeStore:
             raise ContractError("apply_transition")
         ensure_directory(directory)
         atomic_write(directory / "apply.json", canonical_json(record), exclusive=existing is None)
+        from ddk.services.verified_index import sync_index
+
+        sync_index(self, "upsert_transaction", record)
         return self.load_apply(record["apply_id"])
 
     def load_apply(self, apply_id: str) -> Record:

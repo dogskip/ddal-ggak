@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Literal
 
 from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
-from ddk.models.verified_change import Record, parse_record, record_digest
+from ddk.models.verified_change import Record, application_changes, parse_record, record_digest
 from ddk.security.file_access import file_identity, parent_descriptor, read_regular
 from ddk.security.repo_paths import (
     ensure_distinct_paths,
@@ -27,7 +27,7 @@ from ddk.security.repo_paths import (
 from ddk.services.durable_files import OwnedLock, atomic_write, ensure_directory, sync_directory
 from ddk.services.verified_change_store import VerifiedChangeStore
 
-Action = Literal["create", "update", "unchanged", "conflict", "rejected"]
+Action = Literal["create", "update", "delete", "unchanged", "conflict", "rejected"]
 
 
 @dataclass(frozen=True)
@@ -170,6 +170,7 @@ class ArtifactApplier:
         quiescence_confirmed: bool = False,
         local_storage_confirmed: bool = False,
         required_assurance: str = "isolated",
+        target_run_id: str | None = None,
     ) -> Record:
         """Apply an explicit ready run with durable ownership and exact-state recovery."""
         if not quiescence_confirmed or not local_storage_confirmed:
@@ -194,29 +195,32 @@ class ArtifactApplier:
                 "run_id": run_id,
                 "run_sha256": run_sha256,
                 "changes_sha256": changes_sha256,
+                "target_run_id": target_run_id,
             }
-            if any(previous_application[key] != value for key, value in expected.items()):
+            if any(previous_application.get(key) != value for key, value in expected.items()):
                 raise ValueError("application_request_conflict")
             previous_journal = _ApplyJournal(store, previous_application)
             previous_journal.reload()
             return previous_journal.record
-        if not run["changes"]:
+        target_run = store.run(target_run_id) if target_run_id is not None else None
+        definitions = application_changes(store.case(case_id), run, target_run)
+        if not definitions:
             raise ValueError("no_changes_to_apply")
         changes: list[FileChange] = []
         states: dict[str, _FileState | None] = {}
-        artifacts = {item["artifact_id"]: item for item in run["artifacts"]}
-        for change in run["changes"]:
-            source = artifacts[change["after_artifact_id"]]
-            content = read_regular(
-                store.path_for("run", run_id) / source["path"], source["size_bytes"]
-            )
+        source_states = store.application_sources(run, target_run_id)
+        final_states = store.application_sources(run, target_run_id, final=True)
+        for definition in definitions:
+            source_state = source_states[definition["path"]]
+            final_state = final_states[definition["path"]]
+            content = final_state.content if final_state is not None else b""
             changes.append(
                 FileChange(
-                    path=change["path"],
-                    action=change["action"],
+                    path=definition["path"],
+                    action=definition["action"],
                     content=content.decode("utf-8"),
-                    before_sha256=change["before_sha256"],
-                    before_mode=change["before_mode"],
+                    before_sha256=source_state.sha256 if source_state is not None else None,
+                    before_mode=source_state.mode if source_state is not None else None,
                 )
             )
         lock = OwnedLock(store.base_path / "locks/apply.lock", run_id).acquire()
@@ -233,10 +237,10 @@ class ArtifactApplier:
                 states[change.path] = state
             ensure_directory(directory)
             entries: list[Record] = []
-            for change, definition in zip(changes, run["changes"], strict=True):
+            for change, definition in zip(changes, definitions, strict=True):
                 before = states[change.path]
                 backup = f"before/{change.path}" if before is not None else None
-                staged = f"staged/{change.path}"
+                staged = f"staged/{change.path}" if definition["after_sha256"] is not None else None
                 for relative, payload in (
                     (backup, before.content if before is not None else b""),
                     (staged, change.content.encode("utf-8")),
@@ -274,6 +278,8 @@ class ArtifactApplier:
                 "postcheck_at": None,
                 "actions": [],
             }
+            if target_run_id is not None:
+                record["target_run_id"] = target_run_id
             preparation_attempted = True
             journal = _ApplyJournal(store, store.publish_apply(record), confirmed=True)
             journal.transition("applying")
@@ -365,7 +371,11 @@ class ArtifactApplier:
             changes: list[FileChange] = []
             previous: dict[str, _FileState | None] = {}
             for entry in journal.record["entries"]:
-                after = read_regular(directory / entry["staged_path"], limit)
+                after = (
+                    read_regular(directory / entry["staged_path"], limit)
+                    if entry["staged_path"] is not None
+                    else b""
+                )
                 before = (
                     read_regular(directory / entry["backup_path"], limit)
                     if entry["backup_path"] is not None
@@ -377,7 +387,11 @@ class ArtifactApplier:
                 changes.append(
                     FileChange(
                         path=entry["path"],
-                        action="update" if before is not None else "create",
+                        action="delete"
+                        if entry["after_sha256"] is None
+                        else "update"
+                        if before is not None
+                        else "create",
                         content=after.decode("utf-8"),
                         before_sha256=entry["before_sha256"],
                         before_mode=entry["before_mode"],
@@ -450,8 +464,16 @@ class ArtifactApplier:
             journal.transition("rolling_back")
             for change in changes:
                 current = _state(resolve_change_path(store.repository, change.path))
-                after_hash = hashlib.sha256(change.content.encode("utf-8")).hexdigest()
-                mode = change.before_mode if change.before_mode is not None else 0o644
+                after_hash = (
+                    hashlib.sha256(change.content.encode("utf-8")).hexdigest()
+                    if change.action != "delete"
+                    else None
+                )
+                mode = (
+                    (change.before_mode if change.before_mode is not None else 0o644)
+                    if change.action != "delete"
+                    else None
+                )
                 if current != previous[change.path] and not _matches(current, after_hash, mode):
                     raise ValueError(f"recovery_unknown: {change.path}")
             self._restore(changes, previous, store.repository, journal)
@@ -515,10 +537,10 @@ class ArtifactApplier:
             state = _state(target)
             if not _matches(state, change.before_sha256, change.before_mode):
                 raise ValueError(f"apply_conflict: {change.path}")
-            if change.action == "update" and state is None:
+            if change.action in {"update", "delete"} and state is None:
                 raise ValueError(f"apply_conflict: {change.path}")
             previous[change.path] = state
-        selected = [change for change in changes if change.action in {"create", "update"}]
+        selected = [change for change in changes if change.action in {"create", "update", "delete"}]
         if backup_dir is not None:
             if backup_dir.is_symlink():
                 raise ValueError("unsafe_backup_directory")
@@ -540,25 +562,45 @@ class ArtifactApplier:
                 ensure_directory(target.parent, mode=0o755)
                 target = resolve_change_path(repo_root, change.path)
                 attempted.append(change)
-                atomic_write(
-                    target,
-                    change.content.encode("utf-8"),
-                    mode=change.before_mode if change.before_mode is not None else 0o644,
-                    exclusive=change.action == "create",
-                    expected_identity=state.identity if state is not None else None,
-                )
+                if change.action == "delete":
+                    with parent_descriptor(target) as (fd, name):
+                        if (
+                            state is None
+                            or file_identity(os.stat(name, dir_fd=fd, follow_symlinks=False))
+                            != state.identity
+                        ):
+                            raise ValueError("apply_conflict")
+                        os.unlink(name, dir_fd=fd)
+                        os.fsync(fd)
+                else:
+                    atomic_write(
+                        target,
+                        change.content.encode("utf-8"),
+                        mode=change.before_mode if change.before_mode is not None else 0o644,
+                        exclusive=change.action == "create",
+                        expected_identity=state.identity if state is not None else None,
+                    )
                 if _journal is not None:
                     _journal.entry(change.path, "written")
             for change in changes:
                 current = _state(resolve_change_path(repo_root, change.path))
                 expected = (
                     hashlib.sha256(change.content.encode("utf-8")).hexdigest()
-                    if change.action != "unchanged"
+                    if change.action not in {"unchanged", "delete"}
+                    else None
+                    if change.action == "delete"
                     else change.before_sha256
                 )
-                mode = change.before_mode if change.before_mode is not None else 0o644
+                mode = (
+                    (change.before_mode if change.before_mode is not None else 0o644)
+                    if change.action != "delete"
+                    and not (change.action == "unchanged" and change.before_sha256 is None)
+                    else None
+                )
                 if not _matches(current, expected, mode):
                     raise ValueError(f"apply_postcheck_failed: {change.path}")
+                if _journal is not None and change.action == "unchanged":
+                    _journal.entry(change.path, "written")
         except BaseException:
             if _journal is not None:
                 _journal.transition("rolling_back")
@@ -583,11 +625,21 @@ class ArtifactApplier:
                     if journal is not None:
                         journal.entry(change.path, "restored")
                     continue
-                mode = before.mode if before is not None else 0o644
-                after_hash = hashlib.sha256(change.content.encode("utf-8")).hexdigest()
-                if current is None or not _matches(current, after_hash, mode):
+                mode = (
+                    (before.mode if before is not None else 0o644)
+                    if change.action != "delete"
+                    else None
+                )
+                after_hash = (
+                    hashlib.sha256(change.content.encode("utf-8")).hexdigest()
+                    if change.action != "delete"
+                    else None
+                )
+                if not _matches(current, after_hash, mode):
                     raise ValueError(f"recovery_unknown: {change.path}")
                 if before is None:
+                    if current is None:
+                        raise ValueError("recovery_unknown")
                     with parent_descriptor(target) as (descriptor, name):
                         actual = os.stat(name, dir_fd=descriptor, follow_symlinks=False)
                         if file_identity(actual) != current.identity:
@@ -599,7 +651,8 @@ class ArtifactApplier:
                         target,
                         before.content,
                         mode=before.mode,
-                        expected_identity=current.identity,
+                        expected_identity=current.identity if current is not None else None,
+                        exclusive=current is None,
                     )
                 _confirm_restored(target, before, repo_root)
                 if journal is not None:

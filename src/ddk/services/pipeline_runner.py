@@ -133,7 +133,7 @@ class PipelineRunner:
             rollback_controller=rollback_controller,
         )
         builder_module = import_module("ddk.graph.builder")
-        build_graph = cast(Callable[[], Any], builder_module.build_ddk_graph)  # type: ignore[union-attr]
+        build_graph = cast(Callable[[], Any], builder_module.build_ddk_graph)  # pyright: ignore
         compiled = build_graph().compile()
         state = initial_state(case_input, retry_budget=self._services.max_fix_attempts)
         if on_update is None:

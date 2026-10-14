@@ -85,7 +85,7 @@ class TestStart:
 
     async def test_commands_outside_the_allow_list_are_refused(self, tmp_path: Path) -> None:
         with pytest.raises(PreviewStartError, match="not allowed"):
-            await SubprocessPreviewLauncher().start(["python3", "-m", "http.server"], tmp_path)
+            await SubprocessPreviewLauncher().start(["bash", "server.sh"], tmp_path)
 
     async def test_secrets_in_the_environment_do_not_reach_the_server(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

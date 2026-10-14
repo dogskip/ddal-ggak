@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ddk.models.evidence import EvidencePack
 from ddk.models.generation import GeneratedArtifactSet
@@ -78,7 +78,10 @@ class CaseArtifactStore:
 
     def load_status(self) -> dict[str, Any]:
         """Load the saved status summary for a case."""
-        return json.loads((self.reports_dir / "status.json").read_text(encoding="utf-8"))
+        return cast(
+            dict[str, Any],
+            json.loads((self.reports_dir / "status.json").read_text(encoding="utf-8")),
+        )
 
     def load_scorecard(self) -> Scorecard:
         """Load the persisted scorecard for a case."""

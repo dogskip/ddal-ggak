@@ -213,7 +213,7 @@ def _parse_eslint_json(text: str, root: Path | None) -> list[Diagnostic] | None:
         return None
 
     found: list[Diagnostic] = []
-    for entry in cast("list[Any]", payload):
+    for entry in cast("list[object]", payload):
         if not isinstance(entry, dict) or "filePath" not in entry:
             continue
         record = cast("dict[str, Any]", entry)
@@ -221,7 +221,7 @@ def _parse_eslint_json(text: str, root: Path | None) -> list[Diagnostic] | None:
         messages = record.get("messages")
         if not isinstance(messages, list):
             continue
-        for item in cast("list[Any]", messages):
+        for item in cast("list[object]", messages):
             if not isinstance(item, dict):
                 continue
             message = cast("dict[str, Any]", item)

@@ -25,8 +25,11 @@ from ddk.services.source_snapshot import (
     SnapshotError,
     SnapshotFile,
     SourceSnapshot,
+    capture_git_source,
+    capture_git_worktree,
     capture_source,
     manifest_digest,
+    resolve_git_ref,
 )
 from ddk.services.verified_change_store import VerifiedChangeStore
 
@@ -65,6 +68,7 @@ class EvaluationRequest:
     deadline_ns: int
     cancelled: Callable[[], bool]
     limits: Mapping[str, int]
+    baseline_snapshot: SourceSnapshot | None = None
 
 
 @dataclass(frozen=True)
@@ -126,17 +130,31 @@ class VerifiedChangeEngine:
         project_inputs: Mapping[str, str] | None = None,
         change_requirements: Mapping[str, Sequence[str]] | None = None,
         cancelled: Callable[[], bool] | None = None,
+        git_base: str | None = None,
+        repository: Path | None = None,
     ) -> Record:
         started = time.monotonic_ns()
         case = self.store.case(case_id)
         deadline = started + case["limits"]["run_timeout_ms"] * 1_000_000
+        git_repository = repository or self.store.repository
+        if git_base is not None and baseline is not None:
+            raise ValueError("git_base_conflicts_with_baseline")
+        commit = resolve_git_ref(git_repository, git_base) if git_base is not None else None
         bindings = dict(project_inputs or {})
         links = {key: list(value) for key, value in (change_requirements or {}).items()}
         request: Record = {
             "case_sha256": record_digest(case),
             "operation": "verify",
-            "baseline": os.path.abspath(baseline) if baseline is not None else None,
-            "candidate": os.path.abspath(candidate) if candidate is not None else None,
+            "baseline": "git:" + commit
+            if commit
+            else os.path.abspath(baseline)
+            if baseline is not None
+            else None,
+            "candidate": os.path.abspath(candidate or git_repository)
+            if commit
+            else os.path.abspath(candidate)
+            if candidate is not None
+            else None,
             "project_inputs": bindings,
             "change_requirements": links,
             "assurance_required": case["assurance_required"],
@@ -154,21 +172,24 @@ class VerifiedChangeEngine:
             return stop() or time.monotonic_ns() >= deadline
 
         try:
-            if baseline is None or candidate is None:
+            if commit is None and (baseline is None or candidate is None):
                 raise VerificationStoppedError("ambiguous_baseline")
             frozen = self._fixed_inputs(case)
-            baseline_snapshot = capture_source(
-                baseline,
-                max_file_bytes=case["limits"]["max_file_bytes"],
-                max_total_bytes=case["limits"]["max_artifact_bytes"],
-                cancelled=interrupted,
-            )
-            candidate_snapshot = capture_source(
-                candidate,
-                max_file_bytes=case["limits"]["max_file_bytes"],
-                max_total_bytes=case["limits"]["max_artifact_bytes"],
-                cancelled=interrupted,
-            )
+            file_limits = {
+                "max_file_bytes": case["limits"]["max_file_bytes"],
+                "max_total_bytes": case["limits"]["max_artifact_bytes"],
+            }
+            if commit is not None:
+                baseline_snapshot = capture_git_source(git_repository, commit, **file_limits)
+                candidate_snapshot = (
+                    capture_source(candidate, **file_limits, cancelled=interrupted)
+                    if candidate is not None
+                    else capture_git_worktree(git_repository, **file_limits)
+                )
+            else:
+                assert baseline is not None and candidate is not None
+                baseline_snapshot = capture_source(baseline, **file_limits, cancelled=interrupted)
+                candidate_snapshot = capture_source(candidate, **file_limits, cancelled=interrupted)
             candidate_hash, changes, artifacts = self._prepare(
                 case, baseline_snapshot, candidate_snapshot, frozen, bindings, links
             )
@@ -226,6 +247,7 @@ class VerifiedChangeEngine:
                     deadline,
                     interrupted,
                     limits,
+                    baseline_snapshot,
                 )
                 record["integrity"]["cleanup_complete"] = False
                 outcome = await self._evaluate(evaluation, case["limits"]["cleanup_timeout_ms"])
@@ -329,15 +351,11 @@ class VerifiedChangeEngine:
                 raise VerificationStoppedError(
                     "criteria_changed" if role == "criteria" else "protected_input_changed", path
                 )
-        if set(source) - set(after):
-            raise VerificationStoppedError(
-                "source_delete_unsupported", ",".join(sorted(set(source) - set(after)))
-            )
         source_after = {path: item for path, item in after.items() if path not in bindings}
         requirements = {item["requirement_id"] for item in case["requirements"]}
         for path, requirement_ids in links.items():
             if (
-                path not in source_after
+                path not in set(source_after) | set(source)
                 or path not in case["scope_paths"]
                 or not requirement_ids
                 or not set(requirement_ids) <= requirements
@@ -375,6 +393,34 @@ class VerifiedChangeEngine:
                     "after_mode": item.mode,
                     "after_artifact_id": ident,
                     "requirement_ids": sorted(set(links[path])),
+                }
+            )
+        for path in sorted(set(source) - set(source_after)):
+            previous = before[path]
+            ids = links.get(path, ())
+            approved = [r for r in case["requirements"] if r["requirement_id"] in ids]
+            if (
+                path not in case["scope_paths"]
+                or not ids
+                or len(approved) != len(set(ids))
+                or not all(
+                    r.get("allow_delete", False)
+                    and path in r.get("allowed_paths", case["scope_paths"])
+                    for r in approved
+                )
+            ):
+                raise VerificationStoppedError("source_delete_unsupported", path)
+            normalize_change_path(path)
+            changes.append(
+                {
+                    "path": path,
+                    "action": "delete",
+                    "before_sha256": previous.sha256,
+                    "after_sha256": None,
+                    "before_mode": previous.mode,
+                    "after_mode": None,
+                    "after_artifact_id": None,
+                    "requirement_ids": sorted(set(ids)),
                 }
             )
         if len(changes) > case["limits"]["max_changed_files"]:
@@ -551,7 +597,7 @@ class VerifiedChangeEngine:
                 )
                 invalid_test = check["kind"] == "test" and (
                     (result["executed_count"] or 0) == 0
-                    or result["skipped_count"] != 0
+                    or (result["skipped_count"] != 0 and not check.get("allow_skipped", False))
                     or (result["status"] == "passed" and result["failed_count"] != 0)
                 )
                 invalid_command = check["kind"] in {"command", "test"} and (

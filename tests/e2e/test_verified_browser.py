@@ -323,7 +323,12 @@ async def test_rgb_requires_approved_reference_without_generating_a_baseline(
     assert hashlib.sha256(reference).hexdigest() == source_hash
     assert data["visuals"][0]["mismatch_ppm"] == (0 if matches else 1_000_000)
     assert data["visuals"][0]["ssim"] > 0.99
-    assert {item["kind"] for item in result.artifacts} == {"screenshot", "diff", "data"}
+    assert {item["kind"] for item in result.artifacts} == {
+        "screenshot",
+        "diff",
+        "data",
+        "ax_snapshot",
+    }
 
 
 async def test_deadline_and_cancellation_close_browser_and_context(
@@ -388,7 +393,7 @@ async def test_deadline_and_cancellation_close_browser_and_context(
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
-    records = list((tmp_path / "cancel").glob("*.json"))
+    records = [p for p in (tmp_path / "cancel").glob("*.json") if not p.name.endswith(".ax.json")]
     assert records and json.loads(records[0].read_text())["cleanup_complete"]
     assert json.loads(records[0].read_text())["reason_code"] == "cancelled"
     assert browser_closed == [True, True]

@@ -8,7 +8,7 @@ import shutil
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from PIL import Image
 
@@ -518,7 +518,7 @@ def _viewport_for(reference: Path) -> tuple[int, int]:
 
 def _region(raw: dict[str, int]) -> MismatchRegion:
     dissimilarity = raw.get("dissimilarity", 100)
-    severity = (
+    severity: Literal["high", "medium", "low"] = (
         "high"
         if dissimilarity >= _HIGH_DISSIMILARITY
         else "medium"

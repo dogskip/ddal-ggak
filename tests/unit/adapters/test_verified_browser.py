@@ -273,7 +273,11 @@ async def test_sandbox_failure_never_retries_with_weaker_options(
     assert launch.await_count == 1
     assert launch.call_args.kwargs["headless"] is True
     assert launch.call_args.kwargs["chromium_sandbox"] is True
-    assert "args" not in launch.call_args.kwargs
+    assert launch.call_args.kwargs["args"] == [
+        "--hide-scrollbars",
+        "--mute-audio",
+        "--force-color-profile=srgb",
+    ]
     manager.__aexit__.assert_awaited_once()
 
 

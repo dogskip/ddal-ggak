@@ -48,12 +48,13 @@ class VerifiedChangeService:
         self,
         case_id: str,
         *,
-        baseline: Path,
-        candidate: Path,
+        baseline: Path | None = None,
+        candidate: Path | None = None,
         run_id: str,
         project_inputs: Mapping[str, str] | None = None,
         change_requirements: Mapping[str, Sequence[str]] | None = None,
         trusted_local_approved: bool = False,
+        git_base: str | None = None,
     ) -> Record:
         case = self.store.case(case_id)
         evaluator = self._approved_evaluator(case, trusted_local_approved)
@@ -65,6 +66,7 @@ class VerifiedChangeService:
             run_id=run_id,
             project_inputs=project_inputs,
             change_requirements=change_requirements,
+            git_base=git_base,
         )
 
     def _approved_evaluator(self, case: Record, approved: bool) -> Evaluator:
@@ -195,6 +197,7 @@ class VerifiedChangeService:
         quiescence_confirmed: bool = False,
         local_storage_confirmed: bool = False,
         required_assurance: str = "isolated",
+        target_run_id: str | None = None,
     ) -> Record:
         return ArtifactApplier().apply_run(
             self.store,
@@ -206,6 +209,7 @@ class VerifiedChangeService:
             quiescence_confirmed=quiescence_confirmed,
             local_storage_confirmed=local_storage_confirmed,
             required_assurance=required_assurance,
+            target_run_id=target_run_id,
         )
 
     def recover(

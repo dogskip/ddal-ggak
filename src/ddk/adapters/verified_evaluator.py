@@ -191,9 +191,9 @@ def _prepare(request: EvaluationRequest, *, trusted_local: bool) -> _Inputs:
     refs = plan["visual_references"]
     _require(isinstance(refs, list), "invalid_visual_references")
     references: dict[str, VisualReference] = {}
-    for value in cast(list[object], refs):
-        _require(isinstance(value, dict), "invalid_visual_reference")
-        reference = cast(Record, value)
+    for reference_value in cast(list[object], refs):
+        _require(isinstance(reference_value, dict), "invalid_visual_reference")
+        reference = cast(Record, reference_value)
         _require(
             set(reference) == {"path", "viewport", "environment_sha256", "mask_sha256"},
             "invalid_visual_reference",
@@ -260,21 +260,39 @@ async def _command(
     )
     timeout = max(0.001, (deadline - time.monotonic_ns()) / 1e9)
     output_bytes: int | None = 0
+    report_path = app.parent / f"command-{request.phase}-{index}.report"
+    has_report = any("{report}" in arg for arg in check["command_argv"])
+    argv = [arg.replace("{report}", str(report_path)) for arg in check["command_argv"]]
+    if has_report and (report_path.exists() or report_path.is_symlink()):
+        raise ValueError("report_path_exists")
     try:
         async with asyncio.timeout(timeout):
-            answer = await SubprocessBuildRunner().run(
-                check["command_argv"], app, math.ceil(timeout)
-            )
+            answer = await SubprocessBuildRunner().run(argv, app, math.ceil(timeout))
     except TimeoutError as error:
         cleanup = not _cleanup_failed(error)
         result["reason_code"] = "timeout" if cleanup else "cleanup_failed"
         payload = b"Command deadline exceeded; partial output size is unknown"
         output_bytes = None
     else:
-        result = command_report(request, check, answer)
         cleanup = answer.returncode != 125
         payload = (answer.stdout + "\n" + answer.stderr).encode()
         output_bytes = len(answer.stdout.encode()) + len(answer.stderr.encode())
+        report = b""
+        if has_report:
+            try:
+                report = read_regular(
+                    report_path, min(2 * 1024**2, request.limits["max_output_bytes"])
+                )
+                result = command_report(
+                    request, check, replace(answer, stdout=report.decode("utf-8", errors="strict"))
+                )
+                payload += b"\nREPORT:\n" + report
+                output_bytes += len(report)
+            except (OSError, ValueError):
+                result.update(status="unavailable", reason_code="test_report_unavailable")
+                output_bytes = None
+        else:
+            result = command_report(request, check, answer)
     artifact = EvaluationArtifact(
         f"{request.phase}-command-{index}",
         "log",
@@ -414,6 +432,17 @@ class VerifiedEvaluator:
                     count_output(written)
                     cleanup = cleanup and finished
                     finish_check(app)
+                    continue
+                if check["kind"] == "policy":
+                    from ddk.adapters.verified_policy import evaluate_policy_owned
+
+                    result, artifact = await evaluate_policy_owned(
+                        request, check, inputs.files[check["definition_path"]].content
+                    )
+                    results.append(result)
+                    if not retain(artifact):
+                        result["artifact_ids"] = []
+                    count_output(len(artifact.content))
                     continue
                 if check["kind"] not in {"browser", "visual"}:
                     results.append(_result(request, check, "unsupported_check_kind"))

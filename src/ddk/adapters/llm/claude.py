@@ -67,7 +67,7 @@ class ClaudeAdapter:
         Streaming keeps the connection busy, so an answer that takes longer than the read timeout
         to write (large code, long thinking) is not cut off.
         """
-        async with self._client.messages.stream(**kwargs) as stream:  # type: ignore[call-overload]
+        async with self._client.messages.stream(**kwargs) as stream:  # pyright: ignore
             return await stream.get_final_message()
 
     async def _invoke(self, **kwargs: Any) -> anthropic.types.Message:
@@ -155,7 +155,7 @@ class ClaudeAdapter:
         system_prompt, anthropic_messages = _split_messages(messages)
 
         schema: dict[str, Any] = (
-            output_schema.model_json_schema()  # type: ignore[union-attr]
+            output_schema.model_json_schema()  # pyright: ignore
             if hasattr(output_schema, "model_json_schema")
             else {}
         )
@@ -194,9 +194,9 @@ class ClaudeAdapter:
     def _to_response(
         self, model: str, response: anthropic.types.Message, content: str
     ) -> LLMResponse:
-        usage = response.usage  # type: ignore[reportUnknownMemberType]
-        input_tok = int(usage.input_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
-        output_tok = int(usage.output_tokens)  # type: ignore[reportUnknownMemberType,reportUnknownArgumentType]
+        usage = response.usage  # pyright: ignore
+        input_tok = int(usage.input_tokens)  # pyright: ignore
+        output_tok = int(usage.output_tokens)  # pyright: ignore
         cost = estimate_cost(model, input_tok, output_tok)
         self._accumulated_cost += cost
         return LLMResponse(
@@ -205,7 +205,7 @@ class ClaudeAdapter:
             input_tokens=input_tok,
             output_tokens=output_tok,
             cost_usd=cost,
-            raw_response=response.model_dump(),  # type: ignore[arg-type]
+            raw_response=response.model_dump(),  # pyright: ignore
             truncated=getattr(response, "stop_reason", None) in _CUT_OFF,
         )
 
@@ -276,4 +276,4 @@ def _extract_json_text(response: anthropic.types.Message) -> str | None:
 
 
 # Verify the adapter satisfies the protocol at import time
-_: LLMAdapter = ClaudeAdapter.__new__(ClaudeAdapter)  # type: ignore[assignment]
+_: LLMAdapter = ClaudeAdapter.__new__(ClaudeAdapter)  # pyright: ignore

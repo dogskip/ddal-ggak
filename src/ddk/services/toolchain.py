@@ -197,7 +197,7 @@ def _reference_paths(project_dir: Path, config: dict[str, Any]) -> list[str]:
     if not isinstance(raw, list):
         return []
     found: list[str] = []
-    for item in cast("list[Any]", raw):
+    for item in cast("list[object]", raw):
         if not isinstance(item, dict):
             continue
         path = cast("dict[str, Any]", item).get("path")
@@ -250,7 +250,9 @@ def _declared_packages(package: dict[str, Any]) -> set[str]:
 def _string_map(value: Any) -> dict[str, str]:
     if not isinstance(value, dict):
         return {}
-    return {str(k): str(v) for k, v in cast("dict[Any, Any]", value).items() if isinstance(v, str)}
+    return {
+        str(k): str(v) for k, v in cast("dict[object, object]", value).items() if isinstance(v, str)
+    }
 
 
 def _load_jsonc(path: Path) -> dict[str, Any]:

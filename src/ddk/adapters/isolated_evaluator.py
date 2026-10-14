@@ -8,6 +8,7 @@ import math
 import tempfile
 import time
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -46,6 +47,7 @@ _MODULES = (
     "security/repo_paths.py",
     "security/secret_paths.py",
     "security/file_access.py",
+    "security/redact.py",
 )
 _ENTRY = (
     "python3",
@@ -209,6 +211,16 @@ async def evaluate_isolated(
             if reason:
                 results.append(check_result(request, check, reason))
                 continue
+            if check["kind"] == "policy":
+                from ddk.adapters.verified_policy import evaluate_policy_owned
+
+                result, artifact = await evaluate_policy_owned(
+                    request, check, files[check["definition_path"]].content
+                )
+                result["artifact_ids"] = []
+                results.append(result)
+                retain(artifact)
+                continue
             if check["kind"] not in {"command", "test", "browser", "visual"}:
                 results.append(check_result(request, check, "unsupported_check_kind"))
                 continue
@@ -293,10 +305,32 @@ async def evaluate_isolated(
                     raise ValueError("app_environment_mismatch")
                 environment_verified = True
                 if not browser:
-                    answer = await session.app(tuple(check["command_argv"]), timeout_s=remaining())
+                    has_report = any("{report}" in arg for arg in check["command_argv"])
+                    report_name = f"command-{request.phase}-{index}.report"
+                    command = tuple(
+                        arg.replace("{report}", "/results/" + report_name)
+                        for arg in check["command_argv"]
+                    )
+                    answer = await session.app(command, timeout_s=remaining())
+                    raw_stdout = answer.stdout
+                    written += len(answer.stdout.encode()) + len(answer.stderr.encode())
+                    if has_report:
+                        try:
+                            native_report = read_regular(
+                                output / report_name,
+                                min(2 * 1024**2, request.limits["max_output_bytes"]),
+                            )
+                            written += len(native_report)
+                            answer = replace(
+                                answer, stdout=native_report.decode("utf-8", errors="strict")
+                            )
+                        except (ValueError, OSError) as error:
+                            results[-1].update(
+                                status="unavailable", reason_code="test_report_unavailable"
+                            )
+                            raise ValueError("test_report_unavailable") from error
                     results[-1] = command_report(request, check, answer)
                     results[-1]["duration_ms"] = (time.monotonic_ns() - started) // 1_000_000
-                    written += len(answer.stdout.encode()) + len(answer.stderr.encode())
                     if answer.returncode in {124, 125}:
                         output_bytes = None
                         halted = "output_unknown"
@@ -305,7 +339,7 @@ async def evaluate_isolated(
                             f"{request.phase}-command-{index}",
                             "log",
                             f"artifacts/{request.phase}/command-{index}.log",
-                            (answer.stdout + "\n" + answer.stderr).encode(),
+                            (raw_stdout + "\n" + answer.stderr).encode(),
                         )
                     )
                     return BuildResult(True, "", "", 0)

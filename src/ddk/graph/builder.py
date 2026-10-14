@@ -28,7 +28,7 @@ from ddk.graph.router import route_after_autofix, route_after_stage, route_after
 from ddk.graph.state import GraphState
 
 
-def build_ddk_graph() -> StateGraph:  # type: ignore[type-arg, return-value]
+def build_ddk_graph() -> StateGraph[GraphState, ServiceContainer, GraphState, GraphState]:
     """Build the ddalggak LangGraph StateGraph.
 
     Phase 5 (CERT-01/02/03/06/07): 10-node pipeline.
@@ -39,21 +39,23 @@ def build_ddk_graph() -> StateGraph:  # type: ignore[type-arg, return-value]
     Returns:
         LangGraph StateGraph ready for compilation and invocation.
     """
-    workflow: StateGraph = StateGraph(GraphState, context_schema=ServiceContainer)  # type: ignore[type-arg]
+    workflow = StateGraph[GraphState, ServiceContainer, GraphState, GraphState](
+        GraphState, context_schema=ServiceContainer
+    )
 
     # Linear generation pipeline (unchanged from Phase 3)
-    workflow.add_node("intake", node_wrapper(intake_node))  # type: ignore[arg-type]
-    workflow.add_node("repo_scan", node_wrapper(repo_scan_node))  # type: ignore[arg-type]
-    workflow.add_node("intent_extract", node_wrapper(intent_extract_node))  # type: ignore[arg-type]
-    workflow.add_node("design_system", node_wrapper(design_system_node))  # type: ignore[arg-type]
-    workflow.add_node("plan", node_wrapper(plan_node))  # type: ignore[arg-type]
-    workflow.add_node("generate", node_wrapper(generate_node))  # type: ignore[arg-type]
-    workflow.add_node("normalize", node_wrapper(normalize_node))  # type: ignore[arg-type]
+    workflow.add_node("intake", node_wrapper(intake_node))  # pyright: ignore
+    workflow.add_node("repo_scan", node_wrapper(repo_scan_node))  # pyright: ignore
+    workflow.add_node("intent_extract", node_wrapper(intent_extract_node))  # pyright: ignore
+    workflow.add_node("design_system", node_wrapper(design_system_node))  # pyright: ignore
+    workflow.add_node("plan", node_wrapper(plan_node))  # pyright: ignore
+    workflow.add_node("generate", node_wrapper(generate_node))  # pyright: ignore
+    workflow.add_node("normalize", node_wrapper(normalize_node))  # pyright: ignore
 
     # Phase 4 validation/self-healing nodes
-    workflow.add_node("validate", node_wrapper(validate_node))  # type: ignore[arg-type]
-    workflow.add_node("autofix", node_wrapper(autofix_node))  # type: ignore[arg-type]
-    workflow.add_node("certify", node_wrapper(certify_node))  # type: ignore[arg-type]
+    workflow.add_node("validate", node_wrapper(validate_node))  # pyright: ignore
+    workflow.add_node("autofix", node_wrapper(autofix_node))  # pyright: ignore
+    workflow.add_node("certify", node_wrapper(certify_node))  # pyright: ignore
 
     # Linear pipeline edges; a stage that needs a human skips the rest and keeps its own message
     workflow.add_edge(START, "intake")

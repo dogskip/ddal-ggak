@@ -72,17 +72,17 @@ def redact_dict(
             result[key] = redact_string(value)
         elif isinstance(value, dict):
             result[key] = redact_dict(
-                value,  # type: ignore[arg-type]
+                value,  # pyright: ignore
                 max_depth=max_depth,
                 _current_depth=_current_depth + 1,
             )
         elif isinstance(value, list):
             redacted_list: list[Any] = []
-            for item in value:  # type: ignore[var-annotated]
+            for item in value:  # pyright: ignore
                 if isinstance(item, str):
                     redacted_list.append(redact_string(item))
                 else:
-                    redacted_list.append(item)  # type: ignore[reportUnknownVariableType]
+                    redacted_list.append(item)  # pyright: ignore
             result[key] = redacted_list
         else:
             result[key] = value

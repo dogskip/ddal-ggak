@@ -14,6 +14,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from types import GenericAlias
 from typing import Any, Protocol, cast
 
 from PIL import Image
@@ -156,7 +157,9 @@ def _load[M: BaseModel](path: Path, model: type[M]) -> M | None:
 
 def _load_list[M: BaseModel](path: Path, model: type[M]) -> list[M]:
     try:
-        return TypeAdapter(list[model]).validate_json(path.read_text(encoding="utf-8"))
+        return TypeAdapter[list[M]](GenericAlias(list, model)).validate_json(
+            path.read_text(encoding="utf-8")
+        )
     except (OSError, ValueError):
         return []
 

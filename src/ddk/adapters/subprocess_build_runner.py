@@ -24,7 +24,10 @@ class ProcessCleanupError(RuntimeError):
 class ProcessOutput:
     """Concurrent, bounded stdout and stderr for one directly created process group."""
 
-    def __init__(self, process: asyncio.subprocess.Process) -> None:
+    def __init__(
+        self, process: asyncio.subprocess.Process, max_output_bytes: int = MAX_OUTPUT_BYTES
+    ) -> None:
+        self.limit = max_output_bytes
         self.process = process
         self.stdout = bytearray()
         self.stderr = bytearray()
@@ -45,7 +48,7 @@ class ProcessOutput:
 
     async def _drain(self, stream: asyncio.StreamReader, target: bytearray) -> None:
         while chunk := await stream.read(_READ_BYTES):
-            available = MAX_OUTPUT_BYTES - self._size
+            available = self.limit - self._size
             kept = chunk[:available]
             target.extend(kept)
             self._size += len(kept)
@@ -60,7 +63,7 @@ class ProcessOutput:
 
     def text(self, reason: str = "") -> tuple[str, str]:
         suffix = ("\n" + reason).encode() if reason else b""
-        budget = MAX_OUTPUT_BYTES - len(suffix)
+        budget = self.limit - len(suffix)
         stdout = bytes(self.stdout).decode(errors="replace").encode()[:budget]
         stdout_text = stdout.decode(errors="ignore")
         budget -= len(stdout_text.encode())
@@ -123,7 +126,12 @@ async def stop_owned_process(
 
 
 async def start_owned_process(
-    command: list[str], cwd: Path, *, stdin: int | None = None
+    command: list[str],
+    cwd: Path,
+    *,
+    stdin: int | None = None,
+    environment: dict[str, str] | None = None,
+    max_output_bytes: int = MAX_OUTPUT_BYTES,
 ) -> tuple[asyncio.subprocess.Process, ProcessOutput]:
     """Retain ownership when cancellation races with subprocess creation."""
     abandoned = False
@@ -133,13 +141,13 @@ async def start_owned_process(
         process = await asyncio.create_subprocess_exec(
             *command,
             cwd=str(cwd),
-            env=child_environment(cwd),
+            env=child_environment(cwd) if environment is None else environment,
             stdin=stdin,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             start_new_session=True,
         )
-        output = ProcessOutput(process)
+        output = ProcessOutput(process, max_output_bytes)
         if abandoned:
             await stop_owned_process(process, output, deadline_ns=cleanup_deadline_ns)
         return process, output

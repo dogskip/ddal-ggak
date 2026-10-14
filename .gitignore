@@ -1,36 +1,113 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Packaging and distribution
 *.egg-info/
+*.egg
+.eggs/
 dist/
 build/
-.ddk/
+node_modules/
+
+# Testing, coverage, and static analysis
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
-.pyright/
-.ruff_cache/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.hypothesis/
+.tox/
+.nox/
+
+# Environment files, secrets, and credentials
 .env
 .env.*
 !.env.example
 *.pem
 *.key
-.DS_Store
-node_modules/
-.ddk-home/
-logs/
-.mypy_cache/
-.coverage.*
-coverage.xml
+*.pfx
+*.p12
+*.cert
+*.crt
+id_rsa*
+id_ed25519*
+.ssh/
+.aws/
+.netrc
+.npmrc
+credentials.json
+auth.json
+token.json
+tokens.json
+service-account*.json
+secrets/
 
-# Local plans, reviews, launch drafts and raw execution evidence.
-/.planning/
-/evidence/
+# Design documents, generated packages, and specifications
+design-package/
+/design/
 /docs/design/
 /docs/superpowers/
 /docs/launch/
+/docs/drafts/
+/docs/internal/
+/docs/private/
+/docs/planning/
+/docs/reviews/
+/docs/specs/
+specs/
+plans/
 
-# Generated browser reports may contain source, local paths or screenshots.
+# Local planning, evidence, and scratch directories
+/.planning/
+/evidence/
+scratch/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+
+# AI assistants and editor configurations
+.serena/
+.claude/
+.cursor/
+.gemini/
+.agents/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local application runtime, logs, and recording cassettes
+.ddk/
+.ddk-home/
+logs/
+*.log
+*.cassette.json
+cassettes/
+
+# Generated browser reports and compliance matrix
 /test-results/
 /playwright-report/
 /benchmarks/compliance-matrix.json
+
+# Operating System artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,70 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___ test_approved_step_timeout_bounds_a_command_with_a_longer_check_timeout ____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-377/test_approved_step_timeout_bou0')
+
+    async def test_approved_step_timeout_bounds_a_command_with_a_longer_check_timeout(tmp_path):
+        request, _, _ = request_for(tmp_path, argv=["node", "-e", "setTimeout(()=>process.exit(0),50)"])
+        request = replace(request, limits={**request.limits, "step_timeout_ms": 1})
+        outcome = await VerifiedEvaluator(trusted_local_approved=True).evaluate(request)
+>       assert outcome.results[0]["status"] == "unavailable"
+E       AssertionError: assert 'passed' == 'unavailable'
+E         
+E         - unavailable
+E         + passed
+
+tests/unit/adapters/test_verified_evaluator.py:472: AssertionError
+________ test_approved_step_timeout_is_shared_with_preview_and_browser _________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-377/test_approved_step_timeout_is_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d107ec0>
+
+    async def test_approved_step_timeout_is_shared_with_preview_and_browser(tmp_path, monkeypatch):
+        request, _, _ = request_for(
+            tmp_path,
+            kind="browser",
+            argv=[],
+            plan_changes={"preview_argv": ["node", "serve.cjs", "{port}"]},
+        )
+        request = replace(
+            request,
+            checks=({**request.checks[0], "viewport": {"width": 320, "height": 200}},),
+            limits={**request.limits, "step_timeout_ms": 50},
+        )
+        from types import SimpleNamespace
+        from ddk.adapters.verified_browser import BrowserRun
+    
+        preview = AsyncMock()
+        preview.start.return_value = SimpleNamespace(
+            url="http://127.0.0.1:1234", stop=AsyncMock(), output=lambda: ("", "")
+        )
+        observed = []
+    
+        async def flow(*args, **kwargs):
+            observed.append(kwargs["deadline_ns"])
+            return BrowserRun(
+                {
+                    "check_id": request.checks[0]["check_id"],
+                    "status": "unavailable",
+                    "reason_code": "timeout",
+                    "artifact_ids": [],
+                },
+                [],
+                True,
+            )
+    
+        monkeypatch.setattr(
+            "ddk.adapters.verified_evaluator.SubprocessPreviewLauncher", lambda: preview
+        )
+        monkeypatch.setattr("ddk.adapters.verified_evaluator.run_flow", flow)
+        before = time.monotonic_ns()
+        await VerifiedEvaluator(trusted_local_approved=True).evaluate(request)
+>       assert preview.start.await_args.kwargs["timeout_s"] <= 0.05
+E       assert 0.999993167 <= 0.05
+
+tests/unit/adapters/test_verified_evaluator.py:518: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_evaluator.py::test_approved_step_timeout_bounds_a_command_with_a_longer_check_timeout
+FAILED tests/unit/adapters/test_verified_evaluator.py::test_approved_step_timeout_is_shared_with_preview_and_browser
+2 failed, 53 deselected in 1.05s

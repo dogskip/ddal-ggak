@@ -1,0 +1,76 @@
+FFFFFFFFFFF                                                              [100%]
+=================================== FAILURES ===================================
+_________________ test_deleted_original_is_conflict_not_create _________________
+tests/unit/services/test_apply_transaction_safety.py:32: in test_deleted_original_is_conflict_not_create
+    assert changes[0].action == "conflict"
+E   AssertionError: assert 'create' == 'conflict'
+E     
+E     - conflict
+E     + create
+______________________ test_edit_after_plan_is_preserved _______________________
+tests/unit/services/test_apply_transaction_safety.py:42: in test_edit_after_plan_is_preserved
+    with pytest.raises(ValueError, match="conflict"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+________________ test_permission_change_after_plan_is_preserved ________________
+tests/unit/services/test_apply_transaction_safety.py:55: in test_permission_change_after_plan_is_preserved
+    with pytest.raises(ValueError, match="conflict"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_____________ test_create_does_not_replace_a_file_added_after_plan _____________
+tests/unit/services/test_apply_transaction_safety.py:66: in test_create_does_not_replace_a_file_added_after_plan
+    with pytest.raises(ValueError, match="conflict"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+____________________ test_one_conflict_prevents_all_writes _____________________
+tests/unit/services/test_apply_transaction_safety.py:78: in test_one_conflict_prevents_all_writes
+    assert applier.write(changes, tmp_path) == []
+E   AssertionError: assert [FileChange(p...', reason='')] == []
+E     
+E     Left contains one more item: FileChange(path='b.ts', action='create', content='new', reason='')
+E     Use -v to get more diff
+____________________ test_force_never_overwrites_a_conflict ____________________
+tests/unit/services/test_apply_transaction_safety.py:88: in test_force_never_overwrites_a_conflict
+    with pytest.raises(ValueError, match="force_disabled"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_______________ test_duplicate_target_is_rejected_before_writes ________________
+tests/unit/services/test_apply_transaction_safety.py:97: in test_duplicate_target_is_rejected_before_writes
+    with pytest.raises(ValueError, match="duplicate"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+______________ test_second_write_failure_restores_earlier_updates ______________
+tests/unit/services/test_apply_transaction_safety.py:137: in test_second_write_failure_restores_earlier_updates
+    assert first.read_text() == "old-a"
+E   AssertionError: assert 'new-a' == 'old-a'
+E     
+E     - old-a
+E     + new-a
+_________ test_apply_rejects_unsafe_option_before_case_access[--force] _________
+tests/unit/test_unsafe_delivery_guards.py:18: in test_apply_rejects_unsafe_option_before_case_access
+    assert "내보내기" in result.output
+E   AssertionError: assert '내보내기' in '❌ 조회할 case가 없습니다. 먼저 `ddk run`을 실행하세요.\n'
+E    +  where '❌ 조회할 case가 없습니다. 먼저 `ddk run`을 실행하세요.\n' = <Result SystemExit(1)>.output
+_____ test_apply_rejects_unsafe_option_before_case_access[--allow-blocked] _____
+tests/unit/test_unsafe_delivery_guards.py:18: in test_apply_rejects_unsafe_option_before_case_access
+    assert "내보내기" in result.output
+E   AssertionError: assert '내보내기' in '❌ 조회할 case가 없습니다. 먼저 `ddk run`을 실행하세요.\n'
+E    +  where '❌ 조회할 case가 없습니다. 먼저 `ddk run`을 실행하세요.\n' = <Result SystemExit(1)>.output
+_______________ test_git_rollback_cannot_reset_or_clean_any_tree _______________
+tests/unit/test_unsafe_delivery_guards.py:34: in test_git_rollback_cannot_reset_or_clean_any_tree
+    with pytest.raises(ValueError, match="rollback_disabled"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+=========================== short test summary info ============================
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_deleted_original_is_conflict_not_create
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_edit_after_plan_is_preserved
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_permission_change_after_plan_is_preserved
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_create_does_not_replace_a_file_added_after_plan
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_one_conflict_prevents_all_writes
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_force_never_overwrites_a_conflict
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_duplicate_target_is_rejected_before_writes
+FAILED tests/unit/services/test_apply_transaction_safety.py::test_second_write_failure_restores_earlier_updates
+FAILED tests/unit/test_unsafe_delivery_guards.py::test_apply_rejects_unsafe_option_before_case_access[--force]
+FAILED tests/unit/test_unsafe_delivery_guards.py::test_apply_rejects_unsafe_option_before_case_access[--allow-blocked]
+FAILED tests/unit/test_unsafe_delivery_guards.py::test_git_rollback_cannot_reset_or_clean_any_tree
+11 failed in 0.28s

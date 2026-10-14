@@ -1,0 +1,104 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_timeout_output_is_unknown_and_stops_subsequent_checks __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-375/test_timeout_output_is_unknown0')
+
+    async def test_timeout_output_is_unknown_and_stops_subsequent_checks(tmp_path):
+        request, _, _ = request_for(
+            tmp_path, argv=["node", "-e", "process.stdout.write('partial');setInterval(()=>{},1000)"]
+        )
+        first = {**request.checks[0], "required": False, "timeout_ms": 30}
+        request = replace(
+            request,
+            checks=(
+                first,
+                {
+                    **first,
+                    "check_id": "second",
+                    "required": True,
+                    "command_argv": ["node", "-e", "console.log('must-not-run')"],
+                },
+            ),
+        )
+        outcome = await VerifiedEvaluator(trusted_local_approved=True).evaluate(request)
+>       assert outcome.output_bytes is None
+E       AssertionError: assert 13 is None
+E        +  where 13 = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N...tree_sha256='4ae49bd5d2186d472a9fb58195d0058d4b994e4a3e108e4028b41428d4182863', cleanup_complete=True, output_bytes=13).output_bytes
+
+tests/unit/adapters/test_verified_evaluator.py:459: AssertionError
+_ test_real_engine_rejects_changed_private_source_and_request_output_overflow[timeout-output] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-375/test_real_engine_rejects_chang0')
+settings = BrowserSettings(environment={'os_name': 'Darwin', 'os_version': '27.2.0', 'architecture': 'arm64', 'runtime_name': 'py...ll-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell', cleanup_timeout_ms=10000, max_artifact_bytes=209715200)
+fault = 'timeout-output'
+
+    @pytest.mark.parametrize(
+        "fault", ["command-source", "preview-source", "output-limit", "timeout-output"]
+    )
+    async def test_real_engine_rejects_changed_private_source_and_request_output_overflow(
+        tmp_path, settings, fault
+    ):
+        case, store, before = scenario(tmp_path, settings)
+        payloads = {
+            item["path"]: (
+                store.path_for("case", case["case_id"]) / "inputs" / item["path"]
+            ).read_bytes()
+            for item in case["inputs"]
+        }
+        case = copy.deepcopy(case)
+        case["case_id"] = "00000000-0000-4000-8000-000000000062"
+        if fault == "command-source":
+            case["checks"][0]["command_argv"][-1] = (
+                "require('fs').writeFileSync('index.html','changed by command');"
+                "console.log(JSON.stringify({executed_count:1,failed_count:0,skipped_count:0}))"
+            )
+        elif fault == "preview-source":
+            plan = decode_json(payloads["criteria/execution.json"])
+            launcher = (
+                "const f=require('fs');f.writeFileSync('index.html',"
+                "f.readFileSync('index.html','utf8').replace('Old','New'));"
+                + SERVER.decode().replace("process.argv[2]", "process.argv[1]")
+            )
+            plan["preview_argv"] = ["node", "-e", launcher, "{port}"]
+            payloads["criteria/execution.json"] = canonical_json(plan)
+        elif fault == "output-limit":
+            case["limits"]["max_output_bytes"] = 1
+        else:
+            optional = case["checks"][0]
+            optional.update(
+                required=False,
+                timeout_ms=30,
+                command_argv=["node", "-e", "process.stdout.write('partial');setInterval(()=>{},1000)"],
+            )
+            case["requirements"][0]["required"] = False
+            case["checks"] = [*case["checks"][1:], optional]
+        for item in case["inputs"]:
+            payload = payloads[item["path"]]
+            item.update(sha256=hashlib.sha256(payload).hexdigest(), size_bytes=len(payload))
+        case["evaluator_sha256"] = manifest_digest(
+            fixed_file(item["path"], payloads[item["path"]])
+            for item in case["inputs"]
+            if item["role"] == "criteria"
+        )
+        store.publish_case(case, payloads)
+        record = await VerifiedChangeEngine(
+            store, VerifiedEvaluator(trusted_local_approved=True)
+        ).verify(
+            case["case_id"],
+            baseline=tmp_path / "baseline",
+            candidate=tmp_path / "candidate",
+            run_id=RUN_ID,
+            change_requirements={"index.html": ["target"]},
+        )
+>       assert record["decision"] == "blocked"
+E       AssertionError: assert 'manual-review' == 'blocked'
+E         
+E         - blocked
+E         + manual-review
+
+tests/e2e/test_verified_evaluator.py:387: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_evaluator.py::test_timeout_output_is_unknown_and_stops_subsequent_checks
+FAILED tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[timeout-output]
+2 failed in 3.83s

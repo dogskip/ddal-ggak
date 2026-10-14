@@ -1,0 +1,38 @@
+{
+  "max_output_bytes": 1,
+  "output_bytes": null,
+  "results": [
+    {
+      "check_id": "check-command",
+      "phase": "candidate",
+      "status": "unavailable",
+      "exit_code": null,
+      "executed_count": null,
+      "failed_count": null,
+      "skipped_count": null,
+      "retry_count": 0,
+      "duration_ms": 0,
+      "reason_code": "preview server exited with code 1: \ud55c",
+      "artifact_ids": [],
+      "evidence_origin": "trusted-observer",
+      "round_no": 0
+    },
+    {
+      "check_id": "second-check",
+      "phase": "candidate",
+      "status": "unavailable",
+      "exit_code": null,
+      "executed_count": null,
+      "failed_count": null,
+      "skipped_count": null,
+      "retry_count": 0,
+      "duration_ms": 0,
+      "reason_code": "output_unknown",
+      "artifact_ids": [],
+      "evidence_origin": "trusted-observer",
+      "round_no": 0
+    }
+  ],
+  "cleanup_complete": true,
+  "source_sha256": "efbe341ee3fe46466fafa1fc0dfe984088de10d0cf8ee1dce32d5fc9f025eb1a"
+}

@@ -1,0 +1,1 @@
+{"cleanup_complete":true,"environment_sha256":"8982b54dec21f1ea2d75d725e56945a1fa3039b4f023b5fb3a0688fffa90df02","errors":[{"code":"browser_unavailable","detail":"RuntimeError: synthetic setup failure"}],"fixture_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","reason_code":"cancelled","steps":[],"visuals":[]}

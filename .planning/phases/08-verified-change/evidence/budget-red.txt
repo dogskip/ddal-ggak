@@ -1,0 +1,132 @@
+D3 TDD RED commands (provider network calls: 0):
+ANTHROPIC_API_KEY= OPENAI_API_KEY= GEMINI_API_KEY= PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/unit/adapters/test_claude_errors.py tests/unit/adapters/test_model_traits.py -k "automatic_retries or one_http_attempt or known_model_names" -q -p no:cacheprovider --tb=short
+ANTHROPIC_API_KEY= OPENAI_API_KEY= GEMINI_API_KEY= PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest tests/unit/test_verified_budget.py -q -p no:cacheprovider --tb=short
+Additional RED: -k over_limit, then -k "overrun_blocks_even or unrepresentable". The initial unrepresentable-cost test hit a lower fixture budget first; the corrected fixture budget then confirmed the intended missing-calculated-evidence failure.
+
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+___________________ test_sdk_automatic_retries_are_disabled ____________________
+tests/unit/adapters/test_claude_errors.py:99: in test_sdk_automatic_retries_are_disabled
+    assert ClaudeAdapter(api_key="fake-key")._client.max_retries == 0
+E   AssertionError: assert 2 == 0
+E    +  where 2 = <anthropic.AsyncAnthropic object at 0x10af53920>.max_retries
+E    +    where <anthropic.AsyncAnthropic object at 0x10af53920> = <ddk.adapters.llm.claude.ClaudeAdapter object at 0x10b4a5250>._client
+E    +      where <ddk.adapters.llm.claude.ClaudeAdapter object at 0x10b4a5250> = ClaudeAdapter(api_key='fake-key')
+____________ test_one_http_attempt_on_retryable_provider_error[429] ____________
+tests/unit/adapters/test_claude_errors.py:128: in test_one_http_attempt_on_retryable_provider_error
+    assert attempts == 1
+E   assert 15 == 1
+____________ test_one_http_attempt_on_retryable_provider_error[500] ____________
+tests/unit/adapters/test_claude_errors.py:128: in test_one_http_attempt_on_retryable_provider_error
+    assert attempts == 1
+E   assert 15 == 1
+___________ test_known_model_names_do_not_resolve_unverified_aliases ___________
+tests/unit/adapters/test_model_traits.py:121: in test_known_model_names_do_not_resolve_unverified_aliases
+    from ddk.adapters.llm.model_traits import known_model_names
+E   ImportError: cannot import name 'known_model_names' from 'ddk.adapters.llm.model_traits' (/Users/bjchoi/.codex/worktrees/b48f/ddalggak/src/ddk/adapters/llm/model_traits.py)
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_claude_errors.py::test_sdk_automatic_retries_are_disabled
+FAILED tests/unit/adapters/test_claude_errors.py::test_one_http_attempt_on_retryable_provider_error[429]
+FAILED tests/unit/adapters/test_claude_errors.py::test_one_http_attempt_on_retryable_provider_error[500]
+FAILED tests/unit/adapters/test_model_traits.py::test_known_model_names_do_not_resolve_unverified_aliases
+4 failed, 53 deselected in 0.44s
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/unit/test_verified_budget.py ______________
+ImportError while importing test module '/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/unit/test_verified_budget.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_verified_budget.py:18: in <module>
+    from ddk.services.verified_budget import (
+E   ModuleNotFoundError: No module named 'ddk.services.verified_budget'
+=========================== short test summary info ============================
+ERROR tests/unit/test_verified_budget.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.09s
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_over_limit_observation_is_preserved_and_blocks_additional_calls[usage0-cost_reservation_exceeded] _
+tests/unit/test_verified_budget.py:376: in test_over_limit_observation_is_preserved_and_blocks_additional_calls
+    outcome = await call(budget, run, provider)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_verified_budget.py:106: in call
+    return await budget.call(
+src/ddk/services/verified_budget.py:534: in call
+    self._store.stage_artifacts(record, payloads)
+src/ddk/services/verified_change_store.py:266: in stage_artifacts
+    case = self._validate_run(record)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/verified_change_store.py:121: in _validate_run
+    validate_structure(record)
+src/ddk/models/verified_change.py:154: in validate_structure
+    raise ContractError("schema:" + errors[0].message[:240])
+E   ddk.models.verified_change.ContractError: schema:{'actions': [{'code': 'cost_reservation_exceeded', 'target': None, 'message': 'cost_reservation_exceeded', 'retryable': False}, {'code': 'provider_request_limit_exceeded', 'target': None, 'message': 'provider_request_limit_exceeded', 'retry
+_ test_over_limit_observation_is_preserved_and_blocks_additional_calls[usage1-provider_request_limit_exceeded] _
+tests/unit/test_verified_budget.py:376: in test_over_limit_observation_is_preserved_and_blocks_additional_calls
+    outcome = await call(budget, run, provider)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_verified_budget.py:106: in call
+    return await budget.call(
+src/ddk/services/verified_budget.py:534: in call
+    self._store.stage_artifacts(record, payloads)
+src/ddk/services/verified_change_store.py:266: in stage_artifacts
+    case = self._validate_run(record)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/verified_change_store.py:121: in _validate_run
+    validate_structure(record)
+src/ddk/models/verified_change.py:154: in validate_structure
+    raise ContractError("schema:" + errors[0].message[:240])
+E   ddk.models.verified_change.ContractError: schema:{'actions': [{'code': 'provider_request_limit_exceeded', 'target': None, 'message': 'provider_request_limit_exceeded', 'retryable': False}], 'artifacts': [{'artifact_id': 'price-a48df9af-8527-46ca-a209-961ed5c02ffd', 'kind': 'price', 'path'
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_budget.py::test_over_limit_observation_is_preserved_and_blocks_additional_calls[usage0-cost_reservation_exceeded]
+FAILED tests/unit/test_verified_budget.py::test_over_limit_observation_is_preserved_and_blocks_additional_calls[usage1-provider_request_limit_exceeded]
+2 failed, 28 deselected in 0.31s
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____ test_observed_token_overrun_blocks_even_when_extra_usage_is_missing ______
+tests/unit/test_verified_budget.py:452: in test_observed_token_overrun_blocks_even_when_extra_usage_is_missing
+    assert outcome.blocked
+E   AssertionError: assert False
+E    +  where False = BudgetCallOutcome(run_record={'actions': [], 'artifacts': [{'artifact_id': 'price-38b52f8e-aecc-48a6-a38c-2118c6ab2991...eated_at': '2026-10-14T03:03:50.144399Z', 'completed_at': '2026-10-14T03:03:50.162691Z', 'round_no': 0}, blocked=False).blocked
+________ test_unrepresentable_actual_cost_is_retained_in_usage_evidence ________
+tests/unit/test_verified_budget.py:467: in test_unrepresentable_actual_cost_is_retained_in_usage_evidence
+    outcome = await RunBudget.start(store, run).call(0, price=p, input_limit=1, output_limit=0, provider=provider)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/verified_budget.py:420: in call
+    raise BudgetError("cost_reservation_limit")
+E   ddk.services.verified_budget.BudgetError: cost_reservation_limit
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_budget.py::test_observed_token_overrun_blocks_even_when_extra_usage_is_missing
+FAILED tests/unit/test_verified_budget.py::test_unrepresentable_actual_cost_is_retained_in_usage_evidence
+2 failed, 36 deselected in 0.23s
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____ test_observed_token_overrun_blocks_even_when_extra_usage_is_missing ______
+tests/unit/test_verified_budget.py:452: in test_observed_token_overrun_blocks_even_when_extra_usage_is_missing
+    assert outcome.blocked
+E   AssertionError: assert False
+E    +  where False = BudgetCallOutcome(run_record={'actions': [], 'artifacts': [{'artifact_id': 'price-c04c08f2-6c4a-4e3b-91d4-183d1e4bfa09...eated_at': '2026-10-14T03:03:59.025210Z', 'completed_at': '2026-10-14T03:03:59.045197Z', 'round_no': 0}, blocked=False).blocked
+________ test_unrepresentable_actual_cost_is_retained_in_usage_evidence ________
+tests/unit/test_verified_budget.py:471: in test_unrepresentable_actual_cost_is_retained_in_usage_evidence
+    assert observed["calculated_micro_usd"] == (maximum * maximum + 999_999) // 1_000_000
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'calculated_micro_usd'
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_budget.py::test_observed_token_overrun_blocks_even_when_extra_usage_is_missing
+FAILED tests/unit/test_verified_budget.py::test_unrepresentable_actual_cost_is_retained_in_usage_evidence
+2 failed, 36 deselected in 0.32s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_deadline_expired_during_history_audit_does_not_create_reservation ____
+tests/unit/test_verified_budget.py:651: in test_deadline_expired_during_history_audit_does_not_create_reservation
+    assert store.pending_run(run["run_id"])["model_calls"] == []
+E   AssertionError: assert [{'attempt_no...': None, ...}] == []
+E     
+E     Left contains one more item: {'attempt_no': 1, 'calculated_micro_usd': None, 'call_id': 'da369883-03a7-4c00-98bf-1ef53e2ae881', 'completed_at': None, ...}
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_budget.py::test_deadline_expired_during_history_audit_does_not_create_reservation
+1 failed, 42 deselected in 0.24s

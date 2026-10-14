@@ -1,0 +1,103 @@
+
+==================================== ERRORS ====================================
+_______ ERROR collecting tests/unit/adapters/test_verified_isolation.py ________
+ImportError while importing test module '/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/unit/adapters/test_verified_isolation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/adapters/test_verified_isolation.py:14: in <module>
+    from ddk.adapters.verified_isolation import (
+E   ModuleNotFoundError: No module named 'ddk.adapters.verified_isolation'
+=========================== short test summary info ============================
+ERROR tests/unit/adapters/test_verified_isolation.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.06s
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_________ test_inspect_accepts_docker_canonical_profile_and_network_id _________
+tests/unit/adapters/test_verified_isolation.py:365: in test_inspect_accepts_docker_canonical_profile_and_network_id
+    assert result.completed, result.reason
+E   AssertionError: container_policy_mismatch
+E   assert False
+E    +  where False = IsolationResult(completed=False, policy_verified=False, cleanup_complete=True, assurance='isolated', code='isolation_u...6ad6c09dee37fd380dc0bcd184e2ef96f45efd', 'app_id': 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'}).completed
+__________ test_checker_failure_is_observed_without_losing_its_report __________
+tests/unit/adapters/test_verified_isolation.py:379: in test_checker_failure_is_observed_without_losing_its_report
+    assert result.completed and result.returncode==1 and result.cleanup_complete
+E   AssertionError: assert (False)
+E    +  where False = IsolationResult(completed=False, policy_verified=True, cleanup_complete=True, assurance='isolated', code='isolation_un... 'cpu_quota': 100000, 'cpu_period': 100000}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).completed
+__________________ test_foreign_replacement_is_never_removed ___________________
+tests/unit/adapters/test_verified_isolation.py:399: in test_foreign_replacement_is_never_removed
+    assert replaced and not result.cleanup_complete
+E   AssertionError: assert (True and not True)
+E    +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='... 'cpu_quota': 100000, 'cpu_period': 100000}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).cleanup_complete
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_inspect_accepts_docker_canonical_profile_and_network_id
+FAILED tests/unit/adapters/test_verified_isolation.py::test_checker_failure_is_observed_without_losing_its_report
+FAILED tests/unit/adapters/test_verified_isolation.py::test_foreign_replacement_is_never_removed
+3 failed, 18 deselected in 0.07s
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______________ test_preflight_consumes_the_same_request_deadline _______________
+tests/unit/adapters/test_verified_isolation.py:441: in test_preflight_consumes_the_same_request_deadline
+    assert not result.completed and result.code=="isolation_unavailable"
+E   AssertionError: assert (not True)
+E    +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='... 'cpu_quota': 100000, 'cpu_period': 100000}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).completed
+_________________ test_cleanup_never_extends_its_total_budget __________________
+tests/unit/adapters/test_verified_isolation.py:461: in test_cleanup_never_extends_its_total_budget
+    assert not result.cleanup_complete and not result.completed
+E   AssertionError: assert (not True)
+E    +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='... 'cpu_quota': 100000, 'cpu_period': 100000}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).cleanup_complete
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_preflight_consumes_the_same_request_deadline
+FAILED tests/unit/adapters/test_verified_isolation.py::test_cleanup_never_extends_its_total_budget
+2 failed, 21 deselected in 1.13s
+F.FFF                                                                    [100%]
+=================================== FAILURES ===================================
+__________________ test_runtime_readonly_mounts_are_required ___________________
+tests/unit/adapters/test_verified_isolation.py:491: in test_runtime_readonly_mounts_are_required
+    assert not result.completed and result.cleanup_complete
+E   AssertionError: assert (not True)
+E    +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='...ts': {'/criteria': 'rw', '/results': 'rw'}}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).completed
+_________ test_plan_never_accepts_privileged_or_shell_control[change1] _________
+tests/unit/adapters/test_verified_isolation.py:498: in test_plan_never_accepts_privileged_or_shell_control
+    with pytest.raises(IsolationUnavailableError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE IsolationUnavailableError
+_________ test_plan_never_accepts_privileged_or_shell_control[change2] _________
+tests/unit/adapters/test_verified_isolation.py:498: in test_plan_never_accepts_privileged_or_shell_control
+    with pytest.raises(IsolationUnavailableError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE IsolationUnavailableError
+_________ test_plan_never_accepts_privileged_or_shell_control[change3] _________
+tests/unit/adapters/test_verified_isolation.py:498: in test_plan_never_accepts_privileged_or_shell_control
+    with pytest.raises(IsolationUnavailableError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE IsolationUnavailableError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_runtime_readonly_mounts_are_required
+FAILED tests/unit/adapters/test_verified_isolation.py::test_plan_never_accepts_privileged_or_shell_control[change1]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_plan_never_accepts_privileged_or_shell_control[change2]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_plan_never_accepts_privileged_or_shell_control[change3]
+4 failed, 1 passed, 23 deselected in 0.08s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_cancelled_cleanup_failure_retains_owned_ids _______________
+tests/unit/adapters/test_verified_isolation.py:534: in test_cancelled_cleanup_failure_retains_owned_ids
+    assert any('"cleanup_complete": false' in note and '"app_id"' in note for note in notes)
+E   assert False
+E    +  where False = any(<generator object test_cancelled_cleanup_failure_retains_owned_ids.<locals>.<genexpr> at 0x109457850>)
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_cancelled_cleanup_failure_retains_owned_ids
+1 failed, 30 deselected in 0.16s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_checker_output_limit_never_completes_execution ______________
+tests/unit/adapters/test_verified_isolation.py:582: in test_checker_output_limit_never_completes_execution
+    assert not result.completed and result.code=="isolation_unavailable"
+E   AssertionError: assert (not True)
+E    +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='...'nosuid', 'nodev'], 'shm_bytes': 268435456}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).completed
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_checker_output_limit_never_completes_execution
+1 failed, 31 deselected in 0.08s

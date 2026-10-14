@@ -1,0 +1,197 @@
+{
+  "files": {
+    "src/ddk/adapters/verified_browser.py": "d778092a0859f86d45a979922b6405164bd1b5aa79e9879c351faf48278d2b04",
+    "tests/unit/adapters/test_verified_browser.py": "971d105a1ab8d64f4bf21abd12332bbf397b49ac5d38951580a72ba8b8bf20ce",
+    "tests/e2e/test_verified_browser.py": "8f5d96ac9b7d5c9b2a655b5bd2fde4040cd7bc840b1f2b38b9a1c20e2474c1b1",
+    "docs/design/34-verified-change-design.md": "555500f9f733832ed031183c47ecb4f91ad148f4f1d80f5c4435ed1746dec2c6",
+    "docs/design/35-verified-change-storage.md": "6fac23179727d6a63a47a0488066b0310d9ed522e540248a399df5ac369c1730",
+    "docs/design/36-verified-change-verification.md": "c21ba527e91c54f74ff1799c4838f316b6b535e5a967c7a324b7e88319ef6724",
+    "docs/design/verified-change/contract.schema.json": "d63ad780df2fbcfa638a1afa83dc0a7fe1bb11fe3eb3e310fed9fd6eae179e1f"
+  },
+  "verification_command": ".venv/bin/pytest tests/unit/adapters/test_verified_browser.py tests/e2e/test_verified_browser.py -q --basetemp=.planning/phases/08-verified-change/evidence/verified-browser-final-3d7e4028",
+  "passed": 32,
+  "unit_passed": 21,
+  "headless_e2e_passed": 11,
+  "headless": true,
+  "chromium_sandbox": true,
+  "assurance_tested": "trusted-local",
+  "isolated_execution_tested": false,
+  "same_origin_http_redirect": "redirect_unavailable",
+  "external_http_redirect": "blocked before following",
+  "external_collector_requests": 0,
+  "sources": [
+    "https://playwright.dev/python/docs/api/class-route#route-fetch",
+    "https://playwright.dev/python/docs/api/class-browsercontext#browser-context-route",
+    "https://playwright.dev/python/docs/api/class-websocketroute#web-socket-route-close"
+  ],
+  "artifacts": {
+    "test_steps_share_context_but_d0/first/4737d29e23774372b1ab21df550b933a.json": {
+      "sha256": "cbdd5cf6fb59398261d8f17d663232a3197a3f3b4ec7aafbc3ea7988af78321b",
+      "size_bytes": 364,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_steps_share_context_but_d0/first/15d41fb639cb4515ae9c8228b69a92c7.png": {
+      "sha256": "8fbd31684119788db4a4abbaaaf908307e173cc5af6132832f793afbaf20a438",
+      "size_bytes": 773,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_steps_share_context_but_d0/second/10eba1e84c8f41f8aa12f21744fab2ed.json": {
+      "sha256": "a51bb8a5fffb3bf7e668405143b76cc815c093a8def7a43ae4622cbdf3931126",
+      "size_bytes": 272,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_steps_share_context_but_d0/second/55d99c9374264552a64f184c0f7bf53d.png": {
+      "sha256": "244c843d5b4c65e8e9972775f9a2175141229620582fc0d048120588e16df969",
+      "size_bytes": 986,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied1/e155010f735d4b0c957be246acaddfec.json": {
+      "sha256": "a17146c32e5ac5bfbf33e30323365d80cc33836341091ac51dc84abb629b270c",
+      "size_bytes": 387,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied1/2a50ed5049524f4da922acbf74768816.png": {
+      "sha256": "69a95ffe071637e24c6c78a3f8522fbba8b9d633f7694f0f46ee17b6758abc48",
+      "size_bytes": 3055,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied0/64b8d9a26e224c1b8da0bfdf7c5cbc1a.png": {
+      "sha256": "1ade145243d85df0bca6590dee44606dbda8df2f892f3cf505b0dd506c384806",
+      "size_bytes": 3823,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied0/ed12cc625fc1422f9e75e94c0126279a.json": {
+      "sha256": "284ae96f122185ebd3855983a093145dc8ab7a683843d73740a1c76d23c0a00b",
+      "size_bytes": 1244,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied2/115754f74a87488698fe565b00781379.png": {
+      "sha256": "1d12285f338ee0a58f62d9e017c8483c8a4bb3787fa9e901e2365f854c5cc405",
+      "size_bytes": 2514,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied2/acfbd6ae730442a4b3eeac5deb8ced39.json": {
+      "sha256": "53e934482f0282f210c06b103984e8917d1ea712f9b0536bdcf427243d2fb430",
+      "size_bytes": 385,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied3/52c04f3daaa54b419c1e28447b5ad06a.png": {
+      "sha256": "b1fe1857395fb82faf1fecf3ef8c864c93f731da5dbe191f360ac9f996edc214",
+      "size_bytes": 3265,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied3/1d0e808b36b04892befcc0f685533808.json": {
+      "sha256": "040a9eb4b3483471b0ea7e0687a38c3283339d98f237f77cb9f5f4129eca397f",
+      "size_bytes": 459,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied4/a5bfe6a4b3c349ef9729962ff2c1714c.png": {
+      "sha256": "e712e5b35b91248ad974412c298423323d42b2cbd6f696002838afbaac767089",
+      "size_bytes": 1955,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_runtime_errors_and_denied4/cb9e065d37144e608d7d0fec87538fd1.json": {
+      "sha256": "b276cecb1bba139a3cff06ed6e19de1d82647aa75c5800091b7bc10053e4ca04",
+      "size_bytes": 434,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_rgb_requires_approved_ref1/cf05b8477d824e3590b365a47f2477a3.png": {
+      "sha256": "752511c793509c56ef6f0faf96003c6fa71e19f6ec78b6e8a2eda1b7a2fac59a",
+      "size_bytes": 651,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_rgb_requires_approved_ref1/7fb23ca0dac740f081e96515836bfdd1.png": {
+      "sha256": "7063f0faeb9ccf29385b4ed72426c4f553658a4c10d2c6413d7cc7af7f6f58cd",
+      "size_bytes": 265,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_rgb_requires_approved_ref1/c368f7140d6943089056de5aa09dcd7b.json": {
+      "sha256": "3c848947a6951ec39a05d5d20623d043de48925cee5d192b489c2a85bdf379cf",
+      "size_bytes": 333,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_rgb_requires_approved_ref0/7c02809002b94d7c8aa847a3c20a6f90.json": {
+      "sha256": "41cc2e85074ca1d4c943088e1ad204cb3008540783fff7372d4ac75cce457b4a",
+      "size_bytes": 393,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_rgb_requires_approved_ref0/51fb7c4ae8d5412bba63a78417eb19a9.png": {
+      "sha256": "804f446fb569923cfd365edbcef5859caa6f45a2913922cdd8a85673e0a05d56",
+      "size_bytes": 663,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_rgb_requires_approved_ref0/4e3710b74803452597edb55cb34d7af8.png": {
+      "sha256": "752511c793509c56ef6f0faf96003c6fa71e19f6ec78b6e8a2eda1b7a2fac59a",
+      "size_bytes": 651,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_deadline_and_cancellation0/cancel/e5574920c5b2400eb8527556736352d4.json": {
+      "sha256": "c7a2fc91cbe9acaf2bcb0f5f7003ec150e021a47c6bdaf556e1570d965a204bc",
+      "size_bytes": 259,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_deadline_and_cancellation0/timeout/58e94c7336054d798bf43aa7eeebc157.json": {
+      "sha256": "cf9987d4d164341003660346f888948237bfe1bf06f9525cb97e2f4c87d59d06",
+      "size_bytes": 287,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_internal_redirect_is_expl0/15bc25895d124bfcae64d29326cd6e76.json": {
+      "sha256": "92f8241e4389dad147106af7dc938529b6f76328237bf00a1f03958abc211c90",
+      "size_bytes": 650,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    },
+    "test_internal_redirect_is_expl1/01d2fa2398be499e89f22842c0465f05.json": {
+      "sha256": "245bafc21122eb632b346baa5d18bcf8fd7801bdc9531fec470943f172146291",
+      "size_bytes": 611,
+      "mode": 384,
+      "sensitive": true,
+      "public_export_allowed": false
+    }
+  }
+}

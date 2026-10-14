@@ -1,0 +1,300 @@
+........................................FFFFFF...FFFFFFF                 [100%]
+=================================== FAILURES ===================================
+_ test_execution_or_input_unavailable_returns_two_with_original_blocked_record[isolation_unavailable] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_execution_or_input_unavai0')
+service = <tests.unit.test_cli_verified.Service object at 0x10d985790>
+code = 'isolation_unavailable'
+
+    @pytest.mark.parametrize("code", [
+        "isolation_unavailable", "environment_gap", "ambiguous_baseline", "baseline_mismatch",
+        "ambiguous_change_requirements", "invalid_change_requirements",
+    ])
+    def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(tmp_path, service, code):
+        service.result.update(decision="blocked", actions=[{"code": code}])
+        result = runner.invoke(app, verify_args(tmp_path))
+>       assert result.exit_code == 2, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": "blocked", "assurance": "isolated", "actions": [{"code": "isolation_unavailable"}]}
+E         service progress
+E         
+E       assert 1 == 2
+E        +  where 1 = <Result SystemExit(1)>.exit_code
+
+tests/unit/test_cli_verified.py:435: AssertionError
+_ test_execution_or_input_unavailable_returns_two_with_original_blocked_record[environment_gap] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_execution_or_input_unavai1')
+service = <tests.unit.test_cli_verified.Service object at 0x10d929100>
+code = 'environment_gap'
+
+    @pytest.mark.parametrize("code", [
+        "isolation_unavailable", "environment_gap", "ambiguous_baseline", "baseline_mismatch",
+        "ambiguous_change_requirements", "invalid_change_requirements",
+    ])
+    def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(tmp_path, service, code):
+        service.result.update(decision="blocked", actions=[{"code": code}])
+        result = runner.invoke(app, verify_args(tmp_path))
+>       assert result.exit_code == 2, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": "blocked", "assurance": "isolated", "actions": [{"code": "environment_gap"}]}
+E         service progress
+E         
+E       assert 1 == 2
+E        +  where 1 = <Result SystemExit(1)>.exit_code
+
+tests/unit/test_cli_verified.py:435: AssertionError
+_ test_execution_or_input_unavailable_returns_two_with_original_blocked_record[ambiguous_baseline] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_execution_or_input_unavai2')
+service = <tests.unit.test_cli_verified.Service object at 0x10da434d0>
+code = 'ambiguous_baseline'
+
+    @pytest.mark.parametrize("code", [
+        "isolation_unavailable", "environment_gap", "ambiguous_baseline", "baseline_mismatch",
+        "ambiguous_change_requirements", "invalid_change_requirements",
+    ])
+    def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(tmp_path, service, code):
+        service.result.update(decision="blocked", actions=[{"code": code}])
+        result = runner.invoke(app, verify_args(tmp_path))
+>       assert result.exit_code == 2, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": "blocked", "assurance": "isolated", "actions": [{"code": "ambiguous_baseline"}]}
+E         service progress
+E         
+E       assert 1 == 2
+E        +  where 1 = <Result SystemExit(1)>.exit_code
+
+tests/unit/test_cli_verified.py:435: AssertionError
+_ test_execution_or_input_unavailable_returns_two_with_original_blocked_record[baseline_mismatch] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_execution_or_input_unavai3')
+service = <tests.unit.test_cli_verified.Service object at 0x10da481a0>
+code = 'baseline_mismatch'
+
+    @pytest.mark.parametrize("code", [
+        "isolation_unavailable", "environment_gap", "ambiguous_baseline", "baseline_mismatch",
+        "ambiguous_change_requirements", "invalid_change_requirements",
+    ])
+    def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(tmp_path, service, code):
+        service.result.update(decision="blocked", actions=[{"code": code}])
+        result = runner.invoke(app, verify_args(tmp_path))
+>       assert result.exit_code == 2, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": "blocked", "assurance": "isolated", "actions": [{"code": "baseline_mismatch"}]}
+E         service progress
+E         
+E       assert 1 == 2
+E        +  where 1 = <Result SystemExit(1)>.exit_code
+
+tests/unit/test_cli_verified.py:435: AssertionError
+_ test_execution_or_input_unavailable_returns_two_with_original_blocked_record[ambiguous_change_requirements] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_execution_or_input_unavai4')
+service = <tests.unit.test_cli_verified.Service object at 0x10da67680>
+code = 'ambiguous_change_requirements'
+
+    @pytest.mark.parametrize("code", [
+        "isolation_unavailable", "environment_gap", "ambiguous_baseline", "baseline_mismatch",
+        "ambiguous_change_requirements", "invalid_change_requirements",
+    ])
+    def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(tmp_path, service, code):
+        service.result.update(decision="blocked", actions=[{"code": code}])
+        result = runner.invoke(app, verify_args(tmp_path))
+>       assert result.exit_code == 2, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": "blocked", "assurance": "isolated", "actions": [{"code": "ambiguous_change_requirements"}]}
+E         service progress
+E         
+E       assert 1 == 2
+E        +  where 1 = <Result SystemExit(1)>.exit_code
+
+tests/unit/test_cli_verified.py:435: AssertionError
+_ test_execution_or_input_unavailable_returns_two_with_original_blocked_record[invalid_change_requirements] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_execution_or_input_unavai5')
+service = <tests.unit.test_cli_verified.Service object at 0x10da45970>
+code = 'invalid_change_requirements'
+
+    @pytest.mark.parametrize("code", [
+        "isolation_unavailable", "environment_gap", "ambiguous_baseline", "baseline_mismatch",
+        "ambiguous_change_requirements", "invalid_change_requirements",
+    ])
+    def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(tmp_path, service, code):
+        service.result.update(decision="blocked", actions=[{"code": code}])
+        result = runner.invoke(app, verify_args(tmp_path))
+>       assert result.exit_code == 2, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": "blocked", "assurance": "isolated", "actions": [{"code": "invalid_change_requirements"}]}
+E         service progress
+E         
+E       assert 1 == 2
+E        +  where 1 = <Result SystemExit(1)>.exit_code
+
+tests/unit/test_cli_verified.py:435: AssertionError
+____ test_verify_error_retains_selected_run_id_for_status[False-error0-130] ____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_verify_error_retains_sele0')
+service = <tests.unit.test_cli_verified.Service object at 0x10da1b320>
+error = CancelledError(), exit_code = 130, explicit_id = False
+
+    @pytest.mark.parametrize(("error", "exit_code"), [
+        (asyncio.CancelledError(), 130), (KeyboardInterrupt(), 130), (ValueError("invalid_request"), 2),
+    ])
+    @pytest.mark.parametrize("explicit_id", [False, True])
+    def test_verify_error_retains_selected_run_id_for_status(tmp_path, service, error, exit_code, explicit_id):
+        service.error = error
+        args = verify_args(tmp_path)
+        if not explicit_id:
+            offset = args.index("--run-id")
+            del args[offset:offset + 2]
+        result = runner.invoke(app, args)
+        assert result.exit_code == exit_code, result.output
+        payload = json.loads(result.stdout)
+>       assert payload["run_id"] == service.calls[0][1]["run_id"]
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:460: KeyError
+____ test_verify_error_retains_selected_run_id_for_status[False-error1-130] ____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_verify_error_retains_sele1')
+service = <tests.unit.test_cli_verified.Service object at 0x10da1b4d0>
+error = KeyboardInterrupt(), exit_code = 130, explicit_id = False
+
+    @pytest.mark.parametrize(("error", "exit_code"), [
+        (asyncio.CancelledError(), 130), (KeyboardInterrupt(), 130), (ValueError("invalid_request"), 2),
+    ])
+    @pytest.mark.parametrize("explicit_id", [False, True])
+    def test_verify_error_retains_selected_run_id_for_status(tmp_path, service, error, exit_code, explicit_id):
+        service.error = error
+        args = verify_args(tmp_path)
+        if not explicit_id:
+            offset = args.index("--run-id")
+            del args[offset:offset + 2]
+        result = runner.invoke(app, args)
+        assert result.exit_code == exit_code, result.output
+        payload = json.loads(result.stdout)
+>       assert payload["run_id"] == service.calls[0][1]["run_id"]
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:460: KeyError
+_____ test_verify_error_retains_selected_run_id_for_status[False-error2-2] _____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_verify_error_retains_sele2')
+service = <tests.unit.test_cli_verified.Service object at 0x10da456d0>
+error = ValueError('invalid_request'), exit_code = 2, explicit_id = False
+
+    @pytest.mark.parametrize(("error", "exit_code"), [
+        (asyncio.CancelledError(), 130), (KeyboardInterrupt(), 130), (ValueError("invalid_request"), 2),
+    ])
+    @pytest.mark.parametrize("explicit_id", [False, True])
+    def test_verify_error_retains_selected_run_id_for_status(tmp_path, service, error, exit_code, explicit_id):
+        service.error = error
+        args = verify_args(tmp_path)
+        if not explicit_id:
+            offset = args.index("--run-id")
+            del args[offset:offset + 2]
+        result = runner.invoke(app, args)
+        assert result.exit_code == exit_code, result.output
+        payload = json.loads(result.stdout)
+>       assert payload["run_id"] == service.calls[0][1]["run_id"]
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:460: KeyError
+____ test_verify_error_retains_selected_run_id_for_status[True-error0-130] _____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_verify_error_retains_sele3')
+service = <tests.unit.test_cli_verified.Service object at 0x10da4ae10>
+error = CancelledError(), exit_code = 130, explicit_id = True
+
+    @pytest.mark.parametrize(("error", "exit_code"), [
+        (asyncio.CancelledError(), 130), (KeyboardInterrupt(), 130), (ValueError("invalid_request"), 2),
+    ])
+    @pytest.mark.parametrize("explicit_id", [False, True])
+    def test_verify_error_retains_selected_run_id_for_status(tmp_path, service, error, exit_code, explicit_id):
+        service.error = error
+        args = verify_args(tmp_path)
+        if not explicit_id:
+            offset = args.index("--run-id")
+            del args[offset:offset + 2]
+        result = runner.invoke(app, args)
+        assert result.exit_code == exit_code, result.output
+        payload = json.loads(result.stdout)
+>       assert payload["run_id"] == service.calls[0][1]["run_id"]
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:460: KeyError
+____ test_verify_error_retains_selected_run_id_for_status[True-error1-130] _____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_verify_error_retains_sele4')
+service = <tests.unit.test_cli_verified.Service object at 0x10da592e0>
+error = KeyboardInterrupt(), exit_code = 130, explicit_id = True
+
+    @pytest.mark.parametrize(("error", "exit_code"), [
+        (asyncio.CancelledError(), 130), (KeyboardInterrupt(), 130), (ValueError("invalid_request"), 2),
+    ])
+    @pytest.mark.parametrize("explicit_id", [False, True])
+    def test_verify_error_retains_selected_run_id_for_status(tmp_path, service, error, exit_code, explicit_id):
+        service.error = error
+        args = verify_args(tmp_path)
+        if not explicit_id:
+            offset = args.index("--run-id")
+            del args[offset:offset + 2]
+        result = runner.invoke(app, args)
+        assert result.exit_code == exit_code, result.output
+        payload = json.loads(result.stdout)
+>       assert payload["run_id"] == service.calls[0][1]["run_id"]
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:460: KeyError
+_____ test_verify_error_retains_selected_run_id_for_status[True-error2-2] ______
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-360/test_verify_error_retains_sele5')
+service = <tests.unit.test_cli_verified.Service object at 0x10da41f10>
+error = ValueError('invalid_request'), exit_code = 2, explicit_id = True
+
+    @pytest.mark.parametrize(("error", "exit_code"), [
+        (asyncio.CancelledError(), 130), (KeyboardInterrupt(), 130), (ValueError("invalid_request"), 2),
+    ])
+    @pytest.mark.parametrize("explicit_id", [False, True])
+    def test_verify_error_retains_selected_run_id_for_status(tmp_path, service, error, exit_code, explicit_id):
+        service.error = error
+        args = verify_args(tmp_path)
+        if not explicit_id:
+            offset = args.index("--run-id")
+            del args[offset:offset + 2]
+        result = runner.invoke(app, args)
+        assert result.exit_code == exit_code, result.output
+        payload = json.loads(result.stdout)
+>       assert payload["run_id"] == service.calls[0][1]["run_id"]
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:460: KeyError
+_______________ test_status_input_error_retains_requested_run_id _______________
+
+service = <tests.unit.test_cli_verified.Service object at 0x10db0ede0>
+
+    def test_status_input_error_retains_requested_run_id(service):
+        service.error = FileNotFoundError("missing_run")
+        result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
+        assert result.exit_code == 2, result.output
+>       assert json.loads(result.stdout)["run_id"] == RUN_ID
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/unit/test_cli_verified.py:469: KeyError
+=========================== short test summary info ============================
+FAILED tests/unit/test_cli_verified.py::test_execution_or_input_unavailable_returns_two_with_original_blocked_record[isolation_unavailable]
+FAILED tests/unit/test_cli_verified.py::test_execution_or_input_unavailable_returns_two_with_original_blocked_record[environment_gap]
+FAILED tests/unit/test_cli_verified.py::test_execution_or_input_unavailable_returns_two_with_original_blocked_record[ambiguous_baseline]
+FAILED tests/unit/test_cli_verified.py::test_execution_or_input_unavailable_returns_two_with_original_blocked_record[baseline_mismatch]
+FAILED tests/unit/test_cli_verified.py::test_execution_or_input_unavailable_returns_two_with_original_blocked_record[ambiguous_change_requirements]
+FAILED tests/unit/test_cli_verified.py::test_execution_or_input_unavailable_returns_two_with_original_blocked_record[invalid_change_requirements]
+FAILED tests/unit/test_cli_verified.py::test_verify_error_retains_selected_run_id_for_status[False-error0-130]
+FAILED tests/unit/test_cli_verified.py::test_verify_error_retains_selected_run_id_for_status[False-error1-130]
+FAILED tests/unit/test_cli_verified.py::test_verify_error_retains_selected_run_id_for_status[False-error2-2]
+FAILED tests/unit/test_cli_verified.py::test_verify_error_retains_selected_run_id_for_status[True-error0-130]
+FAILED tests/unit/test_cli_verified.py::test_verify_error_retains_selected_run_id_for_status[True-error1-130]
+FAILED tests/unit/test_cli_verified.py::test_verify_error_retains_selected_run_id_for_status[True-error2-2]
+FAILED tests/unit/test_cli_verified.py::test_status_input_error_retains_requested_run_id
+13 failed, 43 passed in 0.51s

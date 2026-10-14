@@ -1,0 +1,10 @@
+{
+  "evaluated_source_claim": "4ae49bd5d2186d472a9fb58195d0058d4b994e4a3e108e4028b41428d4182863",
+  "approved_source": "4ae49bd5d2186d472a9fb58195d0058d4b994e4a3e108e4028b41428d4182863",
+  "status": "passed",
+  "cleanup_complete": true,
+  "command_output": "MUTATED-COPY\n\n",
+  "original_content": "<h1>Original</h1>",
+  "source_sha256": "2509d4167e535e1b3e651ca39f39f4c19015ef454aa55ad0cad19df3f5e42f9a",
+  "limitation": "Evaluator outcome probe; full ready engine exploit not executed."
+}

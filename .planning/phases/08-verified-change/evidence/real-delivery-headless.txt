@@ -1,0 +1,21 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+______ test_wrong_looking_page_is_repaired_from_the_design_and_certified _______
+
+repo = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-329/test_wrong_looking_page_is_rep0/repo')
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-329/test_wrong_looking_page_is_rep0')
+
+    async def test_wrong_looking_page_is_repaired_from_the_design_and_certified(
+        repo: Path, tmp_path: Path
+    ) -> None:
+        design = await _render_design(repo, tmp_path / "design")
+>       assert design.is_file(), "the design page could not be rendered"
+E       AssertionError: the design page could not be rendered
+E       assert False
+E        +  where False = is_file()
+E        +    where is_file = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-329/test_wrong_looking_page_is_rep0/design/generated.png').is_file
+
+tests/e2e/test_visual_loop.py:190: AssertionError
+=========================== short test summary info ============================
+FAILED tests/e2e/test_visual_loop.py::test_wrong_looking_page_is_repaired_from_the_design_and_certified
+1 failed, 1 passed in 23.20s

@@ -1,0 +1,256 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_______ test_bad_raw_frame_closes_transport_without_dispatch[duplicate] ________
+
+tmp_path = PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-raw-red-run/test_bad_raw_frame_closes_tran0')
+fault = 'duplicate'
+
+    @pytest.mark.parametrize(
+        "fault", ["duplicate", "oversized", "multibyte_oversized", "invalid_utf8", "depth", "nan"]
+    )
+    async def test_bad_raw_frame_closes_transport_without_dispatch(tmp_path, fault):
+        env = dict(os.environ)
+        env.update(
+            PYTHONPATH=os.pathsep.join([str(ROOT / "src"), str(ROOT)]),
+            PYTHONDONTWRITEBYTECODE="1",
+            DDK_ANTHROPIC_API_KEY="",
+            ANTHROPIC_API_KEY="",
+        )
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "ddk",
+            "serve",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=ROOT,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(json.dumps(INITIALIZE).encode() + b"\n")
+            await process.stdin.drain()
+            initialized = await asyncio.wait_for(process.stdout.readline(), 5)
+            assert json.loads(initialized)["result"]["protocolVersion"] == "2025-11-25"
+            payload = b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n' + bad_frame(fault)
+            stdout, stderr = await asyncio.wait_for(process.communicate(payload), 8)
+            observed = [json.loads(line) for line in stdout.splitlines() if line]
+>           assert not any(message.get("id") == 999 for message in observed)
+E           assert not True
+E            +  where True = any(<generator object test_bad_raw_frame_closes_transport_without_dispatch.<locals>.<genexpr> at 0x10d326740>)
+
+tests/integration/test_mcp_raw_stdio.py:80: AssertionError
+_______ test_bad_raw_frame_closes_transport_without_dispatch[oversized] ________
+
+tmp_path = PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-raw-red-run/test_bad_raw_frame_closes_tran1')
+fault = 'oversized'
+
+    @pytest.mark.parametrize(
+        "fault", ["duplicate", "oversized", "multibyte_oversized", "invalid_utf8", "depth", "nan"]
+    )
+    async def test_bad_raw_frame_closes_transport_without_dispatch(tmp_path, fault):
+        env = dict(os.environ)
+        env.update(
+            PYTHONPATH=os.pathsep.join([str(ROOT / "src"), str(ROOT)]),
+            PYTHONDONTWRITEBYTECODE="1",
+            DDK_ANTHROPIC_API_KEY="",
+            ANTHROPIC_API_KEY="",
+        )
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "ddk",
+            "serve",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=ROOT,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(json.dumps(INITIALIZE).encode() + b"\n")
+            await process.stdin.drain()
+            initialized = await asyncio.wait_for(process.stdout.readline(), 5)
+            assert json.loads(initialized)["result"]["protocolVersion"] == "2025-11-25"
+            payload = b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n' + bad_frame(fault)
+            stdout, stderr = await asyncio.wait_for(process.communicate(payload), 8)
+            observed = [json.loads(line) for line in stdout.splitlines() if line]
+>           assert not any(message.get("id") == 999 for message in observed)
+E           assert not True
+E            +  where True = any(<generator object test_bad_raw_frame_closes_transport_without_dispatch.<locals>.<genexpr> at 0x10d3279f0>)
+
+tests/integration/test_mcp_raw_stdio.py:80: AssertionError
+__ test_bad_raw_frame_closes_transport_without_dispatch[multibyte_oversized] ___
+
+tmp_path = PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-raw-red-run/test_bad_raw_frame_closes_tran2')
+fault = 'multibyte_oversized'
+
+    @pytest.mark.parametrize(
+        "fault", ["duplicate", "oversized", "multibyte_oversized", "invalid_utf8", "depth", "nan"]
+    )
+    async def test_bad_raw_frame_closes_transport_without_dispatch(tmp_path, fault):
+        env = dict(os.environ)
+        env.update(
+            PYTHONPATH=os.pathsep.join([str(ROOT / "src"), str(ROOT)]),
+            PYTHONDONTWRITEBYTECODE="1",
+            DDK_ANTHROPIC_API_KEY="",
+            ANTHROPIC_API_KEY="",
+        )
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "ddk",
+            "serve",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=ROOT,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(json.dumps(INITIALIZE).encode() + b"\n")
+            await process.stdin.drain()
+            initialized = await asyncio.wait_for(process.stdout.readline(), 5)
+            assert json.loads(initialized)["result"]["protocolVersion"] == "2025-11-25"
+            payload = b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n' + bad_frame(fault)
+            stdout, stderr = await asyncio.wait_for(process.communicate(payload), 8)
+            observed = [json.loads(line) for line in stdout.splitlines() if line]
+>           assert not any(message.get("id") == 999 for message in observed)
+E           assert not True
+E            +  where True = any(<generator object test_bad_raw_frame_closes_transport_without_dispatch.<locals>.<genexpr> at 0x10d568790>)
+
+tests/integration/test_mcp_raw_stdio.py:80: AssertionError
+______ test_bad_raw_frame_closes_transport_without_dispatch[invalid_utf8] ______
+
+tmp_path = PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-raw-red-run/test_bad_raw_frame_closes_tran3')
+fault = 'invalid_utf8'
+
+    @pytest.mark.parametrize(
+        "fault", ["duplicate", "oversized", "multibyte_oversized", "invalid_utf8", "depth", "nan"]
+    )
+    async def test_bad_raw_frame_closes_transport_without_dispatch(tmp_path, fault):
+        env = dict(os.environ)
+        env.update(
+            PYTHONPATH=os.pathsep.join([str(ROOT / "src"), str(ROOT)]),
+            PYTHONDONTWRITEBYTECODE="1",
+            DDK_ANTHROPIC_API_KEY="",
+            ANTHROPIC_API_KEY="",
+        )
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "ddk",
+            "serve",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=ROOT,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(json.dumps(INITIALIZE).encode() + b"\n")
+            await process.stdin.drain()
+            initialized = await asyncio.wait_for(process.stdout.readline(), 5)
+            assert json.loads(initialized)["result"]["protocolVersion"] == "2025-11-25"
+            payload = b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n' + bad_frame(fault)
+            stdout, stderr = await asyncio.wait_for(process.communicate(payload), 8)
+            observed = [json.loads(line) for line in stdout.splitlines() if line]
+>           assert not any(message.get("id") == 999 for message in observed)
+E           assert not True
+E            +  where True = any(<generator object test_bad_raw_frame_closes_transport_without_dispatch.<locals>.<genexpr> at 0x10d569cb0>)
+
+tests/integration/test_mcp_raw_stdio.py:80: AssertionError
+_________ test_bad_raw_frame_closes_transport_without_dispatch[depth] __________
+
+tmp_path = PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-raw-red-run/test_bad_raw_frame_closes_tran4')
+fault = 'depth'
+
+    @pytest.mark.parametrize(
+        "fault", ["duplicate", "oversized", "multibyte_oversized", "invalid_utf8", "depth", "nan"]
+    )
+    async def test_bad_raw_frame_closes_transport_without_dispatch(tmp_path, fault):
+        env = dict(os.environ)
+        env.update(
+            PYTHONPATH=os.pathsep.join([str(ROOT / "src"), str(ROOT)]),
+            PYTHONDONTWRITEBYTECODE="1",
+            DDK_ANTHROPIC_API_KEY="",
+            ANTHROPIC_API_KEY="",
+        )
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "ddk",
+            "serve",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=ROOT,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(json.dumps(INITIALIZE).encode() + b"\n")
+            await process.stdin.drain()
+            initialized = await asyncio.wait_for(process.stdout.readline(), 5)
+            assert json.loads(initialized)["result"]["protocolVersion"] == "2025-11-25"
+            payload = b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n' + bad_frame(fault)
+            stdout, stderr = await asyncio.wait_for(process.communicate(payload), 8)
+            observed = [json.loads(line) for line in stdout.splitlines() if line]
+>           assert not any(message.get("id") == 999 for message in observed)
+E           assert not True
+E            +  where True = any(<generator object test_bad_raw_frame_closes_transport_without_dispatch.<locals>.<genexpr> at 0x10d56b780>)
+
+tests/integration/test_mcp_raw_stdio.py:80: AssertionError
+__________ test_bad_raw_frame_closes_transport_without_dispatch[nan] ___________
+
+tmp_path = PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-raw-red-run/test_bad_raw_frame_closes_tran5')
+fault = 'nan'
+
+    @pytest.mark.parametrize(
+        "fault", ["duplicate", "oversized", "multibyte_oversized", "invalid_utf8", "depth", "nan"]
+    )
+    async def test_bad_raw_frame_closes_transport_without_dispatch(tmp_path, fault):
+        env = dict(os.environ)
+        env.update(
+            PYTHONPATH=os.pathsep.join([str(ROOT / "src"), str(ROOT)]),
+            PYTHONDONTWRITEBYTECODE="1",
+            DDK_ANTHROPIC_API_KEY="",
+            ANTHROPIC_API_KEY="",
+        )
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "ddk",
+            "serve",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+            cwd=ROOT,
+        )
+        assert process.stdin is not None and process.stdout is not None
+        try:
+            process.stdin.write(json.dumps(INITIALIZE).encode() + b"\n")
+            await process.stdin.drain()
+            initialized = await asyncio.wait_for(process.stdout.readline(), 5)
+            assert json.loads(initialized)["result"]["protocolVersion"] == "2025-11-25"
+            payload = b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n' + bad_frame(fault)
+            stdout, stderr = await asyncio.wait_for(process.communicate(payload), 8)
+            observed = [json.loads(line) for line in stdout.splitlines() if line]
+>           assert not any(message.get("id") == 999 for message in observed)
+E           assert not True
+E            +  where True = any(<generator object test_bad_raw_frame_closes_transport_without_dispatch.<locals>.<genexpr> at 0x10d326f60>)
+
+tests/integration/test_mcp_raw_stdio.py:80: AssertionError
+=========================== short test summary info ============================
+FAILED tests/integration/test_mcp_raw_stdio.py::test_bad_raw_frame_closes_transport_without_dispatch[duplicate]
+FAILED tests/integration/test_mcp_raw_stdio.py::test_bad_raw_frame_closes_transport_without_dispatch[oversized]
+FAILED tests/integration/test_mcp_raw_stdio.py::test_bad_raw_frame_closes_transport_without_dispatch[multibyte_oversized]
+FAILED tests/integration/test_mcp_raw_stdio.py::test_bad_raw_frame_closes_transport_without_dispatch[invalid_utf8]
+FAILED tests/integration/test_mcp_raw_stdio.py::test_bad_raw_frame_closes_transport_without_dispatch[depth]
+FAILED tests/integration/test_mcp_raw_stdio.py::test_bad_raw_frame_closes_transport_without_dispatch[nan]
+6 failed in 2.41s

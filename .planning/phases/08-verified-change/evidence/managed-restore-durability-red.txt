@@ -1,0 +1,122 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_restore_directory_sync_failure_cannot_be_acknowledged_by_matching_bytes[update] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-321/test_restore_directory_sync_fa0')
+restored_operation = 'update'
+
+    @pytest.mark.parametrize("restored_operation", ["update", "create"])
+    def test_restore_directory_sync_failure_cannot_be_acknowledged_by_matching_bytes(
+        tmp_path, restored_operation
+    ):
+        import os
+        import stat
+    
+        from ddk.services import artifact_applier as module
+    
+        store, run = ready_store(tmp_path, True, create_first=restored_operation == "create")
+        original_write = module.atomic_write
+        original_sync = os.fsync
+        failed = False
+        faults = []
+    
+        def fail_write(path, payload, *args, **kwargs):
+            nonlocal failed
+            failed_path = "src/App.tsx" if restored_operation == "create" else "src/New.tsx"
+            if path == tmp_path / failed_path:
+                failed = True
+                raise OSError("injected application failure")
+            return original_write(path, payload, *args, **kwargs)
+    
+        def fail_sync(descriptor):
+            info = os.fstat(descriptor)
+            restored = (
+                (tmp_path / "src/App.tsx").read_bytes() == b"old\n"
+                if restored_operation == "update"
+                else not (tmp_path / "src/New.tsx").exists()
+            )
+            if (
+                failed
+                and restored
+                and stat.S_ISDIR(info.st_mode)
+                and info.st_ino == (tmp_path / "src").stat().st_ino
+            ):
+                faults.append("source directory sync failure")
+                raise OSError(faults[-1])
+            return original_sync(descriptor)
+    
+        with (
+            patch.object(module, "atomic_write", side_effect=fail_write),
+            patch("os.fsync", side_effect=fail_sync),
+        ):
+            result = apply(store, run)
+        assert faults
+>       assert result["state"] == "unknown"
+E       AssertionError: assert 'rolled_back' == 'unknown'
+E         
+E         - unknown
+E         + rolled_back
+
+tests/unit/services/test_managed_application.py:463: AssertionError
+_ test_restore_directory_sync_failure_cannot_be_acknowledged_by_matching_bytes[create] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-321/test_restore_directory_sync_fa1')
+restored_operation = 'create'
+
+    @pytest.mark.parametrize("restored_operation", ["update", "create"])
+    def test_restore_directory_sync_failure_cannot_be_acknowledged_by_matching_bytes(
+        tmp_path, restored_operation
+    ):
+        import os
+        import stat
+    
+        from ddk.services import artifact_applier as module
+    
+        store, run = ready_store(tmp_path, True, create_first=restored_operation == "create")
+        original_write = module.atomic_write
+        original_sync = os.fsync
+        failed = False
+        faults = []
+    
+        def fail_write(path, payload, *args, **kwargs):
+            nonlocal failed
+            failed_path = "src/App.tsx" if restored_operation == "create" else "src/New.tsx"
+            if path == tmp_path / failed_path:
+                failed = True
+                raise OSError("injected application failure")
+            return original_write(path, payload, *args, **kwargs)
+    
+        def fail_sync(descriptor):
+            info = os.fstat(descriptor)
+            restored = (
+                (tmp_path / "src/App.tsx").read_bytes() == b"old\n"
+                if restored_operation == "update"
+                else not (tmp_path / "src/New.tsx").exists()
+            )
+            if (
+                failed
+                and restored
+                and stat.S_ISDIR(info.st_mode)
+                and info.st_ino == (tmp_path / "src").stat().st_ino
+            ):
+                faults.append("source directory sync failure")
+                raise OSError(faults[-1])
+            return original_sync(descriptor)
+    
+        with (
+            patch.object(module, "atomic_write", side_effect=fail_write),
+            patch("os.fsync", side_effect=fail_sync),
+        ):
+            result = apply(store, run)
+        assert faults
+>       assert result["state"] == "unknown"
+E       AssertionError: assert 'rolled_back' == 'unknown'
+E         
+E         - unknown
+E         + rolled_back
+
+tests/unit/services/test_managed_application.py:463: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/services/test_managed_application.py::test_restore_directory_sync_failure_cannot_be_acknowledged_by_matching_bytes[update]
+FAILED tests/unit/services/test_managed_application.py::test_restore_directory_sync_failure_cannot_be_acknowledged_by_matching_bytes[create]
+2 failed, 23 deselected in 0.84s

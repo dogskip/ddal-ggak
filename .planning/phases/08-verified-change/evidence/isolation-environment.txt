@@ -1,0 +1,5 @@
+python_runtime syntax_ok
+browser syntax_ok
+node_runtime_syntax 0 
+environment {"available": false, "reason": "local_socket_unavailable", "endpoint": null, "boundary": null, "code": "isolation_unavailable"}
+live_containers_and_browser_policy not_verified_daemon_socket_absent

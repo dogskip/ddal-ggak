@@ -1,0 +1,24 @@
+.FFF                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock[retry] _
+tests/unit/services/test_managed_application.py:392: in test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock
+    with pytest.raises(OSError, match="directory fsync failure"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE OSError
+_ test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock[recover] _
+tests/unit/services/test_managed_application.py:395: in test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock
+    with pytest.raises(OSError, match="directory fsync failure"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE OSError
+______ test_completed_publication_crash_clears_only_the_stale_owned_lock _______
+tests/unit/services/test_managed_application.py:412: in test_completed_publication_crash_clears_only_the_stale_owned_lock
+    assert not (store.base_path/'locks/apply.lock').exists()
+E   AssertionError: assert not True
+E    +  where True = exists()
+E    +    where exists = (PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-315/test_completed_publication_cra0/.ddk/verified-change/1') / 'locks/apply.lock').exists
+E    +      where PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-315/test_completed_publication_cra0/.ddk/verified-change/1') = <ddk.services.verified_change_store.VerifiedChangeStore object at 0x1098f5d90>.base_path
+=========================== short test summary info ============================
+FAILED tests/unit/services/test_managed_application.py::test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock[retry]
+FAILED tests/unit/services/test_managed_application.py::test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock[recover]
+FAILED tests/unit/services/test_managed_application.py::test_completed_publication_crash_clears_only_the_stale_owned_lock
+3 failed, 1 passed, 19 deselected in 1.01s

@@ -1,0 +1,158 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__ test_failed_preview_start_marks_output_unknown_and_stops_subsequent_checks __
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-381/test_failed_preview_start_mark0')
+
+    async def test_failed_preview_start_marks_output_unknown_and_stops_subsequent_checks(tmp_path):
+        request, _, _ = request_for(
+            tmp_path,
+            kind="browser",
+            argv=[],
+            plan_changes={
+                "preview_argv": ["node", "-e", "console.log('한');process.exit(1)", "{port}"]
+            },
+        )
+        first = {**request.checks[0], "required": False, "viewport": {"width": 320, "height": 200}}
+        request = replace(
+            request,
+            checks=(
+                first,
+                {
+                    **first,
+                    "check_id": "second",
+                    "required": True,
+                    "kind": "command",
+                    "viewport": None,
+                    "command_argv": ["node", "-e", "process.exit(0)"],
+                },
+            ),
+            limits={**request.limits, "max_output_bytes": 1},
+        )
+        outcome = await VerifiedEvaluator(trusted_local_approved=True).evaluate(request)
+>       assert outcome.output_bytes is None
+E       AssertionError: assert 0 is None
+E        +  where 0 = EvaluationOutcome(results=({'check_id': 'check-command', 'phase': 'candidate', 'status': 'unavailable', 'exit_code': N..._tree_sha256='4ae49bd5d2186d472a9fb58195d0058d4b994e4a3e108e4028b41428d4182863', cleanup_complete=True, output_bytes=0).output_bytes
+
+tests/unit/adapters/test_verified_evaluator.py:494: AssertionError
+_ test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-output] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-381/test_real_engine_rejects_chang0')
+settings = BrowserSettings(environment={'os_name': 'Darwin', 'os_version': '27.2.0', 'architecture': 'arm64', 'runtime_name': 'py...ll-1228/chrome-headless-shell-mac-arm64/chrome-headless-shell', cleanup_timeout_ms=10000, max_artifact_bytes=209715200)
+fault = 'preview-output'
+
+    @pytest.mark.parametrize(
+        "fault",
+        ["command-source", "preview-source", "output-limit", "timeout-output", "preview-output"],
+    )
+    async def test_real_engine_rejects_changed_private_source_and_request_output_overflow(
+        tmp_path, settings, fault
+    ):
+        case, store, before = scenario(tmp_path, settings)
+        payloads = {
+            item["path"]: (
+                store.path_for("case", case["case_id"]) / "inputs" / item["path"]
+            ).read_bytes()
+            for item in case["inputs"]
+        }
+        case = copy.deepcopy(case)
+        case["case_id"] = "00000000-0000-4000-8000-000000000062"
+        if fault == "command-source":
+            case["checks"][0]["command_argv"][-1] = (
+                "require('fs').writeFileSync('index.html','changed by command');"
+                "console.log(JSON.stringify({executed_count:1,failed_count:0,skipped_count:0}))"
+            )
+        elif fault == "preview-source":
+            plan = decode_json(payloads["criteria/execution.json"])
+            launcher = (
+                "const f=require('fs');f.writeFileSync('index.html',"
+                "f.readFileSync('index.html','utf8').replace('Old','New'));"
+                + SERVER.decode().replace("process.argv[2]", "process.argv[1]")
+            )
+            plan["preview_argv"] = ["node", "-e", launcher, "{port}"]
+            payloads["criteria/execution.json"] = canonical_json(plan)
+        elif fault == "output-limit":
+            case["limits"]["max_output_bytes"] = 1
+        elif fault == "timeout-output":
+            optional = case["checks"][0]
+            optional.update(
+                required=False,
+                timeout_ms=30,
+                command_argv=["node", "-e", "process.stdout.write('partial');setInterval(()=>{},1000)"],
+            )
+            case["requirements"][0]["required"] = False
+            case["checks"] = [*case["checks"][1:], optional]
+        else:
+            counter = (
+                b"const f=require('fs');f.mkdirSync('dist',{recursive:true});"
+                b"const count=f.existsSync('dist/count')?Number(f.readFileSync('dist/count')):0;"
+                b"f.writeFileSync('dist/count',String(count+1));"
+                + "if(count>=2){console.log('한');process.exit(1);}".encode()
+                + SERVER
+            )
+            for name in before:
+                (tmp_path / name / "serve.cjs").write_bytes(counter)
+                before[name] = capture_source(tmp_path / name)
+            payloads["serve.cjs"] = counter
+            case["baseline_tree_sha256"] = before["baseline"].tree_sha256
+            optional = {
+                **case["checks"][1],
+                "check_id": "optional",
+                "required": False,
+                "definition_path": "criteria/optional.json",
+            }
+            payloads[optional["definition_path"]] = flow("optional", [step("expect-url", value="/")])
+            optional["definition_sha256"] = hashlib.sha256(
+                payloads[optional["definition_path"]]
+            ).hexdigest()
+            case["checks"].append(optional)
+            case["requirements"].append(
+                {
+                    "requirement_id": "optional",
+                    "description": "optional",
+                    "required": False,
+                    "check_ids": ["optional"],
+                }
+            )
+            case["inputs"].append(
+                {
+                    **fixed_file(
+                        optional["definition_path"], payloads[optional["definition_path"]]
+                    ).manifest_entry(),
+                    "role": "criteria",
+                }
+            )
+            plan = decode_json(payloads["criteria/execution.json"])
+            plan["criteria_paths"].append(optional["definition_path"])
+            payloads["criteria/execution.json"] = canonical_json(plan)
+            case["limits"]["max_output_bytes"] = 1
+            case["checks"][0].update(kind="command", command_argv=["node", "-e", "process.exit(0)"])
+        for item in case["inputs"]:
+            payload = payloads[item["path"]]
+            item.update(sha256=hashlib.sha256(payload).hexdigest(), size_bytes=len(payload))
+        case["evaluator_sha256"] = manifest_digest(
+            fixed_file(item["path"], payloads[item["path"]])
+            for item in case["inputs"]
+            if item["role"] == "criteria"
+        )
+        store.publish_case(case, payloads)
+        record = await VerifiedChangeEngine(
+            store, VerifiedEvaluator(trusted_local_approved=True)
+        ).verify(
+            case["case_id"],
+            baseline=tmp_path / "baseline",
+            candidate=tmp_path / "candidate",
+            run_id=RUN_ID,
+            change_requirements={"index.html": ["target"]},
+        )
+>       assert record["decision"] == "blocked"
+E       AssertionError: assert 'manual-review' == 'blocked'
+E         
+E         - blocked
+E         + manual-review
+
+tests/e2e/test_verified_evaluator.py:433: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_evaluator.py::test_failed_preview_start_marks_output_unknown_and_stops_subsequent_checks
+FAILED tests/e2e/test_verified_evaluator.py::test_real_engine_rejects_changed_private_source_and_request_output_overflow[preview-output]
+2 failed in 3.90s

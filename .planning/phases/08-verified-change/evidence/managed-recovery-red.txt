@@ -1,0 +1,49 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_ test_process_exit_recovers_only_owned_states_from_the_durable_journal[before_second] _
+tests/unit/services/test_managed_application.py:279: in test_process_exit_recovers_only_owned_states_from_the_durable_journal
+    result=recover(store)
+           ^^^^^^^^^^^^^^
+tests/unit/services/test_managed_application.py:270: in recover
+    return ArtifactApplier().recover(store,_APPLY_ID,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ArtifactApplier' object has no attribute 'recover'
+_ test_process_exit_recovers_only_owned_states_from_the_durable_journal[after_second] _
+tests/unit/services/test_managed_application.py:279: in test_process_exit_recovers_only_owned_states_from_the_durable_journal
+    result=recover(store)
+           ^^^^^^^^^^^^^^
+tests/unit/services/test_managed_application.py:270: in recover
+    return ArtifactApplier().recover(store,_APPLY_ID,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ArtifactApplier' object has no attribute 'recover'
+______ test_process_exit_after_preparation_never_restarts_the_application ______
+tests/unit/services/test_managed_application.py:292: in test_process_exit_after_preparation_never_restarts_the_application
+    result=recover(store)
+           ^^^^^^^^^^^^^^
+tests/unit/services/test_managed_application.py:270: in recover
+    return ArtifactApplier().recover(store,_APPLY_ID,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ArtifactApplier' object has no attribute 'recover'
+_ test_recovery_rejects_missing_same_host_confirmation_without_changing_the_lock _
+tests/unit/services/test_managed_application.py:304: in test_recovery_rejects_missing_same_host_confirmation_without_changing_the_lock
+    with pytest.raises(ValueError):recover(store,same_host_confirmed=False)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/services/test_managed_application.py:270: in recover
+    return ArtifactApplier().recover(store,_APPLY_ID,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ArtifactApplier' object has no attribute 'recover'
+_______ test_recovery_preserves_foreign_edits_and_keeps_unknown_blocked ________
+tests/unit/services/test_managed_application.py:312: in test_recovery_preserves_foreign_edits_and_keeps_unknown_blocked
+    result=recover(store)
+           ^^^^^^^^^^^^^^
+tests/unit/services/test_managed_application.py:270: in recover
+    return ArtifactApplier().recover(store,_APPLY_ID,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'ArtifactApplier' object has no attribute 'recover'
+=========================== short test summary info ============================
+FAILED tests/unit/services/test_managed_application.py::test_process_exit_recovers_only_owned_states_from_the_durable_journal[before_second]
+FAILED tests/unit/services/test_managed_application.py::test_process_exit_recovers_only_owned_states_from_the_durable_journal[after_second]
+FAILED tests/unit/services/test_managed_application.py::test_process_exit_after_preparation_never_restarts_the_application
+FAILED tests/unit/services/test_managed_application.py::test_recovery_rejects_missing_same_host_confirmation_without_changing_the_lock
+FAILED tests/unit/services/test_managed_application.py::test_recovery_preserves_foreign_edits_and_keeps_unknown_blocked
+5 failed, 12 deselected in 1.40s

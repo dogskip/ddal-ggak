@@ -1,0 +1,131 @@
+$ .venv/bin/pytest tests/unit/adapters/test_subprocess_lifecycle.py tests/unit/adapters/test_subprocess_build_runner.py tests/unit/adapters/test_subprocess_build_runner_robustness.py tests/unit/adapters/test_subprocess_preview.py tests/unit/demo/test_runner.py tests/unit/test_preflight_doctor.py tests/unit/adapters/test_chromium_browser.py tests/unit/services/test_progress.py tests/unit/services/test_case_report.py tests/unit/adapters/test_claude_adapter.py tests/unit/adapters/test_claude_errors.py tests/unit/adapters/test_claude_requests.py tests/unit/adapters/test_claude_wire.py tests/unit/test_cli_demo.py tests/unit/test_cli_english.py -q
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+..................................                                       [100%]
+178 passed in 11.94s
+exit_code=0
+
+$ .venv/bin/pyright src/ddk/adapters/subprocess_build_runner.py src/ddk/adapters/subprocess_preview.py src/ddk/adapters/chromium_browser.py src/ddk/adapters/llm/claude.py src/ddk/cli/__init__.py src/ddk/preflight/doctor.py src/ddk/demo/runner.py src/ddk/services/progress.py src/ddk/services/case_report.py
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+exit_code=0
+
+$ .venv/bin/ruff check src/ddk/adapters/subprocess_build_runner.py src/ddk/adapters/subprocess_preview.py src/ddk/adapters/chromium_browser.py src/ddk/cli/__init__.py src/ddk/preflight/doctor.py src/ddk/services/progress.py src/ddk/services/case_report.py tests/unit/adapters/test_subprocess_lifecycle.py tests/unit/adapters/test_subprocess_build_runner.py tests/unit/adapters/test_subprocess_build_runner_robustness.py tests/unit/demo/test_runner.py
+All checks passed!
+exit_code=0
+
+$ .venv/bin/pytest tests/integration/test_chromium_browser.py -q
+...                                                                      [100%]
+3 passed in 4.22s
+exit_code=0
+
+.                                                                        [100%]
+1 passed in 19.28s
+.                                                                        [100%]
+1 passed in 18.72s
+
+Previous appended browser runs: DDK_E2E=1 pytest tests/e2e/test_demo.py, then explicit env -u DDK_CHROMIUM_PATH DDK_E2E=1 pytest tests/e2e/test_demo.py; both passed.
+$ .venv/bin/pytest tests/unit/demo/test_runner.py tests/unit/test_cli_demo.py -q
+.FF........F.............                                                [100%]
+=================================== FAILURES ===================================
+_______________ test_demo_repairs_the_first_draft_and_certifies ________________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-223/test_demo_repairs_the_first_dr0')
+
+    async def test_demo_repairs_the_first_draft_and_certifies(tmp_path: Path) -> None:
+        stages: list[str] = []
+    
+        result = await run_demo(
+            tmp_path / "demo",
+            services=_services(tmp_path),
+            install=_no_install,
+            on_update=lambda stage, update: stages.append(stage),
+        )
+    
+>       assert stages == [
+            "intake",
+            "repo_scan",
+            "intent_extract",
+            "design_system",
+            "plan",
+            "generate",
+            "normalize",
+            "validate",
+            "autofix",
+            "validate",
+            "certify",
+        ]
+E       AssertionError: assert ['intake', 'r...enerate', ...] == ['intake', 'r...enerate', ...]
+E         
+E         At index 8 diff: 'certify' != 'autofix'
+E         Right contains 2 more items, first extra item: 'validate'
+E         Use -v to get more diff
+
+tests/unit/demo/test_runner.py:97: AssertionError
+______________ test_first_attempt_is_kept_for_a_before_and_after _______________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-223/test_first_attempt_is_kept_for0')
+
+    async def test_first_attempt_is_kept_for_a_before_and_after(tmp_path: Path) -> None:
+        result = await run_demo(tmp_path / "demo", services=_services(tmp_path), install=_no_install)
+    
+        first = result.first_attempt
+>       assert first is not None
+E       assert None is not None
+
+tests/unit/demo/test_runner.py:121: AssertionError
+_____________ test_demo_leaves_an_evidence_report_with_both_checks _____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-223/test_demo_leaves_an_evidence_r0')
+
+    async def test_demo_leaves_an_evidence_report_with_both_checks(tmp_path: Path) -> None:
+        result = await run_demo(tmp_path / "demo", services=_services(tmp_path), install=_no_install)
+    
+        assert result.report_path == result.case_path / "reports" / "report.html"
+        page = result.report_path.read_text(encoding="utf-8")
+>       assert page.count("<h3>") >= 2 and "R-10" in page
+E       assert (1 >= 2)
+E        +  where 1 = <built-in method count of str object at 0x788263b800>('<h3>')
+E        +    where <built-in method count of str object at 0x788263b800> = '<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,... range.value) + \'% 0 0)\'; }\n  range.addEventListener(\'input\', show);\n  show();\n});</script>\n</body>\n</html>\n'.count
+
+tests/unit/demo/test_runner.py:220: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/demo/test_runner.py::test_demo_repairs_the_first_draft_and_certifies
+FAILED tests/unit/demo/test_runner.py::test_first_attempt_is_kept_for_a_before_and_after
+FAILED tests/unit/demo/test_runner.py::test_demo_leaves_an_evidence_report_with_both_checks
+3 failed, 22 passed in 1.47s
+exit_code=1
+
+$ .venv/bin/pyright src/
+/Users/bjchoi/.codex/worktrees/b48f/ddalggak/src/ddk/services/artifact_applier.py
+  /Users/bjchoi/.codex/worktrees/b48f/ddalggak/src/ddk/services/artifact_applier.py:20:5 - error: Import "UnsafeRepositoryPathError" is not accessed (reportUnusedImport)
+1 error, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+exit_code=1
+
+$ .venv/bin/ruff check src/ddk/adapters/subprocess_build_runner.py src/ddk/adapters/subprocess_preview.py src/ddk/adapters/chromium_browser.py src/ddk/cli/__init__.py src/ddk/preflight/doctor.py src/ddk/demo/runner.py src/ddk/services/progress.py src/ddk/services/case_report.py tests/unit/adapters/test_subprocess_lifecycle.py tests/unit/adapters/test_subprocess_build_runner.py tests/unit/adapters/test_subprocess_build_runner_robustness.py tests/unit/demo/test_runner.py tests/e2e/test_demo.py
+All checks passed!
+exit_code=0
+
+..........................                                               [100%]
+26 passed in 4.65s
+
+Final assigned-scope checks after dependency-copy policy alignment:
+$ .venv/bin/pytest tests/unit/adapters/test_subprocess_lifecycle.py tests/unit/adapters/test_subprocess_build_runner.py tests/unit/adapters/test_subprocess_build_runner_robustness.py tests/unit/adapters/test_subprocess_preview.py tests/unit/demo/test_runner.py tests/unit/test_preflight_doctor.py tests/unit/adapters/test_chromium_browser.py tests/unit/services/test_progress.py tests/unit/services/test_case_report.py tests/unit/adapters/test_claude_adapter.py tests/unit/adapters/test_claude_errors.py tests/unit/adapters/test_claude_requests.py tests/unit/adapters/test_claude_wire.py tests/unit/test_cli_demo.py tests/unit/test_cli_english.py -q
+........................................................................ [ 40%]
+........................................................................ [ 80%]
+....................................                                     [100%]
+180 passed in 12.99s
+exit_code=0
+
+$ .venv/bin/pyright src/ddk/adapters/subprocess_build_runner.py src/ddk/adapters/subprocess_preview.py src/ddk/adapters/chromium_browser.py src/ddk/adapters/llm/claude.py src/ddk/cli/__init__.py src/ddk/preflight/doctor.py src/ddk/demo/runner.py src/ddk/services/progress.py src/ddk/services/case_report.py
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+exit_code=0
+

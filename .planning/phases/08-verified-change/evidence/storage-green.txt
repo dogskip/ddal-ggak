@@ -1,0 +1,21 @@
+D1 storage verification evidence (2026-10-14)
+Workspace: /Users/bjchoi/.codex/worktrees/b48f/ddalggak
+Commands in output order:
+.venv/bin/python -m pytest -q tests/unit/test_verified_change_contract.py tests/unit/test_durable_files.py tests/unit/test_verified_change_store.py tests/unit/services/test_case_artifact_store.py tests/contract
+.venv/bin/python -m pytest -q tests/unit/test_repository_boundary.py tests/unit/services/test_context_pack_security.py tests/unit/test_secret_paths.py
+.venv/bin/python -m ruff check [the four runtime files and three new test files]
+.venv/bin/python -m pyright src/ddk/models/verified_change.py src/ddk/security/file_access.py src/ddk/services/durable_files.py src/ddk/services/verified_change_store.py
+These checks use synthetic local files and the unchanged approved examples. No browser, model, power interruption or remote filesystem guarantee is asserted.
+
+........................................................................ [ 47%]
+........................................................................ [ 94%]
+.........                                                                [100%]
+153 passed in 1.91s
+........................................................................ [ 85%]
+............                                                             [100%]
+84 passed in 0.10s
+All checks passed!
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+

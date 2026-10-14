@@ -1,0 +1,60 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____ test_private_export_uses_artifact_limit_instead_of_source_file_limit _____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-361/test_private_export_uses_artif0')
+
+    def test_private_export_uses_artifact_limit_instead_of_source_file_limit(tmp_path):
+        store, original = ready_store(tmp_path / "repo")
+        payload = b"x" * (2 * 1024**2 + 1)
+        run = publish_variant(store, original, log=payload)
+        destination = tmp_path / "large.zip"
+>       VerifiedChangeService(store.repository).export(run["run_id"], destination, include_sensitive=True)
+
+tests/unit/test_verified_change_service.py:215: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/ddk/services/verified_change_service.py:109: in export
+    payload = read_regular(
+src/ddk/security/file_access.py:80: in read_regular
+    return read_regular_at(parent_fd, name, max_bytes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+parent_fd = 11, name = 'observation.json', max_bytes = 2097152
+
+    def read_regular_at(parent_fd: int, name: str, max_bytes: int) -> bytes:
+        """Read one child from an already pinned directory."""
+        if max_bytes < 0:
+            raise ValueError("negative_size_limit")
+        descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent_fd)
+        try:
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+                raise ValueError("unshared_regular_file_required")
+            if before.st_size > max_bytes:
+>               raise ValueError("file_size_limit")
+E               ValueError: file_size_limit
+
+src/ddk/security/file_access.py:53: ValueError
+____________ test_public_export_excludes_free_text_failure_details _____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-361/test_public_export_excludes_fr0')
+
+    def test_public_export_excludes_free_text_failure_details(tmp_path):
+        store, original = ready_store(tmp_path / "repo")
+        private = "Preview exited: PRIVATE_TOKEN=synthetic-only"
+        run = publish_variant(store, original, reason=private)
+        destination = tmp_path / "public.zip"
+        VerifiedChangeService(store.repository).export(run["run_id"], destination)
+        with ZipFile(destination) as archive:
+            report = archive.read("report.json")
+>       assert private.encode() not in report
+E       assert b'Preview exited: PRIVATE_TOKEN=synthetic-only' not in b'{"actions":[],"assurance":"isolated","case_id":"00000000-0000-4000-8000-000000000001","changes":[{"action":"update",...sed"}],"decision":"ready","private_export":false,"run_id":"00000000-0000-4000-8000-000000000056","status":"completed"}'
+E        +  where b'Preview exited: PRIVATE_TOKEN=synthetic-only' = <built-in method encode of str object at 0x10b0d8e70>()
+E        +    where <built-in method encode of str object at 0x10b0d8e70> = 'Preview exited: PRIVATE_TOKEN=synthetic-only'.encode
+
+tests/unit/test_verified_change_service.py:228: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_service.py::test_private_export_uses_artifact_limit_instead_of_source_file_limit
+FAILED tests/unit/test_verified_change_service.py::test_public_export_excludes_free_text_failure_details
+2 failed, 13 deselected in 0.36s

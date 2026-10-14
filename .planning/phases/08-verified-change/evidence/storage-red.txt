@@ -1,0 +1,425 @@
+D1 storage TDD failure evidence (2026-10-14)
+Workspace: /Users/bjchoi/.codex/worktrees/b48f/ddalggak
+Initial command: .venv/bin/python -m pytest -q tests/unit/test_verified_change_contract.py tests/unit/test_durable_files.py
+Additional focused commands used tests/unit/test_verified_change_store.py with -k selections for missing_completed, missing_fixed, reservations, unconfirmed_record, apply_query, apply_cannot_publish, state_shortcuts, conflict_is_terminal, superseded and result_cannot; each output follows below.
+These checks use synthetic local files and the unchanged approved examples. No browser, model, power interruption or remote filesystem guarantee is asserted.
+
+
+==================================== ERRORS ====================================
+_________ ERROR collecting tests/unit/test_verified_change_contract.py _________
+ImportError while importing test module '/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/unit/test_verified_change_contract.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_verified_change_contract.py:10: in <module>
+    from ddk.models.verified_change import (
+E   ModuleNotFoundError: No module named 'ddk.models.verified_change'
+______________ ERROR collecting tests/unit/test_durable_files.py _______________
+ImportError while importing test module '/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/unit/test_durable_files.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_durable_files.py:11: in <module>
+    from ddk.services.durable_files import OwnedLock, atomic_write, read_regular, sync_directory
+E   ModuleNotFoundError: No module named 'ddk.services.durable_files'
+=========================== short test summary info ============================
+ERROR tests/unit/test_verified_change_contract.py
+ERROR tests/unit/test_durable_files.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+2 errors in 0.08s
+
+==================================== ERRORS ====================================
+__________ ERROR collecting tests/unit/test_verified_change_store.py ___________
+ImportError while importing test module '/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/unit/test_verified_change_store.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_verified_change_store.py:13: in <module>
+    from ddk.services.verified_change_store import VerifiedChangeStore
+E   ModuleNotFoundError: No module named 'ddk.services.verified_change_store'
+=========================== short test summary info ============================
+ERROR tests/unit/test_verified_change_store.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.10s
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_missing_completed_artifact_is_rejected_without_repair __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-182/test_missing_completed_artifac0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+
+    def test_missing_completed_artifact_is_rejected_without_repair(tmp_path, records):
+        case, run, inputs, artifacts = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        store.begin_run(prepared_run(run))
+        store.publish_run(run, artifacts)
+        target = store.path_for('run', run['run_id']) / next(iter(artifacts))
+        target.unlink()
+        with pytest.raises((ValueError, OSError)):
+            store.publish_run(run, artifacts)
+>       assert not target.exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-182/test_missing_completed_artifac0/.ddk/verified-change/1/runs/00000000-0000-4000-8000-000000000002/artifacts/observation.json').exists
+
+tests/unit/test_verified_change_store.py:179: AssertionError
+_____________ test_missing_fixed_input_is_rejected_without_repair ______________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-182/test_missing_fixed_input_is_re0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+
+    def test_missing_fixed_input_is_rejected_without_repair(tmp_path, records):
+        case, _, inputs, _ = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        target = store.path_for('case', case['case_id']) / 'inputs' / next(iter(inputs))
+        target.unlink()
+        with pytest.raises((ValueError, OSError)):
+            store.publish_case(case, inputs)
+>       assert not target.exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-182/test_missing_fixed_input_is_re0/.ddk/verified-change/1/cases/00000000-0000-4000-8000-000000000001/inputs/criteria/preserve.json').exists
+
+tests/unit/test_verified_change_store.py:192: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_store.py::test_missing_completed_artifact_is_rejected_without_repair
+FAILED tests/unit/test_verified_change_store.py::test_missing_fixed_input_is_rejected_without_repair
+2 failed, 10 deselected in 0.18s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_pending_reservations_cannot_be_removed __________________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-189/test_pending_reservations_cann0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+
+    def test_pending_reservations_cannot_be_removed(tmp_path, records):
+        case, run, inputs, _ = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        pending = prepared_run(run)
+        price = b'fixed price'
+        pending['artifacts'] = [{'artifact_id': 'price', 'kind': 'price',
+                                 'path': 'artifacts/price.json',
+                                 'sha256': hashlib.sha256(price).hexdigest(),
+                                 'size_bytes': len(price), 'sensitive': False,
+                                 'public_export_allowed': False}]
+        pending['operation'] = 'generation'
+        pending['model_calls'] = [{
+            'call_id': '00000000-0000-4000-8000-000000000008', 'attempt_no': 1,
+            'provider': 'example', 'model': 'example', 'price_artifact_id': 'price',
+            'state': 'reserved', 'reserved_micro_usd': 100, 'calculated_micro_usd': None,
+            'input_tokens': None, 'output_tokens': None, 'created_at': run['started_at'],
+            'completed_at': None, 'round_no': 0}]
+        directory = store.path_for('run', run['run_id'])
+        directory.mkdir(mode=0o700)
+        (directory / 'artifacts').mkdir(mode=0o700)
+        (directory / 'artifacts/price.json').write_bytes(price)
+        (directory / 'artifacts/price.json').chmod(0o600)
+        directory.rmdir if False else None
+        # The run directory reservation is normally created before model evidence exists.
+        initial = copy.deepcopy(pending)
+        initial['artifacts'] = []
+        initial['model_calls'] = []
+        (directory / '.pending').mkdir(mode=0o700)
+        from ddk.models.verified_change import canonical_json
+        (directory / '.pending/run.json').write_bytes(canonical_json(initial))
+        (directory / '.pending/run.json').chmod(0o600)
+        store.save_pending(pending)
+        erased = copy.deepcopy(pending)
+        erased['model_calls'] = []
+>       with pytest.raises(ValueError, match='reservation_history'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_verified_change_store.py:250: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_store.py::test_pending_reservations_cannot_be_removed
+1 failed, 12 deselected in 0.13s
+.                                                                        [100%]
+1 passed, 14 deselected in 0.05s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_failure_after_exclusive_publication_cannot_leave_an_unconfirmed_record __
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-201/test_failure_after_exclusive_p0')
+
+    def test_failure_after_exclusive_publication_cannot_leave_an_unconfirmed_record(tmp_path):
+        real_unlink = os.unlink
+        failed = False
+    
+        def fail_first_temporary_unlink(name, *args, **kwargs):
+            nonlocal failed
+            if name.startswith('.ddk-') and not failed:
+                failed = True
+                raise OSError('temporary unlink failed')
+            return real_unlink(name, *args, **kwargs)
+    
+        with (
+            patch('ddk.services.durable_files.os.unlink', side_effect=fail_first_temporary_unlink),
+            pytest.raises(OSError, match='temporary unlink failed'),
+        ):
+            atomic_write(tmp_path / 'record', b'complete', exclusive=True)
+>       assert not list(tmp_path.iterdir())
+E       AssertionError: assert not [PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-201/test_failure_after_exclusive_p0/record')]
+E        +  where [PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-201/test_failure_after_exclusive_p0/record')] = list(<generator object Path.iterdir at 0x10d303c60>)
+E        +    where <generator object Path.iterdir at 0x10d303c60> = iterdir()
+E        +      where iterdir = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-201/test_failure_after_exclusive_p0').iterdir
+
+tests/unit/test_durable_files.py:233: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_durable_files.py::test_failure_after_exclusive_publication_cannot_leave_an_unconfirmed_record
+1 failed, 15 deselected in 0.07s
+FF.F                                                                     [100%]
+=================================== FAILURES ===================================
+________ test_case_inputs_share_the_repository_path_policy[.GIT/config] ________
+
+path = '.GIT/config'
+
+    @pytest.mark.parametrize('path', ['.GIT/config', '.Env.local', 'src/with\ncontrol.ts',
+                                      'src/space.ts '])
+    def test_case_inputs_share_the_repository_path_policy(path):
+        case = copy.deepcopy(next(iter(CASES.values())))
+        item = copy.deepcopy(case['inputs'][0])
+        item['path'] = path
+        case['inputs'].append(item)
+>       with pytest.raises(ContractError, match='unsafe_input|schema'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ContractError
+
+tests/unit/test_verified_change_contract.py:100: Failed
+________ test_case_inputs_share_the_repository_path_policy[.Env.local] _________
+
+path = '.Env.local'
+
+    @pytest.mark.parametrize('path', ['.GIT/config', '.Env.local', 'src/with\ncontrol.ts',
+                                      'src/space.ts '])
+    def test_case_inputs_share_the_repository_path_policy(path):
+        case = copy.deepcopy(next(iter(CASES.values())))
+        item = copy.deepcopy(case['inputs'][0])
+        item['path'] = path
+        case['inputs'].append(item)
+>       with pytest.raises(ContractError, match='unsafe_input|schema'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ContractError
+
+tests/unit/test_verified_change_contract.py:100: Failed
+_______ test_case_inputs_share_the_repository_path_policy[src/space.ts ] _______
+
+path = 'src/space.ts '
+
+    @pytest.mark.parametrize('path', ['.GIT/config', '.Env.local', 'src/with\ncontrol.ts',
+                                      'src/space.ts '])
+    def test_case_inputs_share_the_repository_path_policy(path):
+        case = copy.deepcopy(next(iter(CASES.values())))
+        item = copy.deepcopy(case['inputs'][0])
+        item['path'] = path
+        case['inputs'].append(item)
+>       with pytest.raises(ContractError, match='unsafe_input|schema'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ContractError
+
+tests/unit/test_verified_change_contract.py:100: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_contract.py::test_case_inputs_share_the_repository_path_policy[.GIT/config]
+FAILED tests/unit/test_verified_change_contract.py::test_case_inputs_share_the_repository_path_policy[.Env.local]
+FAILED tests/unit/test_verified_change_contract.py::test_case_inputs_share_the_repository_path_policy[src/space.ts ]
+3 failed, 1 passed, 91 deselected in 0.10s
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+__ test_apply_query_and_save_refuse_corrupted_saved_files[before/src/App.tsx] __
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-206/test_apply_query_and_save_refu0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+relative = 'before/src/App.tsx'
+
+    @pytest.mark.parametrize("relative", ["before/src/App.tsx", "staged/src/App.tsx"])
+    def test_apply_query_and_save_refuse_corrupted_saved_files(tmp_path, records, relative):
+        case, run, inputs, artifacts = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        store.begin_run(prepared_run(run))
+        store.publish_run(run, artifacts)
+        apply = prepared_apply(store, run, inputs, artifacts)
+        store.publish_apply(apply)
+        target = store.path_for("apply", apply["apply_id"]) / relative
+        target.write_bytes(b"foreign bytes")
+>       with pytest.raises((ValueError, OSError)):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE any of (ValueError, OSError)
+
+tests/unit/test_verified_change_store.py:303: Failed
+__ test_apply_query_and_save_refuse_corrupted_saved_files[staged/src/App.tsx] __
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-206/test_apply_query_and_save_refu1')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+relative = 'staged/src/App.tsx'
+
+    @pytest.mark.parametrize("relative", ["before/src/App.tsx", "staged/src/App.tsx"])
+    def test_apply_query_and_save_refuse_corrupted_saved_files(tmp_path, records, relative):
+        case, run, inputs, artifacts = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        store.begin_run(prepared_run(run))
+        store.publish_run(run, artifacts)
+        apply = prepared_apply(store, run, inputs, artifacts)
+        store.publish_apply(apply)
+        target = store.path_for("apply", apply["apply_id"]) / relative
+        target.write_bytes(b"foreign bytes")
+>       with pytest.raises((ValueError, OSError)):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE any of (ValueError, OSError)
+
+tests/unit/test_verified_change_store.py:303: Failed
+____________ test_apply_cannot_publish_before_all_saved_files_exist ____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-206/test_apply_cannot_publish_befo0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+
+    def test_apply_cannot_publish_before_all_saved_files_exist(tmp_path, records):
+        case, run, inputs, artifacts = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        store.begin_run(prepared_run(run))
+        store.publish_run(run, artifacts)
+        apply = prepared_apply(store, run, inputs, artifacts)
+        directory = store.path_for("apply", apply["apply_id"])
+        (directory / apply["entries"][0]["staged_path"]).unlink()
+>       with pytest.raises((ValueError, OSError)):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE any of (ValueError, OSError)
+
+tests/unit/test_verified_change_store.py:319: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_store.py::test_apply_query_and_save_refuse_corrupted_saved_files[before/src/App.tsx]
+FAILED tests/unit/test_verified_change_store.py::test_apply_query_and_save_refuse_corrupted_saved_files[staged/src/App.tsx]
+FAILED tests/unit/test_verified_change_store.py::test_apply_cannot_publish_before_all_saved_files_exist
+3 failed, 13 deselected in 0.50s
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+__________________ test_apply_rejects_state_shortcuts[False] ___________________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-211/test_apply_rejects_state_short0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+initial = False
+
+    @pytest.mark.parametrize('initial', [False, True])
+    def test_apply_rejects_state_shortcuts(tmp_path, records, initial):
+        store, apply = apply_store(tmp_path, records)
+        if not initial:
+            store.publish_apply(apply)
+        apply['state'] = 'applied'
+        apply['postcheck_at'] = apply['updated_at']
+        for entry in apply['entries']:
+            entry['state'] = 'written'
+>       with pytest.raises(ValueError, match='apply_transition'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_verified_change_store.py:343: Failed
+___________________ test_apply_rejects_state_shortcuts[True] ___________________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-211/test_apply_rejects_state_short1')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+initial = True
+
+    @pytest.mark.parametrize('initial', [False, True])
+    def test_apply_rejects_state_shortcuts(tmp_path, records, initial):
+        store, apply = apply_store(tmp_path, records)
+        if not initial:
+            store.publish_apply(apply)
+        apply['state'] = 'applied'
+        apply['postcheck_at'] = apply['updated_at']
+        for entry in apply['entries']:
+            entry['state'] = 'written'
+>       with pytest.raises(ValueError, match='apply_transition'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_verified_change_store.py:343: Failed
+_______ test_conflict_is_terminal_and_the_saved_request_paths_are_fixed ________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-211/test_conflict_is_terminal_and_0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+
+    def test_conflict_is_terminal_and_the_saved_request_paths_are_fixed(tmp_path, records):
+        store, apply = apply_store(tmp_path, records)
+        store.publish_apply(apply)
+        apply['state'] = 'conflict'
+        apply['entries'][0]['state'] = 'conflict'
+        store.publish_apply(apply)
+        apply['state'] = 'applying'
+>       with pytest.raises(ValueError, match='immutable_apply|apply_transition'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_verified_change_store.py:354: Failed
+___________________ test_verify_cannot_claim_a_repair_round ____________________
+
+    def test_verify_cannot_claim_a_repair_round():
+        run = copy.deepcopy(next(iter(RUNS.values())))
+        run['decision'] = 'blocked'
+        run['latest_round'] = 1
+        run['rounds'].append(copy.deepcopy(run['rounds'][0]))
+        run['rounds'][1]['round_no'] = 1
+>       with pytest.raises(ContractError, match='verify_round'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ContractError
+
+tests/unit/test_verified_change_contract.py:110: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_store.py::test_apply_rejects_state_shortcuts[False]
+FAILED tests/unit/test_verified_change_store.py::test_apply_rejects_state_shortcuts[True]
+FAILED tests/unit/test_verified_change_store.py::test_conflict_is_terminal_and_the_saved_request_paths_are_fixed
+FAILED tests/unit/test_verified_change_contract.py::test_verify_cannot_claim_a_repair_round
+4 failed, 111 deselected in 0.39s
+F.F                                                                      [100%]
+=================================== FAILURES ===================================
+_________ test_superseded_case_must_exist_and_cannot_reference_itself __________
+
+    def test_superseded_case_must_exist_and_cannot_reference_itself():
+        case = copy.deepcopy(next(iter(CASES.values())))
+        case['supersedes_case_id'] = case['case_id']
+>       with pytest.raises(ContractError, match='superseded_case'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ContractError
+
+tests/unit/test_verified_change_contract.py:118: Failed
+_______ test_finished_check_result_cannot_disappear_from_pending_history _______
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-219/test_finished_check_result_can0')
+records = ({'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'le...'src/App.tsx': b'input-3', ...}, {'artifacts/observation.json': b'artifact-0', 'artifacts/new/App.tsx': b'artifact-1'})
+
+    def test_finished_check_result_cannot_disappear_from_pending_history(tmp_path, records):
+        case, run, inputs, artifacts = records
+        store = VerifiedChangeStore(tmp_path)
+        store.publish_case(case, inputs)
+        pending = prepared_run(run)
+        store.begin_run(pending)
+        directory = store.path_for('run', run['run_id'])
+        from ddk.services.durable_files import atomic_write
+        for path, payload in artifacts.items():
+            target = directory / path
+            target.parent.mkdir(parents=True, mode=0o700, exist_ok=True)
+            atomic_write(target, payload, exclusive=True)
+        pending['artifacts'] = run['artifacts']
+        pending['results'] = [run['results'][0]]
+        store.save_pending(pending)
+        erased = copy.deepcopy(pending)
+        erased['results'] = []
+>       with pytest.raises(ValueError, match='result_history'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/unit/test_verified_change_store.py:386: Failed
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_contract.py::test_superseded_case_must_exist_and_cannot_reference_itself
+FAILED tests/unit/test_verified_change_store.py::test_finished_check_result_cannot_disappear_from_pending_history
+2 failed, 1 passed, 115 deselected in 0.36s

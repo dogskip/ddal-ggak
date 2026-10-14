@@ -1,0 +1,256 @@
+..................                                                       [100%]
+18 passed in 0.06s
+......FFFFFFFFFFF.FFF                                                    [100%]
+=================================== FAILURES ===================================
+__________ test_execution_uses_separate_spaces_and_cleans_owned_tasks __________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:263: in test_execution_uses_separate_spaces_and_cleans_owned_tasks
+    result = await service.execute(request(tmp_path), b'{"flow":"approved"}')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+____ test_daemon_policy_drift_blocks_execution_and_cleans[Privileged-True] _____
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+__ test_daemon_policy_drift_blocks_execution_and_cleans[ReadonlyRootfs-False] __
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+______ test_daemon_policy_drift_blocks_execution_and_cleans[PidsLimit-0] _______
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+____ test_daemon_policy_drift_blocks_execution_and_cleans[NetworkMode-host] ____
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+______ test_daemon_policy_drift_blocks_execution_and_cleans[PidMode-host] ______
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+_____ test_daemon_policy_drift_blocks_execution_and_cleans[CapAdd-value5] ______
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+___ test_daemon_policy_drift_blocks_execution_and_cleans[SecurityOpt-value6] ___
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+_______ test_daemon_policy_drift_blocks_execution_and_cleans[ShmSize-0] ________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:303: in test_daemon_policy_drift_blocks_execution_and_cleans
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+__________ test_cancellation_cleans_owned_containers_then_propagates ___________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:318: in test_cancellation_cleans_owned_containers_then_propagates
+    await service.execute(request(tmp_path), b"{}")
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+________________ test_cleanup_failure_prevents_completed_result ________________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:330: in test_cleanup_failure_prevents_completed_result
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+_________ test_inspect_accepts_docker_canonical_profile_and_network_id _________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:382: in test_inspect_accepts_docker_canonical_profile_and_network_id
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+__________ test_checker_failure_is_observed_without_losing_its_report __________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:402: in test_checker_failure_is_observed_without_losing_its_report
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+__________________ test_foreign_replacement_is_never_removed ___________________
+src/ddk/adapters/verified_isolation.py:567: in execute
+    self._verify_record(plan, record, role, evidence.get("app_id"))
+E   TypeError: LocalDockerIsolation._verify_record() takes 4 positional arguments but 5 were given
+
+During handling of the above exception, another exception occurred:
+tests/unit/adapters/test_verified_isolation.py:426: in test_foreign_replacement_is_never_removed
+    result = await service.execute(request(tmp_path), b"{}")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/verified_isolation.py:635: in execute
+    self._cleanup(plan, control, attempted, identities)
+E   TypeError: LocalDockerIsolation._cleanup() takes 4 positional arguments but 5 were given
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_execution_uses_separate_spaces_and_cleans_owned_tasks
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[Privileged-True]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[ReadonlyRootfs-False]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[PidsLimit-0]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[NetworkMode-host]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[PidMode-host]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[CapAdd-value5]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[SecurityOpt-value6]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_daemon_policy_drift_blocks_execution_and_cleans[ShmSize-0]
+FAILED tests/unit/adapters/test_verified_isolation.py::test_cancellation_cleans_owned_containers_then_propagates
+FAILED tests/unit/adapters/test_verified_isolation.py::test_cleanup_failure_prevents_completed_result
+FAILED tests/unit/adapters/test_verified_isolation.py::test_inspect_accepts_docker_canonical_profile_and_network_id
+FAILED tests/unit/adapters/test_verified_isolation.py::test_checker_failure_is_observed_without_losing_its_report
+FAILED tests/unit/adapters/test_verified_isolation.py::test_foreign_replacement_is_never_removed
+14 failed, 7 passed in 0.20s
+.....................                                                    [100%]
+21 passed in 0.09s
+.......................                                                  [100%]
+23 passed in 1.08s
+.......................F....                                             [100%]
+=================================== FAILURES ===================================
+__________________ test_runtime_readonly_mounts_are_required ___________________
+tests/unit/adapters/test_verified_isolation.py:501: in test_runtime_readonly_mounts_are_required
+    assert not result.completed and result.cleanup_complete
+E   AssertionError: assert (not True)
+E    +  where True = IsolationResult(completed=True, policy_verified=True, cleanup_complete=True, assurance='isolated', code=None, reason='...'nosuid', 'nodev'], 'shm_bytes': 268435456}, 'browser': {'started': True, 'headless': True, 'chromium_sandbox': True}}).completed
+=========================== short test summary info ============================
+FAILED tests/unit/adapters/test_verified_isolation.py::test_runtime_readonly_mounts_are_required
+1 failed, 27 passed in 1.33s
+............................                                             [100%]
+28 passed in 1.09s
+............................................                             [100%]
+44 passed in 5.30s
+I001 [*] Import block is un-sorted or un-formatted
+   --> tests/unit/adapters/test_verified_isolation.py:542:5
+    |
+541 |   async def test_bounded_runner_transmits_large_stdio_exactly(tmp_path: Path) -> None:
+542 | /     import hashlib
+543 | |     import sys
+544 | |     from ddk.adapters.verified_isolation import _BoundedDockerRunner
+    | |____________________________________________________________________^
+545 |
+546 |       payload = b"approved input\n" * 100000
+    |
+help: Organize imports
+    |
+543 |     import sys
+544 +
+545 |     from ddk.adapters.verified_isolation import _BoundedDockerRunner
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> tests/unit/adapters/test_verified_isolation.py:557:5
+    |
+556 |   async def test_bounded_runner_refuses_excessive_checker_output(tmp_path: Path) -> None:
+557 | /     import sys
+558 | |     from ddk.adapters.verified_isolation import _BoundedDockerRunner
+    | |____________________________________________________________________^
+559 |
+560 |       result = await _BoundedDockerRunner().run(
+    |
+help: Organize imports
+    |
+557 |     import sys
+558 +
+559 |     from ddk.adapters.verified_isolation import _BoundedDockerRunner
+    |
+
+Found 2 errors.
+[*] 2 fixable with the `--fix` option.
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+All checks passed!
+2 files already formatted
+1 file reformatted, 1 file left unchanged
+.............................................                            [100%]
+45 passed in 5.28s
+All checks passed!
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+

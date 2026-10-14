@@ -1,0 +1,10 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock _
+tests/unit/services/test_managed_application.py:378: in test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock
+    with patch('os.fsync',side_effect=fail), pytest.raises(OSError,match='directory fsync failure'):
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE OSError
+=========================== short test summary info ============================
+FAILED tests/unit/services/test_managed_application.py::test_completed_record_directory_sync_failure_never_returns_success_or_releases_lock
+1 failed, 19 deselected in 0.30s

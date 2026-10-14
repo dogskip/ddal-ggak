@@ -1,0 +1,99 @@
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_ test_build_outputs_are_excluded_without_excluding_nested_source_names[dist] __
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-359/test_build_outputs_are_exclude0')
+output = 'dist'
+
+    @pytest.mark.parametrize("output", ["dist", ".next", ".turbo", "coverage"])
+    def test_build_outputs_are_excluded_without_excluding_nested_source_names(tmp_path, output):
+        root = source(tmp_path)
+        generated = root / output / "generated.js"
+        generated.parent.mkdir()
+        generated.write_bytes(b"generated build output")
+        nested = root / "src" / output / "source.ts"
+        nested.parent.mkdir()
+        nested.write_bytes(b"actual source")
+        result = capture_source(root)
+>       assert f"{output}/generated.js" not in [item.path for item in result.files]
+E       AssertionError: assert 'dist/generated.js' not in ['dist/generated.js', 'package.json', 'src/App.tsx', 'src/dist/source.ts']
+
+tests/unit/test_source_snapshot.py:68: AssertionError
+_ test_build_outputs_are_excluded_without_excluding_nested_source_names[.next] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-359/test_build_outputs_are_exclude1')
+output = '.next'
+
+    @pytest.mark.parametrize("output", ["dist", ".next", ".turbo", "coverage"])
+    def test_build_outputs_are_excluded_without_excluding_nested_source_names(tmp_path, output):
+        root = source(tmp_path)
+        generated = root / output / "generated.js"
+        generated.parent.mkdir()
+        generated.write_bytes(b"generated build output")
+        nested = root / "src" / output / "source.ts"
+        nested.parent.mkdir()
+        nested.write_bytes(b"actual source")
+        result = capture_source(root)
+>       assert f"{output}/generated.js" not in [item.path for item in result.files]
+E       AssertionError: assert '.next/generated.js' not in ['.next/generated.js', 'package.json', 'src/.next/source.ts', 'src/App.tsx']
+
+tests/unit/test_source_snapshot.py:68: AssertionError
+_ test_build_outputs_are_excluded_without_excluding_nested_source_names[.turbo] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-359/test_build_outputs_are_exclude2')
+output = '.turbo'
+
+    @pytest.mark.parametrize("output", ["dist", ".next", ".turbo", "coverage"])
+    def test_build_outputs_are_excluded_without_excluding_nested_source_names(tmp_path, output):
+        root = source(tmp_path)
+        generated = root / output / "generated.js"
+        generated.parent.mkdir()
+        generated.write_bytes(b"generated build output")
+        nested = root / "src" / output / "source.ts"
+        nested.parent.mkdir()
+        nested.write_bytes(b"actual source")
+        result = capture_source(root)
+>       assert f"{output}/generated.js" not in [item.path for item in result.files]
+E       AssertionError: assert '.turbo/generated.js' not in ['.turbo/generated.js', 'package.json', 'src/.turbo/source.ts', 'src/App.tsx']
+
+tests/unit/test_source_snapshot.py:68: AssertionError
+_ test_build_outputs_are_excluded_without_excluding_nested_source_names[coverage] _
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-359/test_build_outputs_are_exclude3')
+output = 'coverage'
+
+    @pytest.mark.parametrize("output", ["dist", ".next", ".turbo", "coverage"])
+    def test_build_outputs_are_excluded_without_excluding_nested_source_names(tmp_path, output):
+        root = source(tmp_path)
+        generated = root / output / "generated.js"
+        generated.parent.mkdir()
+        generated.write_bytes(b"generated build output")
+        nested = root / "src" / output / "source.ts"
+        nested.parent.mkdir()
+        nested.write_bytes(b"actual source")
+        result = capture_source(root)
+>       assert f"{output}/generated.js" not in [item.path for item in result.files]
+E       AssertionError: assert 'coverage/generated.js' not in ['coverage/generated.js', 'package.json', 'src/App.tsx', 'src/coverage/source.ts']
+
+tests/unit/test_source_snapshot.py:68: AssertionError
+__ test_approved_limits_reach_the_actual_evaluator_without_shared_mutability ___
+
+scenario = (<ddk.services.verified_change_store.VerifiedChangeStore object at 0x109973950>, {'record_type': 'case', 'schema_versi...ar/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-359/test_approved_limits_reach_the0/candidate'))
+
+    @pytest.mark.asyncio
+    async def test_approved_limits_reach_the_actual_evaluator_without_shared_mutability(scenario):
+        evaluator = Evaluator()
+        await verify(scenario, evaluator)
+        assert evaluator.requests
+>       assert evaluator.requests[0].limits == scenario[1]["limits"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvaluationRequest' object has no attribute 'limits'
+
+tests/unit/test_verified_change_engine.py:117: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_source_snapshot.py::test_build_outputs_are_excluded_without_excluding_nested_source_names[dist]
+FAILED tests/unit/test_source_snapshot.py::test_build_outputs_are_excluded_without_excluding_nested_source_names[.next]
+FAILED tests/unit/test_source_snapshot.py::test_build_outputs_are_excluded_without_excluding_nested_source_names[.turbo]
+FAILED tests/unit/test_source_snapshot.py::test_build_outputs_are_excluded_without_excluding_nested_source_names[coverage]
+FAILED tests/unit/test_verified_change_engine.py::test_approved_limits_reach_the_actual_evaluator_without_shared_mutability
+5 failed, 46 deselected in 0.36s

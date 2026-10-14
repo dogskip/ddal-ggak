@@ -1,0 +1,633 @@
+{
+  "scope": "document schema, hypothetical relations, field tables, traceability, local links",
+  "result": "passed",
+  "definitions": 21,
+  "fields": 203,
+  "valid_examples": 15,
+  "invalid_examples": 64,
+  "examples_matched": 79,
+  "requirements_traced": 20,
+  "acceptance_tests_defined": 30,
+  "local_links_checked": 37,
+  "failures": [],
+  "observations": [
+    {
+      "name": "approved-case",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "ready-run",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "prepared-apply",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "browser-flow",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "fixed-environment",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "owned-lock",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "failed-target-is-blocked",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "unconfirmed-pending-run",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "passing-required-with-advisory",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "approved-case-with-existing-test",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-clear-input",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-empty-text",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-settled-with-known-usage",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-observed-cost-overrun-remains-blocked",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "r3-wall-clock-adjustment-uses-duration",
+      "expected": "valid",
+      "matched": true,
+      "diagnostics": []
+    },
+    {
+      "name": "unknown-field",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "unknown-schema",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/9', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "missing-required-field",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "non-utc-date",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "short-hash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'case', 'schema_version': 'verified-change/1', 'case_id': '00000000-0000-4000-8000-000000000001', 'legacy_alias': None, 'supersedes_case_id': No"
+      ]
+    },
+    {
+      "name": "orphan-check",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_check"
+      ]
+    },
+    {
+      "name": "optional-check-for-required-requirement",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "optional_check_for_required_requirement",
+        "missing_independent_preserve"
+      ]
+    },
+    {
+      "name": "duplicate-check",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_check"
+      ]
+    },
+    {
+      "name": "protected-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unsafe_scope"
+      ]
+    },
+    {
+      "name": "criteria-hash-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "criteria_hash_mismatch"
+      ]
+    },
+    {
+      "name": "missing-required-result",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "baseline-preserve-failed",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "baseline_preserve_not_passed"
+      ]
+    },
+    {
+      "name": "required-result-skipped",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "required-result-flaky",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "criteria-integrity-false",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "environment-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "environment_mismatch"
+      ]
+    },
+    {
+      "name": "candidate-round-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "candidate_round_mismatch"
+      ]
+    },
+    {
+      "name": "project-report-instead-of-independent-ui",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "untrusted_observation"
+      ]
+    },
+    {
+      "name": "completed-without-decision",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "name": "late-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "run_deadline"
+      ]
+    },
+    {
+      "name": "changed-outside-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "outside_change_scope",
+        "before_not_baseline",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "create-with-before-state",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "change_before_state",
+        "create_existing_baseline",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "artifact-after-hash-mismatch",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "after_artifact_mismatch"
+      ]
+    },
+    {
+      "name": "change-permission-escalation",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "mode_changed",
+        "changes_round_mismatch"
+      ]
+    },
+    {
+      "name": "orphan-artifact",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_artifact"
+      ]
+    },
+    {
+      "name": "duplicate-result-key",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_result"
+      ]
+    },
+    {
+      "name": "wrong-apply-run-hash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_run_hash"
+      ]
+    },
+    {
+      "name": "wrong-apply-mode",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_entry_state"
+      ]
+    },
+    {
+      "name": "snapshot-without-reference",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "snapshot_reference_missing",
+        "snapshot_threshold_missing"
+      ]
+    },
+    {
+      "name": "external-goto",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "external_or_invalid_url"
+      ]
+    },
+    {
+      "name": "isolation-without-image",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "missing_isolated_images"
+      ]
+    },
+    {
+      "name": "latest-failure-hidden-by-old-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "required_candidate_not_passed"
+      ]
+    },
+    {
+      "name": "unknown-reservation-exceeds-budget",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "cost_reservation_limit"
+      ]
+    },
+    {
+      "name": "verify-must-not-call-model",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "verify_called_model",
+        "missing_price_artifact",
+        "cost_reservation_limit"
+      ]
+    },
+    {
+      "name": "zero-test-success",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "zero_or_incomplete_test",
+        "baseline_test_not_executed"
+      ]
+    },
+    {
+      "name": "remote-execution-endpoint",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "remote_endpoint"
+      ]
+    },
+    {
+      "name": "review-with-corrupt-criteria",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "integrity_not_complete"
+      ]
+    },
+    {
+      "name": "repair-without-source-run",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "repair_source_missing"
+      ]
+    },
+    {
+      "name": "untrusted-baseline-preservation",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "untrusted_baseline_observation"
+      ]
+    },
+    {
+      "name": "apply-of-blocked-run",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "apply_run_not_ready"
+      ]
+    },
+    {
+      "name": "criteria-mislabeled-as-source",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "criteria_role_mismatch"
+      ]
+    },
+    {
+      "name": "before-hash-not-baseline",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "before_not_baseline"
+      ]
+    },
+    {
+      "name": "create-of-existing-baseline-file",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "create_existing_baseline"
+      ]
+    },
+    {
+      "name": "criteria-in-write-scope",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "protected_input_in_scope"
+      ]
+    },
+    {
+      "name": "r3-ready-without-observation-artifact",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "missing_observation_artifact",
+        "missing_baseline_artifact",
+        "missing_observation_artifact",
+        "missing_observation_artifact"
+      ]
+    },
+    {
+      "name": "r3-ready-with-unfinished-latest-round",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "latest_round_incomplete"
+      ]
+    },
+    {
+      "name": "r3-settled-without-usage",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "settlement_missing"
+      ]
+    },
+    {
+      "name": "r3-settled-above-reservation-ready",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "settlement_above_reservation"
+      ]
+    },
+    {
+      "name": "r3-price-reference-has-wrong-kind",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "missing_price_artifact"
+      ]
+    },
+    {
+      "name": "r3-model-call-refers-to-missing-round",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_call_round"
+      ]
+    },
+    {
+      "name": "r3-result-refers-to-missing-round",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "orphan_result_round",
+        "baseline_round_not_zero"
+      ]
+    },
+    {
+      "name": "r3-applied-with-prepared-entry",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "applied_entry_state"
+      ]
+    },
+    {
+      "name": "r3-duplicate-apply-path",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "duplicate_apply_path"
+      ]
+    },
+    {
+      "name": "r3-external-entry-backslash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/\\\\example.org/x', 'fixture_s"
+      ]
+    },
+    {
+      "name": "r3-external-goto-backslash",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "external_or_invalid_url"
+      ]
+    },
+    {
+      "name": "r3-external-entry-tab",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'flow', 'schema_version': 'verified-change/1', 'flow_id': 'dashboard-filter', 'check_id': 'target', 'entry_path': '/\\t/example.org/x', 'fixture_"
+      ]
+    },
+    {
+      "name": "r3-external-goto-newline",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "external_or_invalid_url"
+      ]
+    },
+    {
+      "name": "r3-unused-or-invalid-click-value",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unused_step_value"
+      ]
+    },
+    {
+      "name": "r3-unused-or-invalid-goto-count",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unused_step_count"
+      ]
+    },
+    {
+      "name": "r3-unused-or-invalid-snapshot-value",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unused_step_value"
+      ]
+    },
+    {
+      "name": "r3-unused-or-invalid-snapshot-count",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "unused_step_count"
+      ]
+    },
+    {
+      "name": "r3-unused-or-invalid-press-empty",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "empty_press"
+      ]
+    },
+    {
+      "name": "r3-monotonic-duration-exceeds-deadline",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "run_deadline"
+      ]
+    },
+    {
+      "name": "r3-completed-run-missing-duration",
+      "expected": "invalid",
+      "matched": true,
+      "diagnostics": [
+        "schema:{'record_type': 'run', 'schema_version': 'verified-change/1', 'run_id': '00000000-0000-4000-8000-000000000002', 'case_id': '00000000-0000-4000-8000-000000000001"
+      ]
+    }
+  ],
+  "implementation_evidence": 0,
+  "product_effect_evidence": 0
+}

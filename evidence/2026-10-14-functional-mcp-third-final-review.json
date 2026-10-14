@@ -1,0 +1,124 @@
+{
+  "reviewed_at": "2026-10-14T04:09:12.231579+00:00",
+  "verdict": "No remaining mandatory defect found in this reviewed change scope.",
+  "remaining_mandatory_findings": 0,
+  "scope": [
+    "src/ddk/adapters/verified_evaluator.py",
+    "src/ddk/services/verified_change_engine.py",
+    "src/ddk/services/verified_change_service.py",
+    "src/ddk/services/verified_change_store.py",
+    "src/ddk/services/source_snapshot.py",
+    "src/ddk/security/repo_paths.py",
+    "src/ddk/cli/verified.py",
+    "docs/VERIFIED-CHANGES.md"
+  ],
+  "excluded_own_implementation": [
+    "src/ddk/server.py",
+    "src/ddk/security/mcp_stdio.py",
+    "MCP unit and stdio tests"
+  ],
+  "source_changed_by_reviewer": false,
+  "fresh_tests": {
+    "passed": 209,
+    "duration_seconds": 9.47,
+    "log": "evidence/2026-10-14-functional-mcp-third-final-tests.txt",
+    "suites": [
+      "tests/unit/test_verified_change_service.py",
+      "tests/unit/test_verified_change_store.py",
+      "tests/unit/test_verified_change_engine.py",
+      "tests/unit/test_source_snapshot.py",
+      "tests/unit/test_cli_verified.py",
+      "tests/unit/adapters/test_verified_evaluator.py",
+      "tests/integration/test_cli_verified_change.py"
+    ]
+  },
+  "latest_counterexample": {
+    "before": "evidence/2026-10-14-functional-mcp-third-preview-output.json",
+    "after": "evidence/2026-10-14-functional-mcp-third-preview-output-final.json",
+    "result": "Actual failed Node preview output is unknown rather than zero; next check stops as output_unknown."
+  },
+  "resolved_findings": [
+    {
+      "name": "Source inspection copy mutation",
+      "evidence": [
+        "src/ddk/adapters/verified_evaluator.py:440",
+        "src/ddk/adapters/verified_evaluator.py:564",
+        "tests/unit/adapters/test_verified_evaluator.py:364"
+      ],
+      "result": "Modified copy is unavailable, source hash becomes null, later checks stop; engine tree mismatch blocks acceptance."
+    },
+    {
+      "name": "Approved step timeout",
+      "evidence": [
+        "src/ddk/adapters/verified_evaluator.py:275"
+      ],
+      "result": "Command and browser deadlines include the approved step limit."
+    },
+    {
+      "name": "Unknown output on command timeout and preview startup failure",
+      "evidence": [
+        "src/ddk/adapters/verified_evaluator.py:429",
+        "src/ddk/adapters/verified_evaluator.py:538",
+        "src/ddk/services/verified_change_engine.py:234"
+      ],
+      "result": "Unknown output remains null and blocks continuation and acceptance."
+    },
+    {
+      "name": "CLI environment error and cancellation identity",
+      "evidence": [
+        "src/ddk/cli/verified.py:84",
+        "src/ddk/cli/verified.py:101",
+        "src/ddk/cli/verified.py:155"
+      ],
+      "result": "Execution/input unavailable returns 2; cancellation returns 130; selected identifiers remain available."
+    },
+    {
+      "name": "Read-only status, safe imports and export boundaries",
+      "evidence": [
+        "src/ddk/services/verified_change_service.py:23",
+        "src/ddk/services/verified_change_service.py:35",
+        "src/ddk/services/verified_change_service.py:96",
+        "tests/unit/test_verified_change_service.py:86",
+        "tests/unit/test_verified_change_service.py:181",
+        "tests/unit/test_verified_change_service.py:218",
+        "tests/unit/test_verified_change_service.py:230"
+      ],
+      "result": "Status does not initialize storage; ancestor links are rejected; public export excludes free text reason details; private artifacts use the artifact limit."
+    },
+    {
+      "name": "Shared source exclusions",
+      "evidence": [
+        "src/ddk/security/repo_paths.py:12",
+        "src/ddk/services/source_snapshot.py:103",
+        "tests/unit/test_source_snapshot.py:59"
+      ],
+      "result": "Only shared top-level build output paths are excluded; nested source names remain covered."
+    }
+  ],
+  "documentation": {
+    "path": "docs/VERIFIED-CHANGES.md",
+    "current_limits_clear": true,
+    "evidence": [
+      "docs/VERIFIED-CHANGES.md:5",
+      "docs/VERIFIED-CHANGES.md:31",
+      "docs/VERIFIED-CHANGES.md:53",
+      "docs/VERIFIED-CHANGES.md:61"
+    ],
+    "wording_review": "Canonical words.tsv read-only scan under LC_ALL=C; literal candidates were single-character substrings, with no applicable new forbidden expression identified."
+  },
+  "proof_limits": [
+    "Focused tests include actual local Node commands; this review does not repeat the complete headless browser or package checks.",
+    "No actual isolated worker transport success, paid model provider success, broad repository support, or product superiority is claimed.",
+    "The parent agent owns final whole-repository, headless browser, type, formatting and package verification."
+  ],
+  "sha256": {
+    "src/ddk/adapters/verified_evaluator.py": "efbe341ee3fe46466fafa1fc0dfe984088de10d0cf8ee1dce32d5fc9f025eb1a",
+    "src/ddk/services/verified_change_engine.py": "995522df9669fdbf86b46bfde7c0a80652ed13d28411a248b4359b3c0d14f7f2",
+    "src/ddk/services/verified_change_service.py": "da84dd4b196a79b4a3e4c52f4ef3f67c197052cd382fa31fdeea738084fc1264",
+    "src/ddk/services/verified_change_store.py": "0c63a9ddb3da13d219a5588f2c55c66134a6ffa839e2178fe817d62d55741766",
+    "src/ddk/services/source_snapshot.py": "fe23648e0e96cd60749787e1d632b156c6ff2d027acfba2c78fd653db5bbf554",
+    "src/ddk/security/repo_paths.py": "c4ac44a28bcb1484b6c3ad5362d3fc2697cbddd5b750929888fa08697976765c",
+    "src/ddk/cli/verified.py": "69adb3ab932bae1445c7768f6c0c4256df8b0384aafe58832aa615cb4dea8504",
+    "docs/VERIFIED-CHANGES.md": "bcba5ed322b44216bbd0c2f357aa775a2a401324b2dcda69f95e9eaae6d76fae"
+  }
+}

@@ -1,0 +1,36 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_output_allowance_is_shared_by_baseline_and_candidate ___________
+
+scenario = (<ddk.services.verified_change_store.VerifiedChangeStore object at 0x10c85b8f0>, {'record_type': 'case', 'schema_versi...ar/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-367/test_output_allowance_is_share0/candidate'))
+
+    @pytest.mark.asyncio
+    async def test_output_allowance_is_shared_by_baseline_and_candidate(scenario):
+        maximum = scenario[1]["limits"]["max_output_bytes"]
+        evaluator = Evaluator(metadata=lambda outcome: replace(outcome, output_bytes=maximum))
+        result = await verify(scenario, evaluator)
+        assert result["decision"] == "blocked"
+>       assert "output_limit" in {action["code"] for action in result["actions"]}
+E       AssertionError: assert 'output_limit' in {'evaluation_failed'}
+
+tests/unit/test_verified_change_engine.py:127: AssertionError
+___ TestStart.test_owned_output_is_available_without_private_session_access ____
+
+self = <tests.unit.adapters.test_subprocess_preview.TestStart object at 0x10c85b710>
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-367/test_owned_output_is_available0')
+
+    async def test_owned_output_is_available_without_private_session_access(self, tmp_path):
+        script = "console.log('preview-ready');console.error('preview-warning');" + _SERVER
+        session = await SubprocessPreviewLauncher().start(
+            ["node", "-e", script, "{port}"], tmp_path, timeout_s=20
+        )
+        try:
+>           stdout, stderr = session.output()
+                             ^^^^^^^^^^^^^^
+E           AttributeError: '_Session' object has no attribute 'output'. Did you mean: '_output'?
+
+tests/unit/adapters/test_subprocess_preview.py:36: AttributeError
+=========================== short test summary info ============================
+FAILED tests/unit/test_verified_change_engine.py::test_output_allowance_is_shared_by_baseline_and_candidate
+FAILED tests/unit/adapters/test_subprocess_preview.py::TestStart::test_owned_output_is_available_without_private_session_access
+2 failed, 38 deselected in 0.29s

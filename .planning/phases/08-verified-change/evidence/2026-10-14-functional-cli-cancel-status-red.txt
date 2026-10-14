@@ -1,0 +1,19 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_saved_cancelled_run_keeps_cancellation_exit_code _____________
+
+service = <tests.unit.test_cli_verified.Service object at 0x10d4abb90>
+
+    def test_saved_cancelled_run_keeps_cancellation_exit_code(service):
+        service.result.update(status="cancelled", decision=None)
+        result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
+>       assert result.exit_code == 130, result.output
+E       AssertionError: {"schema_version": "verified-change/1", "case_id": "00000000-0000-4000-8000-000000000001", "run_id": "00000000-0000-4000-8000-000000000002", "decision": null, "assurance": "isolated", "actions": [], "status": "cancelled"}
+E         
+E       assert 2 == 130
+E        +  where 2 = <Result SystemExit(2)>.exit_code
+
+tests/unit/test_cli_verified.py:491: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/test_cli_verified.py::test_saved_cancelled_run_keeps_cancellation_exit_code
+1 failed in 0.22s

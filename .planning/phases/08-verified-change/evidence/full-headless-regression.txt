@@ -1,0 +1,9 @@
+s...........s                                                            [100%]Future exception was never retrieved
+future: <Future finished exception=Error('Expect failed\nCall log:\n  - Expect "to_be_visible" with timeout 5000ms\n  - waiting for locator(".missing")\n')>
+playwright._impl._errors.Error: Expect failed
+Call log:
+  - Expect "to_be_visible" with timeout 5000ms
+  - waiting for locator(".missing")
+
+
+11 passed, 2 skipped in 16.81s

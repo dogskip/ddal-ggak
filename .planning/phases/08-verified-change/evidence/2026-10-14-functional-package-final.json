@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-14T04:22:04.062751+00:00",
+  "result": "passed",
+  "cwd": "/private/tmp",
+  "installed_package": "/tmp/ddk-installed-wheel-check/lib/python3.12/site-packages/ddk",
+  "python_modules_compared": 148,
+  "wheel_sha256": "159cffb9e6a4bc5091a69c2395c78bc307608240f866ce0fdd7fe21b830c99a6",
+  "sdist_sha256": "362867a19ade26d9471dcfb97feb8b110f8b92a7e1a7cce05958b3b55db8ee8e",
+  "source_distribution_excludes_local_evidence": true,
+  "installed_cli_commands": 5,
+  "installed_mcp_tools": [
+    "ddk_verify",
+    "ddk_status",
+    "design_new",
+    "preflight",
+    "ddk_version"
+  ],
+  "schema_parse": "passed",
+  "scope": "installation, imports, distribution contents and registration; not live isolation or product effect"
+}

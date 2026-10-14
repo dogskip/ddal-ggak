@@ -1,0 +1,22 @@
+{
+  "step_timeout_ms": 1,
+  "check_timeout_ms": 1000,
+  "result": {
+    "check_id": "check-command",
+    "phase": "candidate",
+    "status": "passed",
+    "exit_code": 0,
+    "executed_count": null,
+    "failed_count": null,
+    "skipped_count": null,
+    "retry_count": 0,
+    "duration_ms": 75,
+    "reason_code": null,
+    "artifact_ids": [
+      "candidate-command-0"
+    ],
+    "evidence_origin": "project-report",
+    "round_no": 0
+  },
+  "source_sha256": "2f9f30a6be0a9bbd7be2d0fcadf539b408095dcbb32ee127f39b771239c966ea"
+}

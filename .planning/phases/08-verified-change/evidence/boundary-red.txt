@@ -1,0 +1,1708 @@
+FFFFFFFFFFFF.....FFFFFFFFFFFFFFF                                         [100%]
+=================================== FAILURES ===================================
+______ test_protected_paths_share_context_and_change_policy[.git/config] _______
+
+path = '.git/config'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.git/config')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+____ test_protected_paths_share_context_and_change_policy[nested/.git/HEAD] ____
+
+path = 'nested/.git/HEAD'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('nested/.git/HEAD')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+_ test_protected_paths_share_context_and_change_policy[.ddk/cases/private.json] _
+
+path = '.ddk/cases/private.json'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.ddk/cases/private.json')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+_ test_protected_paths_share_context_and_change_policy[.ddk-home/.npm-cache/log] _
+
+path = '.ddk-home/.npm-cache/log'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.ddk-home/.npm-cache/log')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+____ test_protected_paths_share_context_and_change_policy[.codex/auth.json] ____
+
+path = '.codex/auth.json'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.codex/auth.json')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+_ test_protected_paths_share_context_and_change_policy[.claude/settings.json] __
+
+path = '.claude/settings.json'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.claude/settings.json')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+_ test_protected_paths_share_context_and_change_policy[.gemini/oauth_creds.json] _
+
+path = '.gemini/oauth_creds.json'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.gemini/oauth_creds.json')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+_ test_protected_paths_share_context_and_change_policy[.config/gcloud/application_default_credentials.json] _
+
+path = '.config/gcloud/application_default_credentials.json'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+        assert is_secret_path(path)
+>       assert is_protected_path(path)
+E       AssertionError: assert False
+E        +  where False = is_protected_path('.config/gcloud/application_default_credentials.json')
+
+tests/unit/test_repository_boundary.py:49: AssertionError
+__ test_protected_paths_share_context_and_change_policy[.docker/config.json] ___
+
+path = '.docker/config.json'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+        assert is_secret_path(path)
+>       assert is_protected_path(path)
+E       AssertionError: assert False
+E        +  where False = is_protected_path('.docker/config.json')
+
+tests/unit/test_repository_boundary.py:49: AssertionError
+______ test_protected_paths_share_context_and_change_policy[.env.example] ______
+
+path = '.env.example'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.env.example')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+_________ test_protected_paths_share_context_and_change_policy[.envrc] _________
+
+path = '.envrc'
+
+    @pytest.mark.parametrize("path", PROTECTED_PATHS)
+    def test_protected_paths_share_context_and_change_policy(path: str) -> None:
+>       assert is_secret_path(path)
+E       AssertionError: assert False
+E        +  where False = is_secret_path('.envrc')
+
+tests/unit/test_repository_boundary.py:48: AssertionError
+________ test_relative_path_requires_exact_posix_spelling[src\\App.tsx] ________
+
+path = 'src\\App.tsx'
+
+    @pytest.mark.parametrize(
+        "path", [r"src\App.tsx", " src/App.tsx", "src/App.tsx ", "src//App.tsx", "src/./App.tsx"]
+    )
+    def test_relative_path_requires_exact_posix_spelling(path: str) -> None:
+>       with pytest.raises(UnsafeRepositoryPathError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE UnsafeRepositoryPathError
+
+tests/unit/test_repository_boundary.py:58: Failed
+__________ test_generic_boundary_rejects_unsafe_file_types[hardlink] ___________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generic_boundary_rejects_0')
+kind = 'hardlink'
+
+    @pytest.mark.parametrize("kind", ["hardlink", "fifo", "parent-file"])
+    def test_generic_boundary_rejects_unsafe_file_types(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        if kind == "hardlink":
+            outside = tmp_path / "outside.ts"
+            outside.write_text("private")
+            os.link(outside, root / "target.ts")
+            path = "target.ts"
+        elif kind == "fifo":
+            os.mkfifo(root / "target.ts")
+            path = "target.ts"
+        else:
+            (root / "src").write_text("not a directory")
+            path = "src/target.ts"
+>       with pytest.raises(UnsafeRepositoryPathError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE UnsafeRepositoryPathError
+
+tests/unit/test_repository_boundary.py:83: Failed
+____________ test_generic_boundary_rejects_unsafe_file_types[fifo] _____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generic_boundary_rejects_1')
+kind = 'fifo'
+
+    @pytest.mark.parametrize("kind", ["hardlink", "fifo", "parent-file"])
+    def test_generic_boundary_rejects_unsafe_file_types(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        if kind == "hardlink":
+            outside = tmp_path / "outside.ts"
+            outside.write_text("private")
+            os.link(outside, root / "target.ts")
+            path = "target.ts"
+        elif kind == "fifo":
+            os.mkfifo(root / "target.ts")
+            path = "target.ts"
+        else:
+            (root / "src").write_text("not a directory")
+            path = "src/target.ts"
+>       with pytest.raises(UnsafeRepositoryPathError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE UnsafeRepositoryPathError
+
+tests/unit/test_repository_boundary.py:83: Failed
+_________ test_generic_boundary_rejects_unsafe_file_types[parent-file] _________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generic_boundary_rejects_2')
+kind = 'parent-file'
+
+    @pytest.mark.parametrize("kind", ["hardlink", "fifo", "parent-file"])
+    def test_generic_boundary_rejects_unsafe_file_types(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        if kind == "hardlink":
+            outside = tmp_path / "outside.ts"
+            outside.write_text("private")
+            os.link(outside, root / "target.ts")
+            path = "target.ts"
+        elif kind == "fifo":
+            os.mkfifo(root / "target.ts")
+            path = "target.ts"
+        else:
+            (root / "src").write_text("not a directory")
+            path = "src/target.ts"
+>       with pytest.raises(UnsafeRepositoryPathError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE UnsafeRepositoryPathError
+
+tests/unit/test_repository_boundary.py:83: Failed
+____________ test_generation_never_imports_linked_original[symlink] ____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_0')
+kind = 'symlink'
+
+    @pytest.mark.parametrize("kind", ["symlink", "parent-symlink", "hardlink", "dangling-symlink"])
+    async def test_generation_never_imports_linked_original(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        outside = tmp_path / "outside.tsx"
+        outside.write_text("private marker")
+        if kind == "parent-symlink":
+            folder = tmp_path / "outside"
+            folder.mkdir()
+            (folder / "App.tsx").write_text("private marker")
+            (root / "src").symlink_to(folder, target_is_directory=True)
+        else:
+            (root / "src").mkdir()
+            target = root / "src/App.tsx"
+            if kind == "hardlink":
+                os.link(outside, target)
+            else:
+                target.symlink_to(outside if kind == "symlink" else tmp_path / "missing")
+        with patch.object(Path, "read_text", side_effect=AssertionError("unsafe direct access")):
+            with pytest.raises(GenerationError, match="no usable file"):
+>               await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+
+tests/unit/test_repository_boundary.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '=== FILE: src/App.tsx ===\nexport default 1;'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_0/repo')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+________ test_generation_never_imports_linked_original[parent-symlink] _________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_1')
+kind = 'parent-symlink'
+
+    @pytest.mark.parametrize("kind", ["symlink", "parent-symlink", "hardlink", "dangling-symlink"])
+    async def test_generation_never_imports_linked_original(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        outside = tmp_path / "outside.tsx"
+        outside.write_text("private marker")
+        if kind == "parent-symlink":
+            folder = tmp_path / "outside"
+            folder.mkdir()
+            (folder / "App.tsx").write_text("private marker")
+            (root / "src").symlink_to(folder, target_is_directory=True)
+        else:
+            (root / "src").mkdir()
+            target = root / "src/App.tsx"
+            if kind == "hardlink":
+                os.link(outside, target)
+            else:
+                target.symlink_to(outside if kind == "symlink" else tmp_path / "missing")
+        with patch.object(Path, "read_text", side_effect=AssertionError("unsafe direct access")):
+            with pytest.raises(GenerationError, match="no usable file"):
+>               await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+
+tests/unit/test_repository_boundary.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '=== FILE: src/App.tsx ===\nexport default 1;'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_1/repo')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+___________ test_generation_never_imports_linked_original[hardlink] ____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_2')
+kind = 'hardlink'
+
+    @pytest.mark.parametrize("kind", ["symlink", "parent-symlink", "hardlink", "dangling-symlink"])
+    async def test_generation_never_imports_linked_original(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        outside = tmp_path / "outside.tsx"
+        outside.write_text("private marker")
+        if kind == "parent-symlink":
+            folder = tmp_path / "outside"
+            folder.mkdir()
+            (folder / "App.tsx").write_text("private marker")
+            (root / "src").symlink_to(folder, target_is_directory=True)
+        else:
+            (root / "src").mkdir()
+            target = root / "src/App.tsx"
+            if kind == "hardlink":
+                os.link(outside, target)
+            else:
+                target.symlink_to(outside if kind == "symlink" else tmp_path / "missing")
+        with patch.object(Path, "read_text", side_effect=AssertionError("unsafe direct access")):
+            with pytest.raises(GenerationError, match="no usable file"):
+>               await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+
+tests/unit/test_repository_boundary.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '=== FILE: src/App.tsx ===\nexport default 1;'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_2/repo')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+_______ test_generation_never_imports_linked_original[dangling-symlink] ________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_3')
+kind = 'dangling-symlink'
+
+    @pytest.mark.parametrize("kind", ["symlink", "parent-symlink", "hardlink", "dangling-symlink"])
+    async def test_generation_never_imports_linked_original(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        outside = tmp_path / "outside.tsx"
+        outside.write_text("private marker")
+        if kind == "parent-symlink":
+            folder = tmp_path / "outside"
+            folder.mkdir()
+            (folder / "App.tsx").write_text("private marker")
+            (root / "src").symlink_to(folder, target_is_directory=True)
+        else:
+            (root / "src").mkdir()
+            target = root / "src/App.tsx"
+            if kind == "hardlink":
+                os.link(outside, target)
+            else:
+                target.symlink_to(outside if kind == "symlink" else tmp_path / "missing")
+        with patch.object(Path, "read_text", side_effect=AssertionError("unsafe direct access")):
+            with pytest.raises(GenerationError, match="no usable file"):
+>               await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+
+tests/unit/test_repository_boundary.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '=== FILE: src/App.tsx ===\nexport default 1;'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_generation_never_imports_3/repo')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+____________ test_json_generation_rejects_non_string_content[None] _____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n0')
+content = None
+
+    @pytest.mark.parametrize("content", [None, 12, {"source": "untrusted"}, ["untrusted"]])
+    async def test_json_generation_rejects_non_string_content(tmp_path: Path, content: object) -> None:
+        answer = json.dumps({"files": [{"path": "src/App.tsx", "content": content}]})
+        with pytest.raises(GenerationError, match="no usable file"):
+>           await _generate(answer, tmp_path)
+
+tests/unit/test_repository_boundary.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '{"files": [{"path": "src/App.tsx", "content": null}]}'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n0')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+_____________ test_json_generation_rejects_non_string_content[12] ______________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n1')
+content = 12
+
+    @pytest.mark.parametrize("content", [None, 12, {"source": "untrusted"}, ["untrusted"]])
+    async def test_json_generation_rejects_non_string_content(tmp_path: Path, content: object) -> None:
+        answer = json.dumps({"files": [{"path": "src/App.tsx", "content": content}]})
+        with pytest.raises(GenerationError, match="no usable file"):
+>           await _generate(answer, tmp_path)
+
+tests/unit/test_repository_boundary.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '{"files": [{"path": "src/App.tsx", "content": 12}]}'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n1')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+__________ test_json_generation_rejects_non_string_content[content2] ___________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n2')
+content = {'source': 'untrusted'}
+
+    @pytest.mark.parametrize("content", [None, 12, {"source": "untrusted"}, ["untrusted"]])
+    async def test_json_generation_rejects_non_string_content(tmp_path: Path, content: object) -> None:
+        answer = json.dumps({"files": [{"path": "src/App.tsx", "content": content}]})
+        with pytest.raises(GenerationError, match="no usable file"):
+>           await _generate(answer, tmp_path)
+
+tests/unit/test_repository_boundary.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '{"files": [{"path": "src/App.tsx", "content": {"source": "untrusted"}}]}'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n2')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+__________ test_json_generation_rejects_non_string_content[content3] ___________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n3')
+content = ['untrusted']
+
+    @pytest.mark.parametrize("content", [None, 12, {"source": "untrusted"}, ["untrusted"]])
+    async def test_json_generation_rejects_non_string_content(tmp_path: Path, content: object) -> None:
+        answer = json.dumps({"files": [{"path": "src/App.tsx", "content": content}]})
+        with pytest.raises(GenerationError, match="no usable file"):
+>           await _generate(answer, tmp_path)
+
+tests/unit/test_repository_boundary.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+answer = '{"files": [{"path": "src/App.tsx", "content": ["untrusted"]}]}'
+root = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_json_generation_rejects_n3')
+
+    async def _generate(answer: str, root: Path) -> GeneratedArtifactSet:
+        return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+            GenerationPlan(
+                case_id="c",
+                nodes=[GenerationNode(id="n", node_type="file", target_path="src/App.tsx")],
+                execution_order=["n"],
+            ),
+            RepoProfile(framework="react"),
+>           IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "modify the heading",
+            repo_root=root,
+        )
+E       pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E       layout_regions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       components
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+E       interactions
+E         Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+tests/unit/test_repository_boundary.py:95: ValidationError
+___________ test_truncated_repair_discards_complete_main_and_extras ____________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_truncated_repair_discards0')
+
+    async def test_truncated_repair_discards_complete_main_and_extras(tmp_path: Path) -> None:
+        original = "export const value: number = 'wrong';\n"
+        artifacts = GeneratedArtifactSet(
+            case_id="c",
+            files=[GeneratedFile(path="src/App.tsx", content=original, source_node_id="n")],
+            file_map={"src/App.tsx": original},
+        )
+        failure = FailureRecord(
+            id="f",
+            taxonomy_id="FT-TYPE-001",
+            severity="major",
+            message="Type string is not assignable to number",
+            file_path="src/App.tsx",
+            raw_output="TS2322",
+        )
+        response = LLMResponse(
+            content="export const value: number = 1;\n=== FILE: src/new.css ===\nbody { color: red; }\n",
+            model="fake",
+            truncated=True,
+        )
+        llm = FakeLLMAdapter()
+        with patch.object(llm, "complete", return_value=response):
+            attempt, updated = await AutoFixPlanner(llm, repo_root=tmp_path).plan_and_apply(
+                [failure], artifacts, "c", 1
+            )
+>       assert attempt.success is False
+E       AssertionError: assert True is False
+E        +  where True = FixAttempt(attempt_number=1, case_id='c', trigger_failures=['f'], rule_id='R-09', files_patched=['src/App.tsx', 'src/n...nt_ref=None, duration_ms=0, created_at=datetime.datetime(2026, 10, 14, 2, 5, 51, 682209, tzinfo=datetime.timezone.utc)).success
+
+tests/unit/test_repository_boundary.py:156: AssertionError
+___ test_copy_excludes_every_non_regular_or_linked_source[internal-symlink] ____
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_copy_excludes_every_non_r0')
+kind = 'internal-symlink'
+
+    @pytest.mark.parametrize("kind", ["internal-symlink", "hardlink", "fifo"])
+    async def test_copy_excludes_every_non_regular_or_linked_source(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        (root / "ok.ts").write_text("ordinary")
+        target = root / "linked.ts"
+        if kind == "internal-symlink":
+            target.symlink_to("ok.ts")
+        elif kind == "hardlink":
+            outside = tmp_path / "private.ts"
+            outside.write_text("private")
+            os.link(outside, target)
+        else:
+            os.mkfifo(target)
+        sandbox = TempDirSandbox()
+        try:
+            copied = await sandbox.create(root)
+            assert (copied / "ok.ts").read_text() == "ordinary"
+>           assert not (copied / "linked.ts").exists()
+E           AssertionError: assert not True
+E            +  where True = exists()
+E            +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-ctaw9mgt') / 'linked.ts').exists
+
+tests/unit/test_repository_boundary.py:180: AssertionError
+_______ test_copy_excludes_every_non_regular_or_linked_source[hardlink] ________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_copy_excludes_every_non_r1')
+kind = 'hardlink'
+
+    @pytest.mark.parametrize("kind", ["internal-symlink", "hardlink", "fifo"])
+    async def test_copy_excludes_every_non_regular_or_linked_source(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        (root / "ok.ts").write_text("ordinary")
+        target = root / "linked.ts"
+        if kind == "internal-symlink":
+            target.symlink_to("ok.ts")
+        elif kind == "hardlink":
+            outside = tmp_path / "private.ts"
+            outside.write_text("private")
+            os.link(outside, target)
+        else:
+            os.mkfifo(target)
+        sandbox = TempDirSandbox()
+        try:
+            copied = await sandbox.create(root)
+            assert (copied / "ok.ts").read_text() == "ordinary"
+>           assert not (copied / "linked.ts").exists()
+E           AssertionError: assert not True
+E            +  where True = exists()
+E            +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-vredhoyf') / 'linked.ts').exists
+
+tests/unit/test_repository_boundary.py:180: AssertionError
+_________ test_copy_excludes_every_non_regular_or_linked_source[fifo] __________
+
+tmp_path = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_copy_excludes_every_non_r2')
+kind = 'fifo'
+
+    @pytest.mark.parametrize("kind", ["internal-symlink", "hardlink", "fifo"])
+    async def test_copy_excludes_every_non_regular_or_linked_source(tmp_path: Path, kind: str) -> None:
+        root = tmp_path / "repo"
+        root.mkdir()
+        (root / "ok.ts").write_text("ordinary")
+        target = root / "linked.ts"
+        if kind == "internal-symlink":
+            target.symlink_to("ok.ts")
+        elif kind == "hardlink":
+            outside = tmp_path / "private.ts"
+            outside.write_text("private")
+            os.link(outside, target)
+        else:
+            os.mkfifo(target)
+        sandbox = TempDirSandbox()
+        try:
+>           copied = await sandbox.create(root)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_repository_boundary.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/ddk/adapters/sandbox/tempdir.py:60: in create
+    shutil.copytree(
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+entries = [<DirEntry 'linked.ts'>, <DirEntry 'ok.ts'>]
+src = PosixPath('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_copy_excludes_every_non_r2/repo')
+dst = PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-wh91r7vc')
+symlinks = True
+ignore = <function TempDirSandbox.create.<locals>.ignore_unsafe_symlinks at 0x10b2e65c0>
+copy_function = <function copy2 at 0x1037b47c0>
+ignore_dangling_symlinks = False, dirs_exist_ok = True
+
+    def _copytree(entries, src, dst, symlinks, ignore, copy_function,
+                  ignore_dangling_symlinks, dirs_exist_ok=False):
+        if ignore is not None:
+            ignored_names = ignore(os.fspath(src), [x.name for x in entries])
+        else:
+            ignored_names = ()
+    
+        os.makedirs(dst, exist_ok=dirs_exist_ok)
+        errors = []
+        use_srcentry = copy_function is copy2 or copy_function is copy
+    
+        for srcentry in entries:
+            if srcentry.name in ignored_names:
+                continue
+            srcname = os.path.join(src, srcentry.name)
+            dstname = os.path.join(dst, srcentry.name)
+            srcobj = srcentry if use_srcentry else srcname
+            try:
+                is_symlink = srcentry.is_symlink()
+                if is_symlink and os.name == 'nt':
+                    # Special check for directory junctions, which appear as
+                    # symlinks but we want to recurse.
+                    lstat = srcentry.stat(follow_symlinks=False)
+                    if lstat.st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT:
+                        is_symlink = False
+                if is_symlink:
+                    linkto = os.readlink(srcname)
+                    if symlinks:
+                        # We can't just leave it to `copy_function` because legacy
+                        # code with a custom `copy_function` may rely on copytree
+                        # doing the right thing.
+                        os.symlink(linkto, dstname)
+                        copystat(srcobj, dstname, follow_symlinks=not symlinks)
+                    else:
+                        # ignore dangling symlink if the flag is on
+                        if not os.path.exists(linkto) and ignore_dangling_symlinks:
+                            continue
+                        # otherwise let the copy occur. copy2 will raise an error
+                        if srcentry.is_dir():
+                            copytree(srcobj, dstname, symlinks, ignore,
+                                     copy_function, ignore_dangling_symlinks,
+                                     dirs_exist_ok)
+                        else:
+                            copy_function(srcobj, dstname)
+                elif srcentry.is_dir():
+                    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+                             ignore_dangling_symlinks, dirs_exist_ok)
+                else:
+                    # Will raise a SpecialFileError for unsupported file types
+                    copy_function(srcobj, dstname)
+            # catch the Error from the recursive copytree so that we can
+            # continue with other files
+            except Error as err:
+                errors.extend(err.args[0])
+            except OSError as why:
+                errors.append((srcname, dstname, str(why)))
+        try:
+            copystat(src, dst)
+        except OSError as why:
+            # Copying file access times may fail on Windows
+            if getattr(why, 'winerror', None) is None:
+                errors.append((src, dst, str(why)))
+        if errors:
+>           raise Error(errors)
+E           shutil.Error: [('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_copy_excludes_every_non_r2/repo/linked.ts', '/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-wh91r7vc/linked.ts', '`/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-167/test_copy_excludes_every_non_r2/repo/linked.ts` is a named pipe')]
+
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:554: Error
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.git/config]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[nested/.git/HEAD]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.ddk/cases/private.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.ddk-home/.npm-cache/log]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.codex/auth.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.claude/settings.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.gemini/oauth_creds.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.config/gcloud/application_default_credentials.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.docker/config.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.env.example]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.envrc]
+FAILED tests/unit/test_repository_boundary.py::test_relative_path_requires_exact_posix_spelling[src\\App.tsx]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[fifo]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[parent-file]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[parent-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[dangling-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[None]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[12]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content2]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content3]
+FAILED tests/unit/test_repository_boundary.py::test_truncated_repair_discards_complete_main_and_extras
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[internal-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[fifo]
+27 failed, 5 passed in 0.91s
+FFFFFFFFFFFF.....FFFFFFFFFFFFFFFFF                                       [100%]
+=================================== FAILURES ===================================
+______ test_protected_paths_share_context_and_change_policy[.git/config] _______
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.git/config')
+____ test_protected_paths_share_context_and_change_policy[nested/.git/HEAD] ____
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('nested/.git/HEAD')
+_ test_protected_paths_share_context_and_change_policy[.ddk/cases/private.json] _
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.ddk/cases/private.json')
+_ test_protected_paths_share_context_and_change_policy[.ddk-home/.npm-cache/log] _
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.ddk-home/.npm-cache/log')
+____ test_protected_paths_share_context_and_change_policy[.codex/auth.json] ____
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.codex/auth.json')
+_ test_protected_paths_share_context_and_change_policy[.claude/settings.json] __
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.claude/settings.json')
+_ test_protected_paths_share_context_and_change_policy[.gemini/oauth_creds.json] _
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.gemini/oauth_creds.json')
+_ test_protected_paths_share_context_and_change_policy[.config/gcloud/application_default_credentials.json] _
+tests/unit/test_repository_boundary.py:49: in test_protected_paths_share_context_and_change_policy
+    assert is_protected_path(path)
+E   AssertionError: assert False
+E    +  where False = is_protected_path('.config/gcloud/application_default_credentials.json')
+__ test_protected_paths_share_context_and_change_policy[.docker/config.json] ___
+tests/unit/test_repository_boundary.py:49: in test_protected_paths_share_context_and_change_policy
+    assert is_protected_path(path)
+E   AssertionError: assert False
+E    +  where False = is_protected_path('.docker/config.json')
+______ test_protected_paths_share_context_and_change_policy[.env.example] ______
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.env.example')
+_________ test_protected_paths_share_context_and_change_policy[.envrc] _________
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.envrc')
+________ test_relative_path_requires_exact_posix_spelling[src\\App.tsx] ________
+tests/unit/test_repository_boundary.py:58: in test_relative_path_requires_exact_posix_spelling
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+__________ test_generic_boundary_rejects_unsafe_file_types[hardlink] ___________
+tests/unit/test_repository_boundary.py:83: in test_generic_boundary_rejects_unsafe_file_types
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+____________ test_generic_boundary_rejects_unsafe_file_types[fifo] _____________
+tests/unit/test_repository_boundary.py:83: in test_generic_boundary_rejects_unsafe_file_types
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+_________ test_generic_boundary_rejects_unsafe_file_types[parent-file] _________
+tests/unit/test_repository_boundary.py:83: in test_generic_boundary_rejects_unsafe_file_types
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+____________ test_generation_never_imports_linked_original[symlink] ____________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+________ test_generation_never_imports_linked_original[parent-symlink] _________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+___________ test_generation_never_imports_linked_original[hardlink] ____________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_______ test_generation_never_imports_linked_original[dangling-symlink] ________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+____________ test_json_generation_rejects_non_string_content[None] _____________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_____________ test_json_generation_rejects_non_string_content[12] ______________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_json_generation_rejects_non_string_content[content2] ___________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_json_generation_rejects_non_string_content[content3] ___________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+___________ test_truncated_repair_discards_complete_main_and_extras ____________
+tests/unit/test_repository_boundary.py:156: in test_truncated_repair_discards_complete_main_and_extras
+    assert attempt.success is False
+E   AssertionError: assert True is False
+E    +  where True = FixAttempt(attempt_number=1, case_id='c', trigger_failures=['f'], rule_id='R-09', files_patched=['src/App.tsx', 'src/n...nt_ref=None, duration_ms=0, created_at=datetime.datetime(2026, 10, 14, 2, 6, 36, 515268, tzinfo=datetime.timezone.utc)).success
+___ test_copy_excludes_every_non_regular_or_linked_source[internal-symlink] ____
+tests/unit/test_repository_boundary.py:180: in test_copy_excludes_every_non_regular_or_linked_source
+    assert not (copied / "linked.ts").exists()
+E   AssertionError: assert not True
+E    +  where True = exists()
+E    +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-5imvpcpt') / 'linked.ts').exists
+_______ test_copy_excludes_every_non_regular_or_linked_source[hardlink] ________
+tests/unit/test_repository_boundary.py:180: in test_copy_excludes_every_non_regular_or_linked_source
+    assert not (copied / "linked.ts").exists()
+E   AssertionError: assert not True
+E    +  where True = exists()
+E    +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-yew2cnvm') / 'linked.ts').exists
+_________ test_copy_excludes_every_non_regular_or_linked_source[fifo] __________
+tests/unit/test_repository_boundary.py:178: in test_copy_excludes_every_non_regular_or_linked_source
+    copied = await sandbox.create(root)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/sandbox/tempdir.py:60: in create
+    shutil.copytree(
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:554: in _copytree
+    raise Error(errors)
+E   shutil.Error: [('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-169/test_copy_excludes_every_non_r2/repo/linked.ts', '/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-bza1clb9/linked.ts', '`/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-169/test_copy_excludes_every_non_r2/repo/linked.ts` is a named pipe')]
+___________ test_context_rejects_untrusted_source_identity[hardlink] ___________
+tests/unit/test_repository_boundary.py:197: in test_context_rejects_untrusted_source_identity
+    pack = ContextPackBuilder().build(tmp_path, ["src/App.tsx"], "generate")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:135: in build
+    candidates = self._gather_candidates(repo_path, target_files)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:180: in _gather_candidates
+    target_dirs = {str(Path(tf).parent) for tf in target_files}
+                                                  ^^^^^^^^^^^^
+E   TypeError: 'PosixPath' object is not iterable
+________ test_context_rejects_untrusted_source_identity[backslash-name] ________
+tests/unit/test_repository_boundary.py:197: in test_context_rejects_untrusted_source_identity
+    pack = ContextPackBuilder().build(tmp_path, ["src/App.tsx"], "generate")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:135: in build
+    candidates = self._gather_candidates(repo_path, target_files)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:180: in _gather_candidates
+    target_dirs = {str(Path(tf).parent) for tf in target_files}
+                                                  ^^^^^^^^^^^^
+E   TypeError: 'PosixPath' object is not iterable
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.git/config]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[nested/.git/HEAD]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.ddk/cases/private.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.ddk-home/.npm-cache/log]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.codex/auth.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.claude/settings.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.gemini/oauth_creds.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.config/gcloud/application_default_credentials.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.docker/config.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.env.example]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.envrc]
+FAILED tests/unit/test_repository_boundary.py::test_relative_path_requires_exact_posix_spelling[src\\App.tsx]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[fifo]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[parent-file]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[parent-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[dangling-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[None]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[12]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content2]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content3]
+FAILED tests/unit/test_repository_boundary.py::test_truncated_repair_discards_complete_main_and_extras
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[internal-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[fifo]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[backslash-name]
+29 failed, 5 passed in 0.16s
+FFFFFFFFFFFF.....FFFFFFFFFFFFFFFFFFFF                                    [100%]
+=================================== FAILURES ===================================
+______ test_protected_paths_share_context_and_change_policy[.git/config] _______
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.git/config')
+____ test_protected_paths_share_context_and_change_policy[nested/.git/HEAD] ____
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('nested/.git/HEAD')
+_ test_protected_paths_share_context_and_change_policy[.ddk/cases/private.json] _
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.ddk/cases/private.json')
+_ test_protected_paths_share_context_and_change_policy[.ddk-home/.npm-cache/log] _
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.ddk-home/.npm-cache/log')
+____ test_protected_paths_share_context_and_change_policy[.codex/auth.json] ____
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.codex/auth.json')
+_ test_protected_paths_share_context_and_change_policy[.claude/settings.json] __
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.claude/settings.json')
+_ test_protected_paths_share_context_and_change_policy[.gemini/oauth_creds.json] _
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.gemini/oauth_creds.json')
+_ test_protected_paths_share_context_and_change_policy[.config/gcloud/application_default_credentials.json] _
+tests/unit/test_repository_boundary.py:49: in test_protected_paths_share_context_and_change_policy
+    assert is_protected_path(path)
+E   AssertionError: assert False
+E    +  where False = is_protected_path('.config/gcloud/application_default_credentials.json')
+__ test_protected_paths_share_context_and_change_policy[.docker/config.json] ___
+tests/unit/test_repository_boundary.py:49: in test_protected_paths_share_context_and_change_policy
+    assert is_protected_path(path)
+E   AssertionError: assert False
+E    +  where False = is_protected_path('.docker/config.json')
+______ test_protected_paths_share_context_and_change_policy[.env.example] ______
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.env.example')
+_________ test_protected_paths_share_context_and_change_policy[.envrc] _________
+tests/unit/test_repository_boundary.py:48: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.envrc')
+________ test_relative_path_requires_exact_posix_spelling[src\\App.tsx] ________
+tests/unit/test_repository_boundary.py:58: in test_relative_path_requires_exact_posix_spelling
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+__________ test_generic_boundary_rejects_unsafe_file_types[hardlink] ___________
+tests/unit/test_repository_boundary.py:83: in test_generic_boundary_rejects_unsafe_file_types
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+____________ test_generic_boundary_rejects_unsafe_file_types[fifo] _____________
+tests/unit/test_repository_boundary.py:83: in test_generic_boundary_rejects_unsafe_file_types
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+_________ test_generic_boundary_rejects_unsafe_file_types[parent-file] _________
+tests/unit/test_repository_boundary.py:83: in test_generic_boundary_rejects_unsafe_file_types
+    with pytest.raises(UnsafeRepositoryPathError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+____________ test_generation_never_imports_linked_original[symlink] ____________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+________ test_generation_never_imports_linked_original[parent-symlink] _________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+___________ test_generation_never_imports_linked_original[hardlink] ____________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_______ test_generation_never_imports_linked_original[dangling-symlink] ________
+tests/unit/test_repository_boundary.py:121: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+____________ test_json_generation_rejects_non_string_content[None] _____________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_____________ test_json_generation_rejects_non_string_content[12] ______________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_json_generation_rejects_non_string_content[content2] ___________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_json_generation_rejects_non_string_content[content3] ___________
+tests/unit/test_repository_boundary.py:128: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+___________ test_truncated_repair_discards_complete_main_and_extras ____________
+tests/unit/test_repository_boundary.py:156: in test_truncated_repair_discards_complete_main_and_extras
+    assert attempt.success is False
+E   AssertionError: assert True is False
+E    +  where True = FixAttempt(attempt_number=1, case_id='c', trigger_failures=['f'], rule_id='R-09', files_patched=['src/App.tsx', 'src/n...nt_ref=None, duration_ms=0, created_at=datetime.datetime(2026, 10, 14, 2, 6, 56, 314758, tzinfo=datetime.timezone.utc)).success
+___ test_copy_excludes_every_non_regular_or_linked_source[internal-symlink] ____
+tests/unit/test_repository_boundary.py:180: in test_copy_excludes_every_non_regular_or_linked_source
+    assert not (copied / "linked.ts").exists()
+E   AssertionError: assert not True
+E    +  where True = exists()
+E    +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-jz8c8oy2') / 'linked.ts').exists
+_______ test_copy_excludes_every_non_regular_or_linked_source[hardlink] ________
+tests/unit/test_repository_boundary.py:180: in test_copy_excludes_every_non_regular_or_linked_source
+    assert not (copied / "linked.ts").exists()
+E   AssertionError: assert not True
+E    +  where True = exists()
+E    +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-cipyq_ze') / 'linked.ts').exists
+_________ test_copy_excludes_every_non_regular_or_linked_source[fifo] __________
+tests/unit/test_repository_boundary.py:178: in test_copy_excludes_every_non_regular_or_linked_source
+    copied = await sandbox.create(root)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/sandbox/tempdir.py:60: in create
+    shutil.copytree(
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:554: in _copytree
+    raise Error(errors)
+E   shutil.Error: [('/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-170/test_copy_excludes_every_non_r2/repo/linked.ts', '/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-292a_gj3/linked.ts', '`/private/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/pytest-of-bjchoi/pytest-170/test_copy_excludes_every_non_r2/repo/linked.ts` is a named pipe')]
+___________ test_context_rejects_untrusted_source_identity[hardlink] ___________
+tests/unit/test_repository_boundary.py:197: in test_context_rejects_untrusted_source_identity
+    pack = ContextPackBuilder().build(tmp_path, ["src/App.tsx"], "generate")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:135: in build
+    candidates = self._gather_candidates(repo_path, target_files)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:180: in _gather_candidates
+    target_dirs = {str(Path(tf).parent) for tf in target_files}
+                                                  ^^^^^^^^^^^^
+E   TypeError: 'PosixPath' object is not iterable
+________ test_context_rejects_untrusted_source_identity[backslash-name] ________
+tests/unit/test_repository_boundary.py:197: in test_context_rejects_untrusted_source_identity
+    pack = ContextPackBuilder().build(tmp_path, ["src/App.tsx"], "generate")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:135: in build
+    candidates = self._gather_candidates(repo_path, target_files)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:180: in _gather_candidates
+    target_dirs = {str(Path(tf).parent) for tf in target_files}
+                                                  ^^^^^^^^^^^^
+E   TypeError: 'PosixPath' object is not iterable
+__________________ test_artifact_set_rejects_colliding_paths ___________________
+tests/unit/test_repository_boundary.py:202: in test_artifact_set_rejects_colliding_paths
+    with pytest.raises(ValidationError, match="collid"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValidationError
+________________ test_generation_rejects_duplicate_file_blocks _________________
+tests/unit/test_repository_boundary.py:214: in test_generation_rejects_duplicate_file_blocks
+    await _generate(
+tests/unit/test_repository_boundary.py:95: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_repair_extras_cannot_traverse_dangling_parent_symlink __________
+tests/unit/test_repository_boundary.py:226: in test_repair_extras_cannot_traverse_dangling_parent_symlink
+    assert accepted is None
+E   AssertionError: assert 'linked/style.css' is None
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.git/config]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[nested/.git/HEAD]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.ddk/cases/private.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.ddk-home/.npm-cache/log]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.codex/auth.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.claude/settings.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.gemini/oauth_creds.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.config/gcloud/application_default_credentials.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.docker/config.json]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.env.example]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.envrc]
+FAILED tests/unit/test_repository_boundary.py::test_relative_path_requires_exact_posix_spelling[src\\App.tsx]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[fifo]
+FAILED tests/unit/test_repository_boundary.py::test_generic_boundary_rejects_unsafe_file_types[parent-file]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[parent-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[dangling-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[None]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[12]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content2]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content3]
+FAILED tests/unit/test_repository_boundary.py::test_truncated_repair_discards_complete_main_and_extras
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[internal-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_copy_excludes_every_non_regular_or_linked_source[fifo]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[backslash-name]
+FAILED tests/unit/test_repository_boundary.py::test_artifact_set_rejects_colliding_paths
+FAILED tests/unit/test_repository_boundary.py::test_generation_rejects_duplicate_file_blocks
+FAILED tests/unit/test_repository_boundary.py::test_repair_extras_cannot_traverse_dangling_parent_symlink
+32 failed, 5 passed in 0.24s
+
+Corrected fixture replay against original service implementations from Git HEAD:
+FFFFFFFFFFF                                                              [100%]
+=================================== FAILURES ===================================
+____________ test_generation_never_imports_linked_original[symlink] ____________
+tests/unit/test_repository_boundary.py:131: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:93: in _generate
+    return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+src/ddk/services/code_generator.py@baseline:132: in generate_all
+    ???
+src/ddk/services/code_generator.py@baseline:235: in _usable_files
+    ???
+src/ddk/services/code_generator.py@baseline:282: in _existing
+    ???
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1198: in _execute_mock_call
+    raise effect
+E   AssertionError: unsafe direct access
+________ test_generation_never_imports_linked_original[parent-symlink] _________
+tests/unit/test_repository_boundary.py:131: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:93: in _generate
+    return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+src/ddk/services/code_generator.py@baseline:132: in generate_all
+    ???
+src/ddk/services/code_generator.py@baseline:235: in _usable_files
+    ???
+src/ddk/services/code_generator.py@baseline:282: in _existing
+    ???
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1198: in _execute_mock_call
+    raise effect
+E   AssertionError: unsafe direct access
+___________ test_generation_never_imports_linked_original[hardlink] ____________
+tests/unit/test_repository_boundary.py:131: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:93: in _generate
+    return await CodeGenerator(FakeLLMAdapter({"generate": answer})).generate_all(
+src/ddk/services/code_generator.py@baseline:132: in generate_all
+    ???
+src/ddk/services/code_generator.py@baseline:235: in _usable_files
+    ???
+src/ddk/services/code_generator.py@baseline:282: in _existing
+    ???
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1139: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1143: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/unittest/mock.py:1198: in _execute_mock_call
+    raise effect
+E   AssertionError: unsafe direct access
+_______ test_generation_never_imports_linked_original[dangling-symlink] ________
+tests/unit/test_repository_boundary.py:129: in test_generation_never_imports_linked_original
+    pytest.raises(GenerationError, match="no usable file"),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE GenerationError
+____________ test_json_generation_rejects_non_string_content[None] _____________
+tests/unit/test_repository_boundary.py:137: in test_json_generation_rejects_non_string_content
+    with pytest.raises(GenerationError, match="no usable file"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE GenerationError
+_____________ test_json_generation_rejects_non_string_content[12] ______________
+tests/unit/test_repository_boundary.py:137: in test_json_generation_rejects_non_string_content
+    with pytest.raises(GenerationError, match="no usable file"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE GenerationError
+__________ test_json_generation_rejects_non_string_content[content2] ___________
+tests/unit/test_repository_boundary.py:137: in test_json_generation_rejects_non_string_content
+    with pytest.raises(GenerationError, match="no usable file"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE GenerationError
+__________ test_json_generation_rejects_non_string_content[content3] ___________
+tests/unit/test_repository_boundary.py:137: in test_json_generation_rejects_non_string_content
+    with pytest.raises(GenerationError, match="no usable file"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE GenerationError
+___________ test_context_rejects_untrusted_source_identity[hardlink] ___________
+tests/unit/test_repository_boundary.py:211: in test_context_rejects_untrusted_source_identity
+    assert not any(marker in chunk.content for chunk in pack.chunks)
+E   assert not True
+E    +  where True = any(<generator object test_context_rejects_untrusted_source_identity.<locals>.<genexpr> at 0x10bfe32a0>)
+________ test_context_rejects_untrusted_source_identity[backslash-name] ________
+tests/unit/test_repository_boundary.py:211: in test_context_rejects_untrusted_source_identity
+    assert not any(marker in chunk.content for chunk in pack.chunks)
+E   assert not True
+E    +  where True = any(<generator object test_context_rejects_untrusted_source_identity.<locals>.<genexpr> at 0x10bfe01e0>)
+________________ test_generation_rejects_duplicate_file_blocks _________________
+tests/unit/test_repository_boundary.py:226: in test_generation_rejects_duplicate_file_blocks
+    with pytest.raises(GenerationError, match="collid"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE GenerationError
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[parent-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[dangling-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[None]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[12]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content2]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content3]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[backslash-name]
+FAILED tests/unit/test_repository_boundary.py::test_generation_rejects_duplicate_file_blocks
+11 failed, 26 deselected in 0.17s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________________ test_copy_refuses_symlink_repository_root ___________________
+tests/unit/test_repository_boundary.py:253: in test_copy_refuses_symlink_repository_root
+    with pytest.raises(UnsafeRepositoryPathError, match="symlink"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_copy_refuses_symlink_repository_root
+1 failed, 37 deselected in 0.06s
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____________ test_repair_rejects_colliding_extra_files[src/new.css] ____________
+tests/unit/test_repository_boundary.py:278: in test_repair_rejects_colliding_extra_files
+    assert attempt.success is False
+E   AssertionError: assert True is False
+E    +  where True = FixAttempt(attempt_number=1, case_id='c', trigger_failures=['f'], rule_id='R-09', files_patched=['src/App.tsx', 'src/n...t_ref=None, duration_ms=0, created_at=datetime.datetime(2026, 10, 14, 2, 10, 55, 769631, tzinfo=datetime.timezone.utc)).success
+____________ test_repair_rejects_colliding_extra_files[src/New.css] ____________
+tests/unit/test_repository_boundary.py:278: in test_repair_rejects_colliding_extra_files
+    assert attempt.success is False
+E   AssertionError: assert True is False
+E    +  where True = FixAttempt(attempt_number=1, case_id='c', trigger_failures=['f'], rule_id='R-09', files_patched=['src/App.tsx', 'src/n...t_ref=None, duration_ms=0, created_at=datetime.datetime(2026, 10, 14, 2, 10, 55, 793046, tzinfo=datetime.timezone.utc)).success
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_repair_rejects_colliding_extra_files[src/new.css]
+FAILED tests/unit/test_repository_boundary.py::test_repair_rejects_colliding_extra_files[src/New.css]
+2 failed, 38 deselected in 0.08s
+...........FFF                                                           [100%]
+=================================== FAILURES ===================================
+_ test_protected_paths_share_context_and_change_policy[.envrc/hooks/private.ts] _
+tests/unit/test_repository_boundary.py:56: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.envrc/hooks/private.ts')
+_ test_protected_paths_share_context_and_change_policy[credentials/private.ts] _
+tests/unit/test_repository_boundary.py:56: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('credentials/private.ts')
+_ test_protected_paths_share_context_and_change_policy[.config/opencode/auth.json] _
+tests/unit/test_repository_boundary.py:56: in test_protected_paths_share_context_and_change_policy
+    assert is_secret_path(path)
+E   AssertionError: assert False
+E    +  where False = is_secret_path('.config/opencode/auth.json')
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.envrc/hooks/private.ts]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[credentials/private.ts]
+FAILED tests/unit/test_repository_boundary.py::test_protected_paths_share_context_and_change_policy[.config/opencode/auth.json]
+3 failed, 11 passed, 29 deselected in 0.07s
+FF.FF.F                                                                  [100%]
+=================================== FAILURES ===================================
+______ test_source_copy_skips_large_installed_dependencies[node_modules] _______
+tests/unit/test_repository_boundary.py:301: in test_source_copy_skips_large_installed_dependencies
+    copied = await sandbox.create(root)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/sandbox/tempdir.py:73: in create
+    shutil.copytree(
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:540: in _copytree
+    copy_function(srcobj, dstname)
+src/ddk/adapters/sandbox/tempdir.py:68: in copy_regular
+    content = read_source(source_root, relative)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/security/repo_paths.py:107: in read_source
+    return read_regular(resolve_source_path(root, raw_path), max_bytes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/security/file_access.py:80: in read_regular
+    return read_regular_at(parent_fd, name, max_bytes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/security/file_access.py:53: in read_regular_at
+    raise ValueError("file_size_limit")
+E   ValueError: file_size_limit
+_ test_source_copy_skips_large_installed_dependencies[packages/web/node_modules] _
+tests/unit/test_repository_boundary.py:301: in test_source_copy_skips_large_installed_dependencies
+    copied = await sandbox.create(root)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/adapters/sandbox/tempdir.py:73: in create
+    shutil.copytree(
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:536: in _copytree
+    copytree(srcobj, dstname, symlinks, ignore, copy_function,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:600: in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+../../../../.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/shutil.py:540: in _copytree
+    copy_function(srcobj, dstname)
+src/ddk/adapters/sandbox/tempdir.py:68: in copy_regular
+    content = read_source(source_root, relative)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/security/repo_paths.py:107: in read_source
+    return read_regular(resolve_source_path(root, raw_path), max_bytes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/security/file_access.py:80: in read_regular
+    return read_regular_at(parent_fd, name, max_bytes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/security/file_access.py:53: in read_regular_at
+    raise ValueError("file_size_limit")
+E   ValueError: file_size_limit
+_ test_dependencies_cannot_be_source_or_model_changes[node_modules/react/index.js] _
+tests/unit/test_repository_boundary.py:315: in test_dependencies_cannot_be_source_or_model_changes
+    pytest.raises(UnsafeRepositoryPathError),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+_ test_dependencies_cannot_be_source_or_model_changes[packages/web/node_modules/x.js] _
+tests/unit/test_repository_boundary.py:315: in test_dependencies_cannot_be_source_or_model_changes
+    pytest.raises(UnsafeRepositoryPathError),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE UnsafeRepositoryPathError
+____________ TestB4AutoFixApplication.test_r09_llm_applies_response ____________
+tests/unit/test_blockers.py:288: in test_r09_llm_applies_response
+    assert attempt.rule_id == "R-09"
+E   AssertionError: assert 'none' == 'R-09'
+E     
+E     - R-09
+E     + none
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_source_copy_skips_large_installed_dependencies[node_modules]
+FAILED tests/unit/test_repository_boundary.py::test_source_copy_skips_large_installed_dependencies[packages/web/node_modules]
+FAILED tests/unit/test_repository_boundary.py::test_dependencies_cannot_be_source_or_model_changes[node_modules/react/index.js]
+FAILED tests/unit/test_repository_boundary.py::test_dependencies_cannot_be_source_or_model_changes[packages/web/node_modules/x.js]
+FAILED tests/unit/test_blockers.py::TestB4AutoFixApplication::test_r09_llm_applies_response
+5 failed, 2 passed, 43 deselected in 0.29s

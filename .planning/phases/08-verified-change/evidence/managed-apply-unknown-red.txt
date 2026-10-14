@@ -1,0 +1,10 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_unknown_record_blocks_new_application_even_if_lock_marker_was_removed __
+tests/unit/services/test_managed_application.py:346: in test_unknown_record_blocks_new_application_even_if_lock_marker_was_removed
+    with pytest.raises(ValueError,match='application_recovery_required'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+=========================== short test summary info ============================
+FAILED tests/unit/services/test_managed_application.py::test_unknown_record_blocks_new_application_even_if_lock_marker_was_removed
+1 failed, 17 deselected in 0.56s

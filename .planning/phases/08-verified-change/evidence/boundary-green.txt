@@ -1,0 +1,289 @@
+....................FFFFFFFF....FF.F.......................FFF.......... [ 34%]
+....F...F............................................................... [ 69%]
+.....F........................................................           [100%]
+=================================== FAILURES ===================================
+____________ test_generation_never_imports_linked_original[symlink] ____________
+tests/unit/test_repository_boundary.py:128: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+________ test_generation_never_imports_linked_original[parent-symlink] _________
+tests/unit/test_repository_boundary.py:128: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+___________ test_generation_never_imports_linked_original[hardlink] ____________
+tests/unit/test_repository_boundary.py:128: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_______ test_generation_never_imports_linked_original[dangling-symlink] ________
+tests/unit/test_repository_boundary.py:128: in test_generation_never_imports_linked_original
+    await _generate("=== FILE: src/App.tsx ===\nexport default 1;", root)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+____________ test_json_generation_rejects_non_string_content[None] _____________
+tests/unit/test_repository_boundary.py:135: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_____________ test_json_generation_rejects_non_string_content[12] ______________
+tests/unit/test_repository_boundary.py:135: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_json_generation_rejects_non_string_content[content2] ___________
+tests/unit/test_repository_boundary.py:135: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+__________ test_json_generation_rejects_non_string_content[content3] ___________
+tests/unit/test_repository_boundary.py:135: in test_json_generation_rejects_non_string_content
+    await _generate(answer, tmp_path)
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+___________ test_context_rejects_untrusted_source_identity[hardlink] ___________
+tests/unit/test_repository_boundary.py:207: in test_context_rejects_untrusted_source_identity
+    pack = ContextPackBuilder().build(tmp_path, ["src/App.tsx"], "generate")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:135: in build
+    candidates = self._gather_candidates(repo_path, target_files)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:180: in _gather_candidates
+    target_dirs = {str(Path(tf).parent) for tf in target_files}
+                                                  ^^^^^^^^^^^^
+E   TypeError: 'PosixPath' object is not iterable
+________ test_context_rejects_untrusted_source_identity[backslash-name] ________
+tests/unit/test_repository_boundary.py:207: in test_context_rejects_untrusted_source_identity
+    pack = ContextPackBuilder().build(tmp_path, ["src/App.tsx"], "generate")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:135: in build
+    candidates = self._gather_candidates(repo_path, target_files)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/ddk/services/context_pack_builder.py:180: in _gather_candidates
+    target_dirs = {str(Path(tf).parent) for tf in target_files}
+                                                  ^^^^^^^^^^^^
+E   TypeError: 'PosixPath' object is not iterable
+________________ test_generation_rejects_duplicate_file_blocks _________________
+tests/unit/test_repository_boundary.py:224: in test_generation_rejects_duplicate_file_blocks
+    await _generate(
+tests/unit/test_repository_boundary.py:100: in _generate
+    IntentGraph(id="c", source_image_hash="h", confidence=1.0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for IntentGraph
+E   layout_regions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   components
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+E   interactions
+E     Field required [type=missing, input_value={'id': 'c', 'source_image... 'h', 'confidence': 1.0}, input_type=dict]
+E       For further information visit https://errors.pydantic.dev/2.13/v/missing
+_________________ test_non_secret_paths_allowed[.env.example] __________________
+tests/unit/test_secret_paths.py:53: in test_non_secret_paths_allowed
+    assert is_secret_path(path) is False
+E   AssertionError: assert True is False
+E    +  where True = is_secret_path('.env.example')
+__________________ test_non_secret_paths_allowed[.env.sample] __________________
+tests/unit/test_secret_paths.py:53: in test_non_secret_paths_allowed
+    assert is_secret_path(path) is False
+E   AssertionError: assert True is False
+E    +  where True = is_secret_path('.env.sample')
+_________________ test_non_secret_paths_allowed[.env.template] _________________
+tests/unit/test_secret_paths.py:53: in test_non_secret_paths_allowed
+    assert is_secret_path(path) is False
+E   AssertionError: assert True is False
+E    +  where True = is_secret_path('.env.template')
+___ TestTempDirSandbox.test_create_preserves_safe_relative_internal_symlinks ___
+tests/unit/adapters/test_tempdir_sandbox.py:84: in test_create_preserves_safe_relative_internal_symlinks
+    assert (work_dir / "link.txt").is_symlink()
+E   AssertionError: assert False
+E    +  where False = is_symlink()
+E    +    where is_symlink = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-e4xnq8zo') / 'link.txt').is_symlink
+_ TestSandboxCopyExclusions.test_secret_files_stay_out_but_env_templates_come_along _
+tests/unit/adapters/test_tempdir_sandbox.py:161: in test_secret_files_stay_out_but_env_templates_come_along
+    assert (work_dir / ".env.example").exists()
+E   AssertionError: assert False
+E    +  where False = exists()
+E    +    where exists = (PosixPath('/var/folders/mm/kmj45ls13zzfqssk63kptb7c0000gn/T/ddk-sandbox-jthfyabb') / '.env.example').exists
+_____ TestGeneratedFileDesignSpecFields.test_normalizes_windows_separators _____
+tests/unit/models/test_generation_alignment.py:77: in test_normalizes_windows_separators
+    generated = GeneratedFile(
+E   pydantic_core._pydantic_core.ValidationError: 1 validation error for GeneratedFile
+E   path
+E     Value error, unsafe repository-relative path: 'src\\components\\Button.tsx' [type=value_error, input_value='src\\components\\Button.tsx', input_type=str]
+E       For further information visit https://errors.pydantic.dev/2.13/v/value_error
+=========================== short test summary info ============================
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[parent-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_generation_never_imports_linked_original[dangling-symlink]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[None]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[12]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content2]
+FAILED tests/unit/test_repository_boundary.py::test_json_generation_rejects_non_string_content[content3]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[hardlink]
+FAILED tests/unit/test_repository_boundary.py::test_context_rejects_untrusted_source_identity[backslash-name]
+FAILED tests/unit/test_repository_boundary.py::test_generation_rejects_duplicate_file_blocks
+FAILED tests/unit/test_secret_paths.py::test_non_secret_paths_allowed[.env.example]
+FAILED tests/unit/test_secret_paths.py::test_non_secret_paths_allowed[.env.sample]
+FAILED tests/unit/test_secret_paths.py::test_non_secret_paths_allowed[.env.template]
+FAILED tests/unit/adapters/test_tempdir_sandbox.py::TestTempDirSandbox::test_create_preserves_safe_relative_internal_symlinks
+FAILED tests/unit/adapters/test_tempdir_sandbox.py::TestSandboxCopyExclusions::test_secret_files_stay_out_but_env_templates_come_along
+FAILED tests/unit/models/test_generation_alignment.py::TestGeneratedFileDesignSpecFields::test_normalizes_windows_separators
+17 failed, 189 passed in 1.11s
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+..............................................................           [100%]
+206 passed in 0.61s
+13 files left unchanged
+All checks passed!
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+...............................................................          [100%]
+207 passed in 0.51s
+1 file reformatted, 12 files left unchanged
+All checks passed!
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+........................................................................ [ 34%]
+........................................................................ [ 68%]
+.................................................................        [100%]
+209 passed in 0.52s
+2 files left unchanged
+All checks passed!
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+........................................................................ [ 33%]
+........................................................................ [ 67%]
+....................................................................     [100%]
+212 passed in 0.52s
+1 file reformatted, 5 files left unchanged
+........................................................................ [ 32%]
+........................................................................ [ 65%]
+........................................................................ [ 98%]
+....                                                                     [100%]
+220 passed in 0.66s
+F401 [*] `unittest.mock.MagicMock` imported but unused
+  --> tests/unit/test_blockers.py:14:38
+   |
+12 | import textwrap
+13 | from pathlib import Path
+14 | from unittest.mock import AsyncMock, MagicMock, patch
+   |                                      ^^^^^^^^^
+15 |
+16 | import pytest
+   |
+help: Remove unused import: `unittest.mock.MagicMock`
+   |
+13 | from pathlib import Path
+   - from unittest.mock import AsyncMock, MagicMock, patch
+14 + from unittest.mock import AsyncMock, patch
+15 |
+   |
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+0 errors, 0 warnings, 0 informations
+WARNING: there is a new pyright version available (v1.1.411 -> v1.1.414).
+Please install the new version or set PYRIGHT_PYTHON_FORCE_VERSION to `latest`
+
+All checks passed!
+6 files already formatted

@@ -1,0 +1,16 @@
+{
+  "src/ddk/adapters/chromium_browser.py": "509b47fc1e1c8c971ccb5309458c81caf3620cae2edfb526efc08c312e211ccc",
+  "src/ddk/adapters/llm/claude.py": "5734933b334d3bf5938305b2f2f1e51faeeeec247f2935e5439be084a771e380",
+  "src/ddk/adapters/subprocess_build_runner.py": "5cc5aa0af340516ceea152b5befcea13d165b48f9d197419d9354cfa99ff01cb",
+  "src/ddk/adapters/subprocess_preview.py": "2b515ce7e393db82a40124d6b3fb2d219e1439aa05e10e8ad7438235a7c336ef",
+  "src/ddk/cli/__init__.py": "0e45d87605f0b74091f497c88875a224a132524612f7306eed4db1ec5b365f9e",
+  "src/ddk/preflight/doctor.py": "dd5fcdfe4cd1d07456a8b9c0107336115e9eed56cebbdc22e6909f201a946ff8",
+  "src/ddk/demo/runner.py": "309bfee4cba23c4b23bfe00aef47b2efe133ea3b76cab1becae647c785a60db6",
+  "src/ddk/services/case_report.py": "e45471d8bd799cbb801bccb002ddca3db9a32b042e0d36a8aef39a503126c3e4",
+  "src/ddk/services/progress.py": "7900cf42800faca85f3fd30fcb3466c0331c142615e4e0fee8891be0d9f8a868",
+  "tests/unit/adapters/test_subprocess_build_runner.py": "c6cb1104ff5f8e755130761395d6835e16334329a1de263bd50c9d2412d2102d",
+  "tests/unit/adapters/test_subprocess_build_runner_robustness.py": "095315429791cc7cb69d8b7f34d55e1fa9ce882ddff210d43d0bad10d834077a",
+  "tests/unit/adapters/test_subprocess_lifecycle.py": "cff25e547b8172123897bb69a06c6f09ed624571b3e788ff95577f4a2d36fee0",
+  "tests/unit/demo/test_runner.py": "1152dc003e4e654def354270be6648e66313f6c6ea17e280a107bd326372766c",
+  "tests/e2e/test_demo.py": "c4ae8112ef8cfeddad01732693e5e1f721049cca1d6f20d888c2547c98d1241c"
+}

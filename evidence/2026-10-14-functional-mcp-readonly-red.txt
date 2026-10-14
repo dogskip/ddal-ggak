@@ -1,0 +1,46 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_actual_cli_stdio_lists_existing_tools_and_reports_errors _________
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/integration/test_verified_mcp_stdio.py", line 170, in test_actual_cli_stdio_lists_existing_tools_and_reports_errors
+  |     async with connected(tmp_path, monkeypatch) as (session, _):
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Users/bjchoi/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/integration/test_verified_mcp_stdio.py", line 120, in connected
+  |     async with stdio.stdio_client(params, errlog=errors) as (read, write):
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Users/bjchoi/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/integration/test_verified_mcp_stdio.py", line 121, in connected
+    |     async with ClientSession(read, write, timedelta(seconds=15)) as session:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.venv/lib/python3.12/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 815, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/integration/test_verified_mcp_stdio.py", line 124, in connected
+      |     yield session, outgoing
+      |   File "/Users/bjchoi/.codex/worktrees/b48f/ddalggak/tests/integration/test_verified_mcp_stdio.py", line 183, in test_actual_cli_stdio_lists_existing_tools_and_reports_errors
+      |     assert not (tmp_path / "repository").exists()
+      | AssertionError: assert not True
+      |  +  where True = exists()
+      |  +    where exists = (PosixPath('/Users/bjchoi/.codex/worktrees/b48f/ddalggak/evidence/2026-10-14-functional-mcp-readonly-red-run/test_actual_cli_stdio_lists_ex0') / 'repository').exists
+      +------------------------------------
+=========================== short test summary info ============================
+FAILED tests/integration/test_verified_mcp_stdio.py::test_actual_cli_stdio_lists_existing_tools_and_reports_errors
+1 failed in 0.56s

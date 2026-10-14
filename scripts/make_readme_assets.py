@@ -47,9 +47,22 @@ figcaption b { color: #1c2430; }
 """
 
 COMPARISON = f"""<!doctype html><meta charset="utf-8"><style>{STYLE}
-main {{ width: 1100px; padding: 24px; display: grid; grid-template-columns: 1fr 1fr;
-  gap: 24px 20px; }}
-</style><main>{{cells}}</main>"""
+main {{ width: 100%; padding: 24px; display: grid;
+  grid-template-columns: repeat(3, 1fr); gap: 24px 20px; }}
+header {{ grid-column: 1 / -1; }}
+h2 {{ margin: 0 0 8px; font-size: 26px; line-height: 1.2; }}
+header p {{ margin: 0; color: #5b6573; font-size: 16px; }}
+figure {{ display: flex; flex-direction: column; gap: 12px; }}
+figcaption {{ order: -1; margin: 0; display: block; }}
+figcaption b {{ display: block; margin-bottom: 6px; font-size: 20px; }}
+figcaption span {{ display: inline-block; }}
+@media (max-width: 600px) {{
+  main {{ grid-template-columns: 1fr; }}
+  h2 {{ font-size: 24px; }}
+}}
+</style><main><header><h2>A mismatch, detected and repaired</h2>
+<p>Recorded-response demo · schematic dashboard · actual browser captures</p>
+</header>{{cells}}</main>"""
 
 PREVIEW = f"""<!doctype html><meta charset="utf-8"><style>{STYLE}
 body {{ width: 1280px; height: 640px; padding: 56px; }}
@@ -143,9 +156,15 @@ async def _launch(playwright: Playwright) -> Browser:
 
 async def _shoot_html(browser: Browser, html: str, target: Path, width: int, height: int) -> None:
     page = await browser.new_page(viewport={"width": width, "height": height})
-    await page.set_content(html)
-    await page.screenshot(path=str(target), full_page=True)
-    await page.close()
+    try:
+        await page.set_content(html)
+        await page.evaluate("document.fonts.ready")
+        await page.locator("img").evaluate_all(
+            "images => Promise.all(images.map(image => image.decode()))"
+        )
+        await page.locator("body").screenshot(path=str(target))
+    finally:
+        await page.close()
 
 
 async def _shoot_report(browser: Browser, report: Path, target: Path) -> None:
@@ -169,12 +188,11 @@ async def make_pictures(demo_root: Path) -> None:
     design = demo_root / "design.png"
     attempt = demo_root / "first-attempt"
     cells = [
-        _cell(design, "Design", "the input image"),
-        _cell(attempt / "page.png", "First attempt", f"SSIM {first:.2f} · not met", "bad"),
-        _cell(attempt / "difference.png", "Difference", "red = differs from the design"),
-        _cell(visual / "generated.png", "After auto-fix", f"SSIM {last:.2f} · passed", "ok"),
+        _cell(design, "1. Design", "the reference image"),
+        _cell(attempt / "page.png", "2. First attempt", f"SSIM {first:.2f} · not met", "bad"),
+        _cell(visual / "generated.png", "3. After auto-fix", f"SSIM {last:.2f} · passed", "ok"),
     ]
-    row = [cells[0], cells[1], cells[3]]
+    row = cells
     async with async_playwright() as playwright:
         browser = await _launch(playwright)
         try:
@@ -183,6 +201,13 @@ async def make_pictures(demo_root: Path) -> None:
                 COMPARISON.replace("{cells}", "".join(cells)),
                 ASSETS / "before-after.png",
                 1100,
+                800,
+            )
+            await _shoot_html(
+                browser,
+                COMPARISON.replace("{cells}", "".join(cells)),
+                ASSETS / "before-after-mobile.png",
+                550,
                 800,
             )
             await _shoot_html(
@@ -204,7 +229,13 @@ def main() -> None:
         output = run_demo(demo_root)
         (ASSETS / "demo.svg").write_text(terminal_svg(output), encoding="utf-8")
         asyncio.run(make_pictures(demo_root))
-    for name in ("demo.svg", "before-after.png", "social-preview.png", "report.png"):
+    for name in (
+        "demo.svg",
+        "before-after.png",
+        "before-after-mobile.png",
+        "social-preview.png",
+        "report.png",
+    ):
         print(f"{ASSETS / name}  {(ASSETS / name).stat().st_size // 1024} KB")
 
 

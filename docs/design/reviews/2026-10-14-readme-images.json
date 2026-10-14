@@ -1,0 +1,274 @@
+{
+  "base_commit": "2bd47eea7fc2363e13576a5ca4563a0eaa3900df",
+  "reported_issue": "The diagnostic red overlay in the top overview looked like a broken screen.",
+  "loading_failure_reproduced": false,
+  "scope": "README comparison layout and asset generation only. Product behavior unchanged.",
+  "source": "Actual ddk demo with recorded model replies; schematic dashboard.",
+  "first_ssim": 0.8876115458618952,
+  "final_ssim": 1.0,
+  "difference_report_preserved": true,
+  "tests": {
+    "focused_passed": 40,
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "diff_check": "passed"
+  },
+  "browser": {
+    "headless": true,
+    "page_errors": [],
+    "checks": [
+      {
+        "asset": "before-after",
+        "viewport": {
+          "width": 1100,
+          "height": 800
+        },
+        "body": {
+          "x": 0,
+          "y": 0,
+          "width": 1100,
+          "height": 412.34375
+        },
+        "elements": [
+          {
+            "tag": "HEADER",
+            "text": null,
+            "x": 24,
+            "y": 24,
+            "right": 1076,
+            "bottom": 85.578125
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 24,
+            "y": 176.578125,
+            "right": 361.328125,
+            "bottom": 388.15625
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "1. Design\nthe reference image",
+            "x": 24,
+            "y": 109.578125,
+            "right": 361.328125,
+            "bottom": 164.578125
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 381.328125,
+            "y": 176.765625,
+            "right": 718.65625,
+            "bottom": 388.34375
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "2. First attempt\nSSIM 0.89 \u00b7 not met",
+            "x": 381.328125,
+            "y": 109.578125,
+            "right": 718.65625,
+            "bottom": 164.765625
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 738.65625,
+            "y": 176.765625,
+            "right": 1076,
+            "bottom": 388.34375
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "3. After auto-fix\nSSIM 1.00 \u00b7 passed",
+            "x": 738.65625,
+            "y": 109.578125,
+            "right": 1076,
+            "bottom": 164.765625
+          }
+        ],
+        "all_elements_within_bounds": true
+      },
+      {
+        "asset": "before-after-mobile",
+        "viewport": {
+          "width": 550,
+          "height": 800
+        },
+        "body": {
+          "x": 0,
+          "y": 0,
+          "width": 550,
+          "height": 1346.453125
+        },
+        "elements": [
+          {
+            "tag": "HEADER",
+            "text": null,
+            "x": 24,
+            "y": 24,
+            "right": 526,
+            "bottom": 105.578125
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 24,
+            "y": 196.578125,
+            "right": 526,
+            "bottom": 511.078125
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "1. Design\nthe reference image",
+            "x": 24,
+            "y": 129.578125,
+            "right": 526,
+            "bottom": 184.578125
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 24,
+            "y": 602.265625,
+            "right": 526,
+            "bottom": 916.765625
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "2. First attempt\nSSIM 0.89 \u00b7 not met",
+            "x": 24,
+            "y": 535.078125,
+            "right": 526,
+            "bottom": 590.265625
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 24,
+            "y": 1007.953125,
+            "right": 526,
+            "bottom": 1322.453125
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "3. After auto-fix\nSSIM 1.00 \u00b7 passed",
+            "x": 24,
+            "y": 940.765625,
+            "right": 526,
+            "bottom": 995.953125
+          }
+        ],
+        "all_elements_within_bounds": true
+      },
+      {
+        "asset": "social-preview",
+        "viewport": {
+          "width": 1280,
+          "height": 640
+        },
+        "body": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 640
+        },
+        "elements": [
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 56,
+            "y": 326.125,
+            "right": 429.328125,
+            "bottom": 560.203125
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "1. Design\nthe reference image",
+            "x": 56,
+            "y": 568.203125,
+            "right": 429.328125,
+            "bottom": 592
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 453.328125,
+            "y": 326.125,
+            "right": 826.65625,
+            "bottom": 560.203125
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "2. First attempt\nSSIM 0.89 \u00b7 not met",
+            "x": 453.328125,
+            "y": 568.203125,
+            "right": 826.65625,
+            "bottom": 592
+          },
+          {
+            "tag": "IMG",
+            "text": null,
+            "x": 850.65625,
+            "y": 326.125,
+            "right": 1224,
+            "bottom": 560.203125
+          },
+          {
+            "tag": "FIGCAPTION",
+            "text": "3. After auto-fix\nSSIM 1.00 \u00b7 passed",
+            "x": 850.65625,
+            "y": 568.203125,
+            "right": 1224,
+            "bottom": 592
+          }
+        ],
+        "all_elements_within_bounds": true
+      },
+      {
+        "picture_viewport": 1440,
+        "selected_image_dimensions": {
+          "width": 1100,
+          "height": 413
+        }
+      },
+      {
+        "picture_viewport": 390,
+        "selected_image_dimensions": {
+          "width": 550,
+          "height": 1347
+        }
+      }
+    ]
+  },
+  "reviews": [
+    {
+      "reviewer": "root",
+      "focus": "reproduction and actual generation"
+    },
+    {
+      "reviewer": "boundary_guards",
+      "focus": "input bytes, score accuracy and claim scope",
+      "blocking_findings": 0
+    },
+    {
+      "reviewer": "contract_storage",
+      "focus": "bounds, image proportions, mobile layout and preserved report",
+      "blocking_findings": 0
+    }
+  ],
+  "sha256": {
+    "docs/assets/before-after.png": "996a6a6e06ae7bb49a73241c1f471ea372544fb37e587910f3cae21e758443aa",
+    "docs/assets/before-after-mobile.png": "2a25156e33ea93a1e48704ce484bbe7263d4ecd054b1a39d48676957cfeac83f",
+    "docs/assets/report.png": "c75878f0568554160681d5694c3878a5b44940050df247dc727ab5990d3d97aa",
+    "docs/assets/demo.svg": "d6fc3166179c2cb4994d3105f6b19e7e408c0c8a9dae43debfb8a5fc64e116c8",
+    "docs/assets/social-preview.png": "5f30a1b57ff0e4c83b87496672ad011a02b5d29f0a69a3558736f5336e306576",
+    "scripts/make_readme_assets.py": "2587172be3aa69246fccb31274a7c331b8e1bce83a09e4cc5d5f49388bbc5d88",
+    "tests/unit/test_readme_assets.py": "d537979716c75dac339db1c470c4b23decc465a794a45c303c1497dc31eb890b",
+    "README.md": "ee97536cc5709c770a97b63da56320603c7c640270b2c0d594a6a7e27a49b4c4",
+    "README.ko.md": "ad9247f23740a27816fcbd58254f086df03860bf56dd9df700483f2d21563bba"
+  },
+  "sources": [
+    "https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#images"
+  ]
+}

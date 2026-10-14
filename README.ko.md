@@ -13,7 +13,13 @@
 어긋난 곳을 고친 뒤에야 "적용해도 되는지"를 알려 줍니다. `ddk apply` 를 실행하기 전에는 저장소에
 아무것도 기록하지 않습니다.
 
-![디자인, 첫 생성 결과, 빨간색 차이 표시, 자동 수정 뒤의 화면](docs/assets/before-after.png)
+<picture>
+  <source media="(max-width: 600px)" srcset="docs/assets/before-after-mobile.png">
+  <img src="docs/assets/before-after.png" alt="단순 도형 예제의 기준 화면, 첫 결과, 수정 결과 비교">
+</picture>
+
+이 그림은 보관된 응답과 단순 도형 화면을 사용하는 예제입니다. 기준·첫 결과·수정 결과를
+순서대로 표시합니다. 빨간 차이 표시는 아래 검증 보고서에서 확인할 수 있습니다.
 
 ## 1분 체험 (API 키 불필요)
 

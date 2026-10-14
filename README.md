@@ -13,7 +13,13 @@ project, type-checks and lints it, renders the page in a real headless browser, 
 screenshot with your design, repairs what differs, and only then says whether the result is safe to
 apply. Nothing is written to your repository until you run `ddk apply`.
 
-![The design, the first generated attempt, the difference in red, and the page after auto-fix](docs/assets/before-after.png)
+<picture>
+  <source media="(max-width: 600px)" srcset="docs/assets/before-after-mobile.png">
+  <img src="docs/assets/before-after.png" alt="Recorded schematic demo: reference design, first attempt and result after repair">
+</picture>
+
+This demo uses a schematic dashboard and recorded model replies. The three images show the
+reference, the first attempt and the repaired result. The red difference overlay is in the report below.
 
 ## Try it in a minute, no API key
 

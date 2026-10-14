@@ -8,12 +8,18 @@ from pathlib import Path
 
 import pytest
 
+from ddk.adapters.chromium_browser import PLAYWRIGHT_BUILD, ChromiumBrowserAdapter
 from tests.fakes import (
     FakeLLMAdapter,
     FakePlaywrightAdapter,
     FakeSubprocessRunner,
     InMemoryFilesystem,
 )
+
+
+def pytest_configure() -> None:
+    """Most assertions quote the Korean text; the English text has its own tests."""
+    os.environ["DDK_LANG"] = "ko"
 
 
 @pytest.fixture
@@ -60,3 +66,14 @@ def anthropic_api_key() -> str:
     if not key:
         pytest.skip("ANTHROPIC_API_KEY not set — skipping integration test")
     return key
+
+
+@pytest.fixture
+def no_browser_start(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Environment checks report a working browser without starting one."""
+
+    async def found(self: ChromiumBrowserAdapter) -> str:
+        return PLAYWRIGHT_BUILD
+
+    monkeypatch.delenv("DDK_CHROMIUM_PATH", raising=False)
+    monkeypatch.setattr(ChromiumBrowserAdapter, "probe", found)

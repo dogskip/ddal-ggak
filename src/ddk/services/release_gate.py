@@ -9,6 +9,7 @@ from ddk.models.release import BlockerItem, ReleaseDecision
 from ddk.models.scorecard import Scorecard
 from ddk.models.validation import FailureRecord, RuntimeValidationReport
 from ddk.models.visual import VisualRegressionReport
+from ddk.services.visual_policy import visual_required as _visual_required
 
 
 class ReleaseGate:
@@ -22,7 +23,14 @@ class ReleaseGate:
         case_id = str(state["case_id"])
         runtime = cast(RuntimeValidationReport | None, state.get("runtime_validation_report"))
         visual = cast(VisualRegressionReport | None, state.get("visual_regression_report"))
-        blockers = self._collect_blockers(case_id, runtime, visual)
+        case_input = state.get("case_input")
+        visual_required = _visual_required(case_input)
+        blockers = self._collect_blockers(
+            case_id,
+            runtime,
+            visual,
+            visual_required=visual_required,
+        )
 
         decision = self._decision_for(state, scorecard, blockers)
         summary = self._summary_for(decision, blockers, scorecard)
@@ -42,6 +50,8 @@ class ReleaseGate:
         case_id: str,
         runtime: RuntimeValidationReport | None,
         visual: VisualRegressionReport | None,
+        *,
+        visual_required: bool,
     ) -> list[BlockerItem]:
         blockers: list[BlockerItem] = []
 
@@ -51,6 +61,29 @@ class ReleaseGate:
                     id="missing-runtime-evidence",
                     category="evidence",
                     description="No runtime validation evidence provided",
+                    severity="critical",
+                )
+            )
+        if runtime is not None and runtime.environment_issues:
+            blockers.append(
+                BlockerItem(
+                    id="validation-environment",
+                    category="evidence",
+                    description=(
+                        "Validation could not run: " + "; ".join(runtime.environment_issues)
+                    ),
+                    severity="critical",
+                )
+            )
+        elif runtime is not None and runtime.steps and not runtime.verified_anything:
+            blockers.append(
+                BlockerItem(
+                    id="nothing-verified",
+                    category="evidence",
+                    description=(
+                        "No build, type-check or lint step applied to this project, "
+                        "so nothing was verified"
+                    ),
                     severity="critical",
                 )
             )
@@ -65,7 +98,10 @@ class ReleaseGate:
                     )
                 )
 
-        if visual is not None and not visual.pass_result:
+        visual_explained = runtime is not None and any(
+            failure.source == "visual" for failure in runtime.failures
+        )
+        if visual is not None and not visual.pass_result and not visual_explained:
             blockers.append(
                 BlockerItem(
                     id=f"{case_id}-visual",
@@ -75,6 +111,15 @@ class ReleaseGate:
                         f"({visual.ssim_score:.2f} < {visual.threshold:.2f})"
                     ),
                     severity="blocker",
+                )
+            )
+        elif visual is None and visual_required:
+            blockers.append(
+                BlockerItem(
+                    id="missing-visual-evidence",
+                    category="evidence",
+                    description="Image-based case has no visual regression evidence",
+                    severity="critical",
                 )
             )
 

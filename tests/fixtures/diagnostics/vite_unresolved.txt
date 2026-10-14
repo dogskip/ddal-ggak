@@ -1,0 +1,11 @@
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 6 modules transformed.
+✗ Build failed in 30ms
+error during build:
+Could not resolve "./Button" from "src/App.tsx"
+file: /work/app/src/App.tsx
+    at getRollupError (file:///work/app/node_modules/rollup/dist/es/shared/parseAst.js:319:41)
+    at error (file:///work/app/node_modules/rollup/dist/es/shared/parseAst.js:315:42)
+    at ModuleLoader.handleInvalidResolvedId (file:///work/app/node_modules/rollup/dist/es/shared/node-entry.js:22750:24)
+    at file:///work/app/node_modules/rollup/dist/es/shared/node-entry.js:22710:26

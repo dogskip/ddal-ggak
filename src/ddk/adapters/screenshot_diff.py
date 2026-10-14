@@ -12,8 +12,10 @@ class SSIMResult:
     """Result of SSIM comparison between two screenshots."""
 
     score: float  # 0.0 to 1.0
-    mismatch_regions: list[dict[str, int]]  # [{x, y, width, height}]
+    mismatch_regions: list[dict[str, int]]  # [{x, y, width, height, dissimilarity 0-100}]
     diff_image_path: Path | None = None
+    changed_pixel_ratio: float = 0.0  # share of pixels whose brightness differs visibly
+    mismatch_area_ratio: float = 0.0  # share of 8x8 blocks that disagree strongly (SSIM < 0.5)
 
 
 @runtime_checkable

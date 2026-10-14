@@ -5,6 +5,7 @@ asyncio_mode = "auto" in pyproject.toml — no @pytest.mark.asyncio needed.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -19,7 +20,7 @@ from tests.fakes import (
     FakeBuildRunner,
     FakePlaywrightAdapter,
     FakeSSIMAdapter,
-    TempDirSandbox,
+    ProjectSandbox,
 )
 
 # ---------------------------------------------------------------------------
@@ -31,6 +32,22 @@ def make_state(case_id: str = "test-case") -> dict[str, Any]:
     return {"case_id": case_id, "generated_artifacts": None}
 
 
+# A project on which build, type-check and lint all apply (the validator only runs
+# steps the project actually sets up).
+FULL_PROJECT = {
+    "package.json": json.dumps(
+        {
+            "name": "app",
+            "scripts": {"build": "vite build"},
+            "devDependencies": {"typescript": "^5", "eslint": "^9"},
+        }
+    ),
+    "tsconfig.json": "{}",
+    "eslint.config.js": "export default []",
+    "node_modules/.bin/.keep": "",
+}
+
+
 def make_validator(
     *,
     build_runner: FakeBuildRunner | None = None,
@@ -38,14 +55,14 @@ def make_validator(
     screenshot_diff: FakeSSIMAdapter | None = None,
 ) -> RuntimeValidator:
     return RuntimeValidator(
-        sandbox=TempDirSandbox(),
+        sandbox=ProjectSandbox(FULL_PROJECT),
         build_runner=build_runner or FakeBuildRunner(),
         playwright=playwright or FakePlaywrightAdapter(),
         screenshot_diff=screenshot_diff or FakeSSIMAdapter(),
     )
 
 
-class NoCleanupSandbox(TempDirSandbox):
+class NoCleanupSandbox(ProjectSandbox):
     async def cleanup(self) -> None:
         return None
 
@@ -66,7 +83,7 @@ class TestSuccessPath:
 
     async def test_validate_materializes_generated_files_in_sandbox(self, tmp_path: Path) -> None:
         validator = RuntimeValidator(
-            sandbox=NoCleanupSandbox(),
+            sandbox=NoCleanupSandbox(FULL_PROJECT),
             build_runner=FakeBuildRunner(returncode=0),
             playwright=FakePlaywrightAdapter(),
             screenshot_diff=FakeSSIMAdapter(),
@@ -96,6 +113,30 @@ class TestSuccessPath:
         assert len(validator._build.run_log) == 3  # type: ignore[attr-defined]
         materialized = Path(validator._build.run_log[0]["cwd"]) / "src/components/Button.tsx"  # type: ignore[attr-defined]
         assert materialized.exists()
+
+    def test_materialization_rejects_path_escape_even_if_model_validation_is_bypassed(
+        self, tmp_path: Path
+    ) -> None:
+        sandbox_dir = tmp_path / "sandbox"
+        sandbox_dir.mkdir()
+        unsafe_file = GeneratedFile.model_construct(
+            path="../escaped.ts",
+            content="export const escaped = true;",
+            source_node_id="unsafe",
+        )
+        artifacts = GeneratedArtifactSet.model_construct(
+            case_id="test-case",
+            files=[unsafe_file],
+        )
+        validator = make_validator()
+
+        with pytest.raises(ValueError, match="unsafe repository-relative path"):
+            validator._materialize_generated_artifacts(
+                {"generated_artifacts": artifacts},
+                sandbox_dir,
+            )
+
+        assert not (tmp_path / "escaped.ts").exists()
 
 
 class TestBuildFailure:

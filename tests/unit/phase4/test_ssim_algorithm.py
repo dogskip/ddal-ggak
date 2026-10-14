@@ -1,6 +1,6 @@
 """Unit tests verifying the Pillow-based SSIM algorithm in LocalScreenshotDiffAdapter.
 
-The adapter uses a histogram-based pixel-difference method (not scikit-image SSIM).
+The adapter computes block-wise SSIM (8x8 blocks, grayscale) with Pillow only.
 These tests validate boundary properties and confirm the 0.92 threshold is reasonable.
 """
 
@@ -46,7 +46,7 @@ def _noisy_image(width: int, height: int, *, seed: int, tmp_path: Path) -> Path:
 
 
 class TestSSIMAlgorithm:
-    """Validate the LocalScreenshotDiffAdapter.compute_ssim pixel-diff algorithm."""
+    """Validate the LocalScreenshotDiffAdapter.compute_ssim block-SSIM algorithm."""
 
     def setup_method(self) -> None:
         self.adapter = LocalScreenshotDiffAdapter()
@@ -78,11 +78,9 @@ class TestSSIMAlgorithm:
     # --- Random noise -------------------------------------------------------
 
     def test_noise_vs_solid_score_well_below_threshold(self, tmp_path: Path) -> None:
-        """Pure noise compared to a solid mid-grey should score below 0.92 threshold.
+        """Pure noise compared to a solid mid-grey should score far below the 0.92 threshold.
 
-        The histogram-based algorithm gives ~0.75 for uniform random noise vs solid grey
-        (expected pixel diff ≈ 85/255 ≈ 33%). The score must stay well below the 0.92
-        acceptance threshold so the adapter can correctly flag dissimilar images.
+        Noise has no structure in common with a flat image, so block SSIM is close to 0.
         """
         solid = _solid_image(64, 64, 128, tmp_path=tmp_path / "solid")
         noisy = _noisy_image(64, 64, seed=42, tmp_path=tmp_path / "noise")
@@ -114,14 +112,21 @@ class TestSSIMAlgorithm:
         result = self.adapter.compute_ssim(ref, gen)
         assert result.score >= 0.99
 
-    # --- mismatch_regions always empty -------------------------------------
+    # --- mismatch regions ---------------------------------------------------
 
-    def test_mismatch_regions_always_empty_list(self, tmp_path: Path) -> None:
-        """The Pillow adapter always returns an empty mismatch_regions list."""
+    def test_fully_inverted_image_is_one_region_covering_everything(self, tmp_path: Path) -> None:
         ref = _solid_image(32, 32, 0, tmp_path=tmp_path / "r")
         gen = _solid_image(32, 32, 255, tmp_path=tmp_path / "g")
         result = self.adapter.compute_ssim(ref, gen)
-        assert result.mismatch_regions == []
+        assert [(r["x"], r["y"], r["width"], r["height"]) for r in result.mismatch_regions] == [
+            (0, 0, 32, 32)
+        ]
+        assert result.mismatch_regions[0]["dissimilarity"] >= 99
+
+    def test_identical_images_have_no_regions(self, tmp_path: Path) -> None:
+        ref = _solid_image(32, 32, 90, tmp_path=tmp_path / "r")
+        gen = _solid_image(32, 32, 90, tmp_path=tmp_path / "g")
+        assert self.adapter.compute_ssim(ref, gen).mismatch_regions == []
 
     # --- Threshold sanity check --------------------------------------------
 

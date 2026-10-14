@@ -43,7 +43,8 @@ _RULES: list[tuple[str, str, str]] = [
     (r"Incompatible type|type mismatch", "FT-TYPE-003", "major"),
     # Lint
     (
-        r"Unused variable|Unused import|is defined but never used|no-unused",
+        r"Unused variable|Unused import|is defined but never used|is assigned a value but never"
+        r"|is declared but (?:its value )?(?:is )?never (?:read|used)|no-unused",
         "FT-LINT-001",
         "minor",
     ),

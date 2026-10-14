@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Literal
 
 from ddk.models.context_pack import ContextChunk, ContextPack
+from ddk.security.redact import redact_string
+from ddk.security.secret_paths import is_secret_path
 
 MAX_FILES = 6
 MAX_LINES = 300
@@ -178,7 +180,7 @@ class ContextPackBuilder:
         target_dirs = {str(Path(tf).parent) for tf in target_files}
 
         for file_path in sorted(repo_path.rglob("*")):
-            if not file_path.is_file():
+            if file_path.is_symlink() or not file_path.is_file():
                 continue
 
             rel = str(file_path.relative_to(repo_path)).replace("\\", "/")
@@ -187,6 +189,10 @@ class ContextPackBuilder:
             if any(part in rel for part in ("node_modules/", "__pycache__/", ".git/")):
                 continue
             if "node_modules" in rel.split("/") or "__pycache__" in rel.split("/"):
+                continue
+
+            # SECURITY: never read secret files into LLM context (defense layer 1).
+            if is_secret_path(rel):
                 continue
 
             # Exclude binary files by extension
@@ -198,6 +204,9 @@ class ContextPackBuilder:
                 content = file_path.read_text(encoding="utf-8", errors="strict")
             except (UnicodeDecodeError, OSError):
                 continue
+
+            # SECURITY: scrub inline credentials before they reach the LLM (layer 2).
+            content = redact_string(content)
 
             priority = self._classify_priority(rel, target_dirs)
             relation_rank = self._classify_relation(rel, target_files, target_dirs)

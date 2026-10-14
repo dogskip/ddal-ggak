@@ -25,4 +25,8 @@ class VisualRegressionReport(DDKBaseModel):
     pass_result: bool
     mismatch_regions: list[MismatchRegion] = []
     diff_image_path: str | None = None
+    changed_pixel_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
+    mismatch_area_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
+    max_mismatch_ratio: float = Field(default=0.03, ge=0.0, le=1.0)
+    viewport: str = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

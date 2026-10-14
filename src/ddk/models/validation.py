@@ -30,6 +30,11 @@ FAILURE_TAXONOMY: dict[str, str] = {
 }
 
 
+FailureSource = Literal["build", "typecheck", "lint", "runtime", "visual"]
+StepName = Literal["install", "build", "typecheck", "lint", "visual"]
+StepStatus = Literal["passed", "failed", "skipped", "unavailable"]
+
+
 class FailureRecord(DDKBaseModel):
     id: str
     taxonomy_id: str
@@ -39,6 +44,21 @@ class FailureRecord(DDKBaseModel):
     line_number: int | None = None
     raw_output: str = ""
     suggested_fix: str | None = None
+    source: FailureSource | None = None
+    code: str | None = None
+
+
+class ValidationStep(DDKBaseModel):
+    """One command the validator ran (or chose not to), and what came of it."""
+
+    name: StepName
+    command: list[str] = []
+    status: StepStatus
+    returncode: int | None = None
+    duration_ms: int = Field(default=0, ge=0)
+    summary: str = ""
+    error_count: int = Field(default=0, ge=0)
+    warning_count: int = Field(default=0, ge=0)
 
 
 class RuntimeValidationReport(DDKBaseModel):
@@ -48,5 +68,18 @@ class RuntimeValidationReport(DDKBaseModel):
     lint_success: bool
     runtime_errors: list[str] = []
     failures: list[FailureRecord] = []
+    steps: list[ValidationStep] = []
     duration_ms: int = Field(default=0, ge=0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def environment_issues(self) -> list[str]:
+        """Steps that could not run because the toolchain is missing (not a code problem)."""
+        return [
+            f"{step.name}: {step.summary}" for step in self.steps if step.status == "unavailable"
+        ]
+
+    @property
+    def verified_anything(self) -> bool:
+        """Whether at least one step actually ran to a pass or a fail."""
+        return any(step.status in {"passed", "failed"} for step in self.steps)

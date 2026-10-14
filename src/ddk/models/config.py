@@ -5,6 +5,10 @@ from enum import StrEnum
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
 
+DEFAULT_PRIMARY_MODEL = "claude-sonnet-5-5"
+DEFAULT_LIGHT_MODEL = "claude-haiku-5-5"
+DEFAULT_SANDBOX_MODE = "tempdir"
+
 
 class LLMProvider(StrEnum):
     ANTHROPIC = "anthropic"

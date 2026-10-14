@@ -18,6 +18,7 @@ class DirtyWorkingTreeError(RuntimeError):
         repo_path: Absolute path to the repository that has a dirty tree.
         modified: Files with unstaged modifications.
         staged: Files with staged (but uncommitted) changes.
+        untracked: Files git does not track yet (``git clean`` would delete them).
     """
 
     def __init__(
@@ -25,11 +26,13 @@ class DirtyWorkingTreeError(RuntimeError):
         repo_path: object,
         modified: list[str],
         staged: list[str],
+        untracked: list[str] | None = None,
     ) -> None:
         self.repo_path = repo_path
         self.modified = modified
         self.staged = staged
-        summary = ", ".join(modified + staged) or "unknown"
+        self.untracked = untracked or []
+        summary = ", ".join(modified + staged + self.untracked) or "unknown"
         super().__init__(
             f"Dirty working tree at {repo_path}: uncommitted files [{summary}]. "
             "Commit or stash changes before rolling back, "
@@ -56,3 +59,49 @@ class CostCapExceededError(RuntimeError):
             f">= cap ${cap_usd:.4f} USD. "
             "Increase DdalggakConfig.cost_cap_usd or reduce pipeline scope."
         )
+
+
+class LLMError(RuntimeError):
+    """Base class for failures at the LLM provider boundary.
+
+    Adapters map opaque provider SDK errors to this hierarchy so the pipeline and
+    CLI can present actionable messages and choose terminal states deterministically.
+    """
+
+
+class LLMAuthenticationError(LLMError):
+    """The provider rejected the credentials (bad / missing / revoked API key)."""
+
+    def __init__(self, detail: str = "") -> None:
+        super().__init__(
+            "LLM authentication failed — check DDK_ANTHROPIC_API_KEY (or "
+            "ANTHROPIC_API_KEY)." + (f" Provider said: {detail}" if detail else "")
+        )
+
+
+class LLMConnectionError(LLMError):
+    """A network problem or timeout prevented reaching the provider."""
+
+    def __init__(self, detail: str = "") -> None:
+        super().__init__(
+            "Could not reach the LLM provider (network error or timeout)."
+            + (f" {detail}" if detail else "")
+        )
+
+
+class LLMRateLimitError(LLMError):
+    """Rate limited and retries were exhausted."""
+
+    def __init__(self, detail: str = "") -> None:
+        super().__init__(
+            "LLM rate limit exceeded after retries — back off and retry later."
+            + (f" {detail}" if detail else "")
+        )
+
+
+class LLMResponseError(LLMError):
+    """The provider returned an unusable response (empty / malformed / rejected)."""
+
+
+class GenerationError(RuntimeError):
+    """The model's answer for a planned node could not be turned into usable files."""

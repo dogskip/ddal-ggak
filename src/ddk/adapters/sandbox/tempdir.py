@@ -9,8 +9,15 @@ import tempfile
 import time
 from pathlib import Path
 
+from ddk.security.secret_paths import is_secret_path
+
 from .base import CommandResult
 from .policy import ALLOWED_COMMANDS, is_command_allowed, is_env_allowed
+
+# Never copied, at any depth.
+_EXCLUDED_ANYWHERE = frozenset({".git", ".ddk", ".ddk-home", "__pycache__"})
+# Build output and caches; dropped only at the repository root.
+_EXCLUDED_AT_ROOT = frozenset({"dist", ".next", ".turbo", "coverage", ".venv"})
 
 
 class TempDirSandbox:
@@ -23,7 +30,40 @@ class TempDirSandbox:
         """Create a temporary sandbox and copy source files into it."""
         self._sandbox_path = Path(tempfile.mkdtemp(prefix="ddk-sandbox-"))
         if source_path.exists():
-            shutil.copytree(source_path, self._sandbox_path, dirs_exist_ok=True)
+            source_root = source_path.resolve()
+
+            def ignore_unsafe_symlinks(directory: str, names: list[str]) -> list[str]:
+                ignored: list[str] = []
+                relative_dir = Path(directory).relative_to(source_path)
+                for name in names:
+                    candidate = Path(directory) / name
+                    relative = (relative_dir / name).as_posix()
+                    if (
+                        name in _EXCLUDED_ANYWHERE
+                        or (relative_dir == Path() and name in _EXCLUDED_AT_ROOT)
+                        or is_secret_path(relative)
+                    ):
+                        ignored.append(name)
+                        continue
+                    if not candidate.is_symlink():
+                        continue
+                    try:
+                        target = candidate.readlink()
+                        resolved_target = candidate.resolve(strict=False)
+                    except OSError:
+                        ignored.append(name)
+                        continue
+                    if target.is_absolute() or not resolved_target.is_relative_to(source_root):
+                        ignored.append(name)
+                return ignored
+
+            shutil.copytree(
+                source_path,
+                self._sandbox_path,
+                dirs_exist_ok=True,
+                symlinks=True,
+                ignore=ignore_unsafe_symlinks,
+            )
         return self._sandbox_path
 
     async def cleanup(self) -> None:

@@ -14,7 +14,7 @@ class LLMCallRecord(DDKBaseModel):
     case_id: str
     node: str
     provider: str  # "anthropic", "openai", "fake"
-    model: str  # "claude-3-5-sonnet-20241022"
+    model: str  # e.g. "claude-sonnet-5-5"
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     seed: int | None = None
     input_tokens: int = Field(default=0, ge=0)

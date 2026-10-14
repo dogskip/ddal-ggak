@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from ddk.models.generation import GeneratedArtifactSet, GeneratedFile
+import pytest
+from pydantic import ValidationError
+
+from ddk.models.generation import (
+    GeneratedArtifactSet,
+    GeneratedFile,
+    GenerationNode,
+    GenerationPlan,
+)
 
 
 class TestGeneratedFileDesignSpecFields:
@@ -49,6 +57,44 @@ class TestGeneratedFileDesignSpecFields:
         assert restored == gf
         assert restored.is_new is True
         assert restored.original_content == "old"
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "",
+            "../escape.tsx",
+            "src/../escape.tsx",
+            "/tmp/escape.tsx",
+            "C:\\temp\\escape.tsx",
+            "\\\\server\\share\\escape.tsx",
+        ],
+    )
+    def test_rejects_paths_outside_repository(self, path: str) -> None:
+        with pytest.raises(ValidationError):
+            GeneratedFile(path=path, content="code", source_node_id="n1")
+
+    def test_normalizes_windows_separators(self) -> None:
+        generated = GeneratedFile(
+            path="src\\components\\Button.tsx",
+            content="code",
+            source_node_id="n1",
+        )
+        assert generated.path == "src/components/Button.tsx"
+
+
+class TestGenerationPlanPaths:
+    def test_node_target_path_is_repository_relative(self) -> None:
+        with pytest.raises(ValidationError):
+            GenerationNode(id="n1", node_type="file", target_path="../../escape.ts")
+
+    def test_plan_target_files_are_repository_relative(self) -> None:
+        node = GenerationNode(id="n1", node_type="file", target_path="src/App.tsx")
+        with pytest.raises(ValidationError):
+            GenerationPlan(
+                case_id="c",
+                nodes=[node],
+                target_files=["src/App.tsx", "../escape.ts"],
+            )
 
 
 class TestGeneratedArtifactSetDesignSpecFields:

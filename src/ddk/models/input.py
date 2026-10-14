@@ -15,6 +15,7 @@ class CaseInput(DDKBaseModel):
     repo_path: Path  # 대상 repo 루트
     reference_notes: str | None = None  # 추가 컨텍스트
     visual_reference_paths: list[Path] = []
+    visual_check: bool = True  # False waives the screenshot comparison with the design image
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("image_paths")

@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
+
+from ddk.security.repo_paths import normalize_repo_relative_path
 
 from ._base import DDKBaseModel
 
@@ -17,6 +19,11 @@ class GenerationNode(DDKBaseModel):
     repair_hooks: list[str] = Field(default_factory=list)
     generation_prompt_hint: str | None = None
 
+    @field_validator("target_path")
+    @classmethod
+    def _normalize_target_path(cls, value: str) -> str:
+        return normalize_repo_relative_path(value)
+
 
 class GenerationPlan(DDKBaseModel):
     case_id: str
@@ -27,6 +34,11 @@ class GenerationPlan(DDKBaseModel):
     estimated_node_count: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+    @field_validator("target_files")
+    @classmethod
+    def _normalize_target_files(cls, values: list[str]) -> list[str]:
+        return [normalize_repo_relative_path(value) for value in values]
+
 
 class GeneratedFile(DDKBaseModel):
     path: str
@@ -36,6 +48,11 @@ class GeneratedFile(DDKBaseModel):
     # Design-spec fields (12-data-models.md §4) — additive, defaults provided
     is_new: bool = False
     original_content: str | None = None
+
+    @field_validator("path")
+    @classmethod
+    def _normalize_path(cls, value: str) -> str:
+        return normalize_repo_relative_path(value)
 
 
 class GeneratedArtifactSet(DDKBaseModel):
@@ -49,3 +66,18 @@ class GeneratedArtifactSet(DDKBaseModel):
     schema_version: str = "1.0"
     changed_paths: list[str] = Field(default_factory=list)
     trace: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("file_map")
+    @classmethod
+    def _normalize_file_map(cls, values: dict[str, str]) -> dict[str, str]:
+        normalized = {
+            normalize_repo_relative_path(path): content for path, content in values.items()
+        }
+        if len(normalized) != len(values):
+            raise ValueError("file_map contains paths that collide after normalization")
+        return normalized
+
+    @field_validator("changed_paths")
+    @classmethod
+    def _normalize_changed_paths(cls, values: list[str]) -> list[str]:
+        return [normalize_repo_relative_path(value) for value in values]

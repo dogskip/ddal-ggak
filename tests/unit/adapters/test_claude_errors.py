@@ -93,3 +93,49 @@ class TestConfig:
         timeout = client.timeout
         read = getattr(timeout, "read", timeout)
         assert read == pytest.approx(42.0)
+
+
+def test_sdk_automatic_retries_are_disabled() -> None:
+    assert ClaudeAdapter(api_key="fake-key")._client.max_retries == 0
+
+
+@pytest.mark.parametrize("status", [429, 500])
+async def test_one_http_attempt_on_retryable_provider_error(
+    monkeypatch: pytest.MonkeyPatch,
+    status: int,
+) -> None:
+    attempts = 0
+    client_type = anthropic.AsyncAnthropic
+    monkeypatch.setattr(client_type, "_calculate_retry_timeout", lambda *_args, **_kwargs: 0)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        return httpx.Response(
+            status,
+            request=request,
+            json={
+                "type": "error",
+                "error": {
+                    "type": "rate_limit_error" if status == 429 else "api_error",
+                    "message": "fixture failure",
+                },
+            },
+        )
+
+    def client(**kwargs: Any) -> anthropic.AsyncAnthropic:
+        return client_type(
+            **kwargs, http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        )
+
+    monkeypatch.setattr("ddk.adapters.llm.claude.anthropic.AsyncAnthropic", client)
+    adapter = ClaudeAdapter(api_key="fake-key")
+    retry_policy = getattr(adapter._messages_create, "retry", None)
+    if retry_policy is not None:
+        monkeypatch.setattr(retry_policy, "wait", lambda _: 0)
+    try:
+        with pytest.raises(LLMRateLimitError if status == 429 else LLMConnectionError):
+            await adapter.complete(_messages(), LLMCallConfig())
+    finally:
+        await adapter._client.close()
+    assert attempts == 1

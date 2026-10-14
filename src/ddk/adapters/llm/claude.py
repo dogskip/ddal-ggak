@@ -6,7 +6,6 @@ import json
 from typing import Any
 
 import anthropic
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from ddk.exceptions import (
     CostCapExceededError,
@@ -41,7 +40,7 @@ class ClaudeAdapter:
                 "Set DDK_ANTHROPIC_API_KEY (or ANTHROPIC_API_KEY) in the environment."
             )
         # Bound every call: the SDK default (10 min) is too long for a CLI workflow.
-        self._client = anthropic.AsyncAnthropic(api_key=api_key, timeout=timeout_s)
+        self._client = anthropic.AsyncAnthropic(api_key=api_key, timeout=timeout_s, max_retries=0)
         self._default_model = default_model
         self._cost_cap_usd = cost_cap_usd
         self._accumulated_cost: float = 0.0
@@ -58,14 +57,8 @@ class ClaudeAdapter:
                 cap_usd=self._cost_cap_usd,
             )
 
-    @retry(
-        retry=retry_if_exception_type((anthropic.RateLimitError, anthropic.InternalServerError)),
-        wait=wait_exponential(multiplier=1, min=2, max=60),
-        stop=stop_after_attempt(5),
-        reraise=True,
-    )
     async def _messages_create(self, **kwargs: Any) -> anthropic.types.Message:
-        """Stream one message to its end, retrying with backoff on 429 / 5xx errors.
+        """Stream one message to its end with exactly one HTTP attempt.
 
         Streaming keeps the connection busy, so an answer that takes longer than the read timeout
         to write (large code, long thinking) is not cut off.
@@ -81,7 +74,7 @@ class ClaudeAdapter:
             raise LLMAuthenticationError(str(exc)) from exc
         except anthropic.PermissionDeniedError as exc:
             raise LLMAuthenticationError(str(exc)) from exc
-        except anthropic.RateLimitError as exc:  # retries exhausted
+        except anthropic.RateLimitError as exc:
             raise LLMRateLimitError(str(exc)) from exc
         except (anthropic.APITimeoutError, anthropic.APIConnectionError) as exc:
             raise LLMConnectionError(str(exc)) from exc
@@ -234,9 +227,10 @@ def _raise_if_declined(response: anthropic.types.Message) -> None:
 def _extract_text(response: anthropic.types.Message) -> str:
     """The reply's text blocks joined; thinking and tool blocks are skipped."""
     return "".join(
-        block.text
+        text
         for block in response.content
-        if getattr(block, "type", None) == "text" and isinstance(getattr(block, "text", None), str)
+        if getattr(block, "type", None) == "text"
+        and isinstance(text := getattr(block, "text", None), str)
     )
 
 

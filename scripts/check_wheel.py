@@ -16,6 +16,7 @@ REQUIRED = (
     "ddk/assets/demo/vite-app/index.html",
     "ddk/assets/demo/vite-app/src/App.tsx",
     "ddk/assets/commands/claude/design.md",
+    "ddk/assets/verified-change/contract.schema.json",
 )
 FORBIDDEN_PARTS = ("node_modules/", "__pycache__/", ".ddk/")
 

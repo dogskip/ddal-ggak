@@ -115,3 +115,13 @@ class TestOutputBudget:
 
     def test_never_asks_for_more_than_the_model_can_write(self) -> None:
         assert output_budget("claude-sonnet-5-5", 127_000, "max") == 128_000
+
+
+def test_known_model_names_do_not_resolve_unverified_aliases() -> None:
+    from ddk.adapters.llm.model_traits import known_model_names
+
+    names = known_model_names()
+    assert "claude-sonnet-5-5" in names
+    assert "claude-sonnet-5-5-latest" not in names
+    assert "claude-from-the-future" not in names
+    assert isinstance(names, frozenset)

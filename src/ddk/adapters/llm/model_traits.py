@@ -103,6 +103,11 @@ _UNKNOWN = ModelTraits(10, 50)
 _SNAPSHOT_OR_ALIAS = re.compile(r"-(?:\d{8}|latest)$")
 
 
+def known_model_names() -> frozenset[str]:
+    """Explicit model names with verified request traits; aliases are excluded."""
+    return frozenset(_FAMILIES)
+
+
 @cache
 def model_traits(model: str) -> ModelTraits:
     """Request rules and prices for ``model`` (dated snapshots and ``-latest`` aliases included)."""

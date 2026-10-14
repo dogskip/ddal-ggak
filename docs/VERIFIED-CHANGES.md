@@ -1,5 +1,6 @@
 # Verify existing changes and apply them safely
 
+For hash-free setup and integrated commands, see the [one-command guide](ONECLICK.md) and [catalog reference](CATALOG.md).
 [한국어](VERIFIED-CHANGES.ko.md) · [Roadmap](../ROADMAP.md)
 
 `ddk change` is separate from legacy `run`, `status`, `apply` and `demo`. Verification needs neither
@@ -155,9 +156,10 @@ not replay of uncertain provider calls. Automatic reconciliation of unknown char
 
 ## MCP and current limits
 
-`ddk serve` exposes `ddk_verify` and `ddk_status` alongside `design_new`, `preflight` and `ddk_version`.
-They share CLI services/contracts/storage. Verification is isolated-only; apply, recovery, installation,
-export and trusted-local grants are not exposed. Status reports stored assurance without upgrading it.
+`ddk serve` exposes eight verified-change tools alongside existing design/preflight/version tools.
+`ddk_verify` remains isolated-only. New repair, apply and probe tools require both server-owner and
+per-request grants, with an additional owner grant for trusted-local execution. See the
+[authorization contract](ONECLICK.md#catalog-and-mcp). Status preserves the stored assurance.
 
 Required-check failure is a normal blocked result. Invalid input and unavailable execution are tool
 errors; persisted run IDs remain inspectable. Testing covers SDK 1.28.1 and negotiated revision
@@ -166,7 +168,7 @@ errors; persisted run IDs remain inspectable. Testing covers SDK 1.28.1 and nego
 Oversized, excessively nested, duplicate-key or invalid UTF-8 requests terminate stdio without
 manufacturing successful replies or deleting saved runs.
 
-Common test-report adapters and guided case preparation are unfinished. Repair is CLI-only and
-its current provider/context support is deliberately narrow; live paid-model quality is unverified.
-The legacy demo uses recorded model responses; this path verifies explicit changes without a model.
-Passing fixed criteria does not prove a defect-free app, product superiority or GitHub popularity.
+Guided case compilation, native report formats and CLI/MCP repair are implemented. Live paid-model
+quality, representative real-project portability and independent first-use evidence remain open.
+The legacy demo uses recorded replies; those do not prove paid-model effectiveness. Passing fixed
+criteria does not establish a defect-free app, product superiority or GitHub popularity.

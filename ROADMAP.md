@@ -1,29 +1,26 @@
 # Roadmap
 
-[한국어](ROADMAP.ko.md) · [Current behavior](docs/VERIFIED-CHANGES.md)
+[한국어](ROADMAP.ko.md) · [Current commands](docs/ONECLICK.md)
 
-Status: beta. Public development is consolidated on `main`. The P0 CLI workflow is implemented; later priorities are planned work.
-Implementation and live-provider quality are separate claims. The goal is useful, repeatable change verification; stars and test counts alone
-do not establish adoption or reliability.
+Beta; public development uses `main`. Features and product effectiveness require different evidence.
 
-| Order | Outcome | Completion criteria |
+| Priority | Status | Outcome and remaining acceptance |
 | --- | --- | --- |
-| P0 — implemented in CLI | Repair and reverify one existing-change request | Freeze case, criteria, baseline and requirement mapping. Reserve round/call/time/output/cost budgets before provider work; charge retries to the same request. Unknown spend or repeated failure stops new work. Independently verify the candidate and preserve interruption recovery; never change criteria to obtain `ready`. |
-| P1 — next | Easier first-case preparation | Validate inputs, show exact files/commands/grants, produce a reviewable case and actionable errors. Require explicit execution approval. Prove a clean-install flow with a new user. |
-| P1 | Common test reports | Add narrow Vitest/Jest adapters with fixed report provenance. Missing, malformed, zero-test, skipped or failing reports cannot pass. Verify real framework examples, not only synthetic JSON. |
-| P2 | Real-project and host evidence | Test at least three representative repositories and multiple host environments with independent users. Publish sanitized reproducible cases, failures, time, cost and repair effectiveness. Lockfile-based dependency preparation requires explicit installation approval and provenance. |
+| P0: verified core | Implemented | Frozen criteria, one bounded repair budget, observed costs, independent checks, exact-state apply/recovery, explicit deletion authority and candidate-bound application. |
+| P1: first case and one command | Implemented; broader usability evidence open | Hash-free `init`, `doctor`, Git snapshots, `up`, headless `probe`, strict MCP grants and rebuildable SQLite/FTS5. Missing request-specific acceptance remains blocked. Validate first-use success with independent users. |
+| P1: native reports and policy | Implemented; framework matrix open | JUnit/pytest/Jest/Vitest/Playwright normalization, explicit skips, bounded policy checks and AX diagnostics. Expand real-framework/version fixtures without equating parser fixtures with framework support. |
+| P2: next | Planned | Reproduce three representative projects, Python/JS/browser workflows and Linux plus macOS. Publish sanitized cases with failure rates, time, observed cost and repair success. Prove a clean installed-package flow with a first-time user. |
+| P2: provider evidence | Planned | Evaluate paid-model repair quality with an approved fixed budget. Verify CLI tool isolation against recorded local transports and explicit billing evidence before CLI-backed calls can produce ready. |
+| P3: dependency preparation | Planned | Explicitly approved lockfile-based preparation with provenance, no implicit dependency installation or lifecycle scripts. |
 
-Each item begins with a written behavior contract and failing acceptance test. Completion requires
-unit/integration checks, relevant headless browser E2E, negative/interruption cases, regression checks,
-package-install verification and fresh review of the actual diff. Repeated repairs use the same fixed
-budget; a green unit suite alone does not close a product claim.
+Each change starts with a behavior contract and failing acceptance cases. Completion requires relevant
+unit/integration/headless/interruption/regression checks, strict typing, package installation and fresh
+review. One passing suite is evidence for that revision and environment, not universal reliability.
+Current evidence includes recorded proposals and local headless/isolated fixtures; it does not establish
+paid-model effectiveness, independent adoption, superiority or a GitHub star target.
 
-Current isolated acceptance covers a static Node fixture on macOS ARM64 with OrbStack Linux.
-Real-framework portability, first-use success and independent review of the latest feature work remain
-open. P0 reuses current safe apply/recovery and isolation behavior. Its provider replies are tested with
-recorded data and the real SDK against a mock transport; live paid-model effectiveness remains open.
-MCP repair is deferred until a separate provider-authorization contract exists.
-
-Public docs, runtime schema, synthetic test fixtures and README images stay versioned. Internal
-design/review notes, launch drafts and raw execution evidence stay local and are excluded from Git
-and distributions. `.gitignore` does not remove prior commits or guarantee secret removal.
+Canonical JSON remains authoritative. The SQLite catalog is fully derived; reconstruction compares
+normalized rows, not physical database bytes. Unknown facts in older records remain null. Internal
+plans/reviews, raw execution evidence and launch drafts stay local and are excluded from Git and
+source distributions. Public user docs, runtime schemas, fixtures and README images remain versioned.
+Ignore rules do not erase history or replace secret review.

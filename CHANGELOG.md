@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — one-command verified changes
+
+- Hash-free `ddk init`/`change init`, Git-ref snapshots, explicit deletion authority, and `ddk up`:
+  verify → bounded repair → export → candidate-bound apply preview/application.
+- Twelve-table SQLite/FTS5 projection with canonical-write hooks, atomic reindex, masked failure
+  lessons and bounded metadata queries. Canonical JSON paths and verdict names remain compatible.
+- Native JUnit/pytest/Jest/Vitest/Playwright reports with explicit skip allowance; owned policy checks;
+  headless PNG/AX/DOM probe and immutable reference registration; exact search/replace proposals.
+- Anthropic, compatible API and restricted CLI provider bridges, dated prices and fail-closed unknown
+  billing. Eight verified-change MCP tools with strict inputs and explicit owner/caller grants.
+- Strict mypy in addition to existing Pyright checks; adversarial deletion/application/catalog tests.
+
+### Changed
+
+- **Breaking CLI change:** `ddk init PATH` is now `ddk workspace-init PATH`.
+  `ddk init --request ...` compiles an immutable verification case.
+- [One-command guide](docs/ONECLICK.md), Korean guide and catalog fields document actual limits;
+  paid-model effectiveness and independent multi-project adoption remain separate evidence priorities.
+
 ### Changed
 
 - **Breaking safety change:** legacy `ddk apply --force`, `--allow-blocked` and whole-repository
@@ -37,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Explicit trusted-local CLI execution is a separate assurance; there is no automatic fallback.
 - MCP `ddk_verify` and `ddk_status` use the same service and storage, with isolated-only execution.
   The [guide](docs/VERIFIED-CHANGES.md) states required inputs and actual acceptance limits;
-  automatic repair/reverification remains [planned](ROADMAP.md).
+  integrated setup, repair and authorization are described in the [one-command guide](docs/ONECLICK.md).
 
 #### The loop that checks itself: design image → code → real browser → repair → verdict
 - **Screenshot comparison in a real browser.** The built app is served on loopback and opened in

@@ -11,7 +11,7 @@
 `ddk` 는 디자인 이미지로 내 저장소에 넣을 코드를 생성하고, 그 결과를 스스로 검증합니다. 프로젝트를
 빌드하고, 타입 검사와 린트를 실행하고, 실제 헤드리스 브라우저에서 화면을 열어 디자인과 비교합니다.
 어긋난 곳을 고친 뒤에야 "적용해도 되는지"를 알려 줍니다. `ddk apply` 를 실행하기 전에는 저장소에
-아무것도 기록하지 않습니다.
+생성 소스를 반영하지 않습니다.
 
 <picture>
   <source media="(max-width: 600px)" srcset="docs/assets/before-after-mobile.png">
@@ -36,6 +36,18 @@ Chromium 중 하나가 필요합니다. 브라우저가 없으면 `ddk demo` 가
 데모는 미리 녹화한 모델 응답을 재생하므로 키가 필요 없습니다. 그 밖의 모든 단계는 실제로 실행됩니다.
 `npm ci`, 빌드, 타입 검사, 린트, 미리보기 서버, 헤드리스 Chromium, 화면 비교가 그렇습니다. 첫 시안은
 디자인과 어긋나고(SSIM 0.89), 그것을 잡아낸 뒤 수정을 적용하면 두 번째 시도가 통과합니다(SSIM 1.00).
+
+## 현재 저장소의 변경 검증
+
+`ddk up "제목 변경과 기존 이동 보존" --dry-run --json`으로 계획을 확인합니다.
+해시가 없는 목표·보존 검사를 한 번 정의하면 `ddk up ... --trusted-local`이 Git 변경과 실제 환경을
+고정하고 화면을 표시하지 않는 Chromium에서 검사한 뒤 검토 자료를 생성합니다.
+`--repair --confirm-provider`는 예산 내 수정, `--apply`와 저장·작업 중지 확인은 관리된 반영을 요청합니다.
+인수 기준이 없으면 실행 전에 중단합니다.
+
+[한 번의 명령 사용 안내](docs/ONECLICK.ko.md)는 `init`, `doctor`, `up`, `probe`, 시험 보고,
+Policy, 재생성 가능한 SQLite·FTS5, 정확한 교체 제안과 검증용 MCP 도구 여덟 개를 설명합니다.
+아래 이미지 기반 명령은 기존 계약으로 계속 제공합니다. 이전 `ddk init PATH`는 `ddk workspace-init PATH`입니다.
 
 ## 내 디자인으로 실행
 
@@ -123,7 +135,8 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk report` | case 의 증거 보고서 생성 (`--open` 으로 바로 열기) |
 | `ddk apply` | 기존 이미지 실행의 `ready` 결과 반영. `--dry-run`으로 계획 조회, 충돌 시 중단 |
 | `ddk status`, `ddk certify` | 저장된 case 상태와 판정 조회 |
-| `ddk change verify/repair/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
+| `ddk init`, `ddk up`, `ddk probe` | 해시 없는 준비, Git 변경 검사·수정, 실제 화면 자료 수집 |
+| `ddk change init/reindex/verify/repair/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
 | `ddk doctor` | Python, uv, API 키, Node.js, git, Chromium 점검 (`--install-browser` 로 Chromium 내려받기) |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
 | `ddk install --all` | Claude Code, Cursor, Codex, Gemini CLI 등에 `/ddk:design` 과 MCP 서버 등록 |
@@ -177,9 +190,11 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 ## AI 도구와 MCP
 
 `ddk install --all`은 지원하는 AI 코딩 도구에 `/ddk:design`과 `ddk serve`를 등록합니다.
-서버는 `design_new`, `preflight`, `ddk_version`, `ddk_verify`, `ddk_status`를 제공합니다.
-기존 변경 검사는 CLI와 같은 서비스·기록을 사용하며 MCP에서는 isolated 실행만 허용합니다.
-반영·복구는 공개하지 않습니다. 이미지 생성은 CLI에서 `ddk run <이미지> --json`을 실행해
+서버는 검증용 도구 여덟 개와 기존 설계·준비·버전 도구를 제공합니다.
+검사 도구는 격리 실행을 유지합니다. 수정·반영·화면 관측은 서버 소유자와 각 요청의 승인이 필요하며
+호스트 실행에는 별도 권한도 필요합니다. [통합 사용 안내](docs/ONECLICK.ko.md)를 참고합니다. 복구는 CLI에서 제공합니다.
+
+이미지 생성은 CLI에서 `ddk run <이미지> --json`을 실행해
 판정과 보고서 경로를 조회합니다.
 
 ## 상태

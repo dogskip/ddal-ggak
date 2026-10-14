@@ -11,7 +11,7 @@ English · [한국어](README.ko.md)
 `ddk` turns a design image into code for your own repository, then checks its own work. It builds the
 project, type-checks and lints it, renders the page in a real headless browser, compares the
 screenshot with your design, repairs what differs, and only then says whether the result is safe to
-apply. Nothing is written to your repository until you run `ddk apply`.
+apply. Generated source is applied only after an explicit apply command.
 
 <picture>
   <source media="(max-width: 600px)" srcset="docs/assets/before-after-mobile.png">
@@ -36,6 +36,18 @@ The demo replays a recorded model reply, which is why it needs no key. Everythin
 `npm ci`, build, type-check, lint, a preview server, headless Chromium and the screenshot comparison.
 The first draft misses the design (SSIM 0.89), the loop catches that, applies a repair, and the second
 attempt passes (SSIM 1.00).
+
+## Verify changes already in your repository
+
+`ddk up "Change heading and preserve navigation" --dry-run --json` shows the plan.
+Define hash-free target and preservation checks once, then `ddk up ... --trusted-local` captures Git
+changes, freezes the actual environment, checks them in headless Chromium and exports review evidence.
+Add `--repair --confirm-provider` for bounded repair or `--apply` with the storage/quiescence
+confirmations for managed application. Missing acceptance checks block before execution.
+
+[One-command guide](docs/ONECLICK.md) covers `init`, `doctor`, `up`, `probe`, native test reports,
+policy checks, rebuildable SQLite/FTS5, exact patches and the eight verified-change MCP tools.
+The image workflow below remains available with its separate legacy contract.
 
 ## Use it on your own design
 
@@ -110,7 +122,7 @@ Know the limits before trusting a green result:
   prompt. Build commands run with a short environment allow-list and a `HOME` inside the copy, so
   your API key and your home folder are not handed to them.
 - Dependencies install with `--ignore-scripts`. The commands that may run are an allow-list
-  (`npm`, `pnpm`, `yarn`, `bun`, `npx`, `node`, `tsc`, `vite`, `git`).
+  (`npm`, `pnpm`, `yarn`, `bun`, `npx`, `node`, `tsc`, `vite`, `git`, `python`, `python3`, `pytest`).
 - The temporary copy is not an operating-system sandbox: your project's own build scripts still run
   on your machine. Treat generated code like a stranger's pull request and review the diff.
 - `DDK_COST_CAP_USD` (default 2.0) stops new model calls once that much is spent; the call in flight
@@ -125,8 +137,10 @@ Know the limits before trusting a green result:
 | `ddk report` | Write the evidence report of a case (`--open` shows it) |
 | `ddk apply` | Apply a legacy image-run `ready` case; `--dry-run` previews it; conflicts block writes |
 | `ddk status`, `ddk certify` | The saved state and verdict of a case |
-| `ddk change verify/repair/status/export/apply/recover` | Verify existing changes against fixed criteria, inspect evidence, export, apply and recover owned changes |
-| `ddk doctor` | Check Python, uv, API key, Node.js, git, Chromium (`--install-browser` downloads it) |
+| `ddk init`, `ddk up`, `ddk probe` | Prepare a case, verify/repair existing Git changes, capture headless evidence; [guide](docs/ONECLICK.md) |
+| `ddk change init/reindex/verify/repair/status/export/apply/recover` | Verify existing changes against fixed criteria, inspect evidence, export, apply and recover owned changes |
+| `ddk doctor --dry-run` | Read-only readiness check with actual browser/font hashes and installed image digests; `--json` gives structured output |
+| `ddk workspace-init` | Create the legacy `.ddk/` workspace; formerly `ddk init PATH` |
 | `ddk design new "<idea>"` | Design Studio: turn an idea into design documents |
 | `ddk install --all` | Register `/ddk:design` and the MCP server with Claude Code, Cursor, Codex, Gemini CLI and others |
 | `ddk proof`, `ddk audit` | Check capability claims and standards coverage against the evidence on disk |
@@ -139,7 +153,7 @@ Set them in the environment or a `.env` file in the working directory.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` or `DDK_ANTHROPIC_API_KEY` | | Anthropic API key (the only provider so far) |
+| `ANTHROPIC_API_KEY` or `DDK_ANTHROPIC_API_KEY` | | Anthropic API key for the image workflow and default change repair |
 | `DDK_LLM_MODEL` | `claude-sonnet-5-5` | Model for design analysis and code |
 | `DDK_LIGHT_MODEL` | `claude-haiku-5-5` | Cheaper model for small steps |
 | `DDK_COST_CAP_USD` | `2.0` | Spending limit per run |
@@ -181,9 +195,11 @@ managed apply/recovery. This is a separate path from the image-generation loop a
 ## Agents and MCP
 
 `ddk install --all` adds `/ddk:design` and registers `ddk serve` with supported AI coding tools.
-The server exposes `design_new`, `preflight`, `ddk_version`, `ddk_verify` and `ddk_status`.
-Existing-change verification uses the same service and saved records as the CLI, permits only isolated
-execution through MCP, and does not expose apply or recovery. Image-to-code remains CLI-only:
+The server provides eight verified-change tools plus design/preflight/version tools.
+Verification stays isolated-only; repair, apply and probe require explicit server-owner and per-call
+grants, with an additional grant for host execution. See the [one-command guide](docs/ONECLICK.md). Recovery remains CLI-only.
+
+Image-to-code remains CLI-only:
 `ddk run <image> --json` returns the verdict and report path.
 
 ## Status

@@ -211,10 +211,9 @@ ddk install --detect       # 찾아낸 AI 코딩 도구 목록
 ddk install --claude       # 또는 --cursor, --codex, --gemini, --opencode, --copilot, --kiro, --all
 ```
 
-`/ddk:design`과 MCP 서버 `ddk serve`를 등록합니다. 도구는 `design_new`, `preflight`,
-`ddk_version`, `ddk_verify`, `ddk_status`입니다. 기존 변경 검사는 고정 입력과 격리 실행을 요구하며,
-MCP는 반영·복구·trusted-local 실행을 공개하지 않습니다.
-[기존 변경 사용 설명서](VERIFIED-CHANGES.ko.md)를 참고하세요.
+서버는 검증용 도구 여덟 개와 기존 설계·준비·버전 도구를 제공합니다.
+검사 도구는 격리 실행을 유지합니다. 수정·반영·화면 관측은 서버 소유자와 각 요청의 승인이 필요하며
+호스트 실행에는 별도 권한도 필요합니다. [통합 사용 안내](ONECLICK.ko.md)를 참고합니다. 복구는 CLI에서 제공합니다.
 
 이미지 생성은 CLI에서 실행합니다. 셸 도구가 있다면 `ddk run <이미지> --json`을 호출하고
 `release_decision`과 `report`를 조회합니다. 예정 기능과 완료 조건은 [후속 계획](../ROADMAP.ko.md)에

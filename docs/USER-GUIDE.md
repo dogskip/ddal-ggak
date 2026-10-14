@@ -219,10 +219,9 @@ ddk install --detect       # which AI coding tools were found
 ddk install --claude       # or --cursor, --codex, --gemini, --opencode, --copilot, --kiro, --all
 ```
 
-This adds `/ddk:design` (or the tool's equivalent) and registers `ddk serve` with five tools:
-`design_new`, `preflight`, `ddk_version`, `ddk_verify` and `ddk_status`. Existing-change verification
-requires prepared fixed inputs and isolated execution; MCP does not expose apply, recovery or
-trusted-local execution. See the [verified-change guide](VERIFIED-CHANGES.md).
+The server provides eight verified-change tools plus design/preflight/version tools.
+Verification stays isolated-only; repair, apply and probe require explicit server-owner and per-call
+grants, with an additional grant for host execution. See the [one-command guide](ONECLICK.md). Recovery remains CLI-only.
 
 Image-to-code remains CLI-only. An agent with a shell tool can run `ddk run <image> --json` and read
 `release_decision` and `report`. Planned capabilities and completion criteria are in the

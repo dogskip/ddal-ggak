@@ -81,7 +81,8 @@ immutable preinstalled images, no external network, no host port or Docker socke
 files, dropped capabilities, seccomp and CPU/memory/process/time limits. Chromium runs headless
 with its sandbox enabled. Missing isolation or environment evidence blocks verification rather
 than falling back to host execution. `trusted-local` requires an explicit user grant and runs
-project commands with user permissions; MCP does not expose that grant.
+project commands with user permissions. MCP repair requires both owner and per-request approval,
+plus a separate owner `trusted-local` capability for host execution. MCP verify remains isolated-only.
 
 The local daemon and checker image are trusted. Writable source copies have no separate disk quota,
 so isolation is not whole-host protection from malicious code. Actual host/framework coverage and
@@ -96,7 +97,18 @@ Repair requires an explicit provider grant and caller-verified prices. Only appr
 and bounded, redacted failed-check excerpts enter the model context; screenshots are omitted.
 Proposals cannot alter criteria, tests, permissions or dependencies and are independently rechecked.
 Missing usage, unsupported charge categories and interrupted HTTP calls stop further paid attempts;
-reservation ceilings do not guarantee the provider's final invoice. MCP does not expose repair.
+reservation ceilings do not guarantee the provider's final invoice. CLI bridges omit unobserved
+usage rather than assigning zero cost, so they cannot grant ready results. They disable user
+customizations and execution tools in an empty private directory; unsupported CLI flags fail closed.
+See [provider and MCP authorization](docs/ONECLICK.md).
+
+Canonical JSON and its validated evidence remain authoritative. SQLite and FTS5 are disposable derived
+metadata, never verdict authorities. Index errors cannot undo canonical saves, and failed history
+queries omit optional context. Reindexing validates records/evidence before atomic replacement.
+Index/lock/sidecar files reject links and non-regular files; catalog lock waits are bounded. Public
+MCP ledger queries select only allowlisted metadata columns. Probe reference updates create a new
+case instead of changing frozen acceptance criteria. Policy regex/diff computation runs in an owned,
+deadline-bound worker with sealed input copies.
 
 ### Publication boundaries
 

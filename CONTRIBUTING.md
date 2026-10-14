@@ -21,6 +21,7 @@ uv sync --frozen --extra dev
 
 # Verify setup
 uv run ruff check src/ tests/ scripts/ && uv run ruff format --check src/ tests/ scripts/
+uv run mypy src/ddk
 uv run pyright
 uv run pytest -m "not playwright and not docker"
 ```
@@ -30,11 +31,11 @@ what is missing.
 
 ## Code Quality Standards
 
-All contributions must pass four quality gates:
+All contributions must pass these quality gates:
 
 1. **Linting**: `uv run ruff check src/ tests/ scripts/`
 2. **Formatting**: `uv run ruff format --check src/ tests/ scripts/`
-3. **Type checking**: `uv run pyright` (strict, over `src/`)
+3. **Type checking**: `uv run mypy src/ddk` and `uv run pyright` (both strict)
 4. **Tests**: `uv run pytest -m "not playwright and not docker" --tb=short`
 
 The opt-in end-to-end tests run the real loop (npm, Chromium, screenshot comparison):

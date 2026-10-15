@@ -605,16 +605,16 @@ async def test_provider_reply_is_retained_as_private_evidence(blocked):
 
 
 async def test_oversized_reply_evidence_finishes_blocked_with_settled_usage(blocked):
-    variant = await with_limits(blocked, max_artifact_bytes=2048)
+    variant = await with_limits(blocked, max_artifact_bytes=4096)
 
     async def provider(request):
-        return answer("x" * 2000)
+        return answer("x" * 6000)
 
     result = await repair(variant, provider)
     assert result["decision"] == "blocked"
     assert result["actions"][-1]["code"] == "artifact_limit"
     assert result["model_calls"][0]["state"] == "settled"
-    assert sum(a["size_bytes"] for a in result["artifacts"]) <= 2048
+    assert sum(a["size_bytes"] for a in result["artifacts"]) <= 4096
 
 
 async def test_provider_reasoning_and_metadata_bytes_consume_the_same_output_allowance(blocked):

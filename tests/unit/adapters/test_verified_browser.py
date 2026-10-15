@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 from PIL import Image
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from ddk.adapters.verified_browser import BrowserSettings, compare_rgb, run_flow
 from ddk.models.verified_change import canonical_json, record_digest
@@ -240,8 +241,11 @@ async def test_expired_monotonic_deadline_cannot_start_browser(
     assert result.result["reason_code"] == "timeout"
 
 
+@pytest.mark.parametrize(
+    "failure", [RuntimeError("sandbox unavailable"), PlaywrightTimeoutError("launch timeout")]
+)
 async def test_sandbox_failure_never_retries_with_weaker_options(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: Exception
 ) -> None:
     from importlib.metadata import version
     from types import SimpleNamespace
@@ -249,7 +253,7 @@ async def test_sandbox_failure_never_retries_with_weaker_options(
 
     binary = tmp_path / "pinned-browser"
     binary.write_bytes(b"pinned")
-    launch = AsyncMock(side_effect=RuntimeError("sandbox unavailable"))
+    launch = AsyncMock(side_effect=failure)
     browser_type = SimpleNamespace(executable_path=str(binary), launch=launch)
     manager = SimpleNamespace(
         start=AsyncMock(return_value=SimpleNamespace(chromium=browser_type)), __aexit__=AsyncMock()

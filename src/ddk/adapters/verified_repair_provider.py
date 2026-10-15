@@ -63,6 +63,8 @@ class ClaudeRepairProvider:
                 usage.get("input_tokens"),
                 usage.get("output_tokens"),
                 0 if _linear_usage(usage) else None,
+                usage.get("cache_read_input_tokens"),
+                usage.get("cache_creation_input_tokens"),
             ),
             "anthropic",
             result.model,

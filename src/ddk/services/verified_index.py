@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,7 +21,9 @@ from uuid import UUID, uuid4
 from ddk.models.verified_change import Record, canonical_json, record_digest
 from ddk.security.file_access import read_regular
 from ddk.security.redact import redact_string
+from ddk.services.context_compactor import compact_diagnostic
 from ddk.services.durable_files import ensure_directory
+from ddk.services.repair_diagnostics import error_signature
 
 if TYPE_CHECKING:
     from ddk.services.verified_change_store import VerifiedChangeStore
@@ -94,7 +96,8 @@ _TABLES: dict[str, str] = {
         "INTEGER NOT NULL,provider_kind TEXT NOT NULL,model TEXT NOT NULL,state TEXT "
         "NOT NULL,input_tokens INTEGER,output_tokens INTEGER,reserved_cost_microusd "
         "INTEGER NOT NULL,actual_cost_microusd INTEGER,prompt_sha256 "
-        "TEXT,response_sha256 TEXT,PRIMARY KEY(run_id,call_id)"
+        "TEXT,response_sha256 TEXT,cache_read_tokens INTEGER,cache_write_tokens INTEGER,"
+        "cache_prefix_sha256 TEXT,PRIMARY KEY(run_id,call_id)"
     ),
     "apply_transactions": (
         "transaction_id TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES "
@@ -109,9 +112,71 @@ _TABLES: dict[str, str] = {
         "CASCADE,round_no INTEGER NOT NULL,check_id TEXT NOT NULL,reason_code TEXT "
         "NOT NULL,error_signature_sha256 TEXT NOT NULL,failed_patch_sha256 TEXT NOT "
         "NULL,affected_paths_json TEXT NOT NULL,diagnostic_summary TEXT NOT NULL "
-        "CHECK(length(diagnostic_summary)<=4096),created_at TEXT NOT NULL"
+        "CHECK(length(diagnostic_summary)<=4096),created_at TEXT NOT NULL,"
+        "resolved_in_round INTEGER CHECK(resolved_in_round IS NULL OR resolved_in_round>round_no),"
+        "resolved_patch_sha256 TEXT"
     ),
 }
+
+
+_TABLES.update(
+    {
+        "gate_verdicts": (
+            "case_id TEXT NOT NULL REFERENCES cases(case_id) ON DELETE CASCADE,"
+            "plane TEXT NOT NULL CHECK(plane IN "
+            "('all','command','test','browser','visual','policy')),"
+            "run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,"
+            "case_sha256 TEXT NOT NULL CHECK(length(case_sha256)=64),"
+            "bound_tree_sha256 TEXT CHECK(bound_tree_sha256 IS NULL OR "
+            "length(bound_tree_sha256)=64),"
+            "evaluator_sha256 TEXT NOT NULL CHECK(length(evaluator_sha256)=64),"
+            "verdict TEXT NOT NULL CHECK(verdict IN ('ready','blocked','manual-review')),"
+            "assurance_level TEXT,verified_at TEXT,selection_status TEXT NOT NULL "
+            "CHECK(selection_status IN ('selected','ambiguous')),PRIMARY KEY(case_id,plane)"
+        ),
+        "context_digests": (
+            "run_id TEXT NOT NULL,round_no INTEGER NOT NULL,source_artifact_id TEXT NOT NULL,"
+            "compacted_artifact_id TEXT NOT NULL,compressor_kind TEXT NOT NULL "
+            "CHECK(compressor_kind IN "
+            "('raw','log_frame_extract','ax_tree_diff','json_schema_crush')),"
+            "raw_bytes INTEGER NOT NULL CHECK(raw_bytes>=0),compacted_bytes INTEGER NOT NULL "
+            "CHECK(compacted_bytes BETWEEN 0 AND 65536),raw_sha256 TEXT NOT NULL "
+            "CHECK(length(raw_sha256)=64),"
+            "compacted_sha256 TEXT NOT NULL CHECK(length(compacted_sha256)=64),"
+            "PRIMARY KEY(run_id,round_no,source_artifact_id),"
+            "FOREIGN KEY(run_id,round_no) REFERENCES run_rounds(run_id,round_no) ON DELETE CASCADE,"
+            "FOREIGN KEY(run_id,source_artifact_id) REFERENCES "
+            "artifacts(run_id,artifact_id) ON DELETE CASCADE,"
+            "FOREIGN KEY(run_id,compacted_artifact_id) REFERENCES "
+            "artifacts(run_id,artifact_id) ON DELETE CASCADE"
+        ),
+        "stall_diagnoses": (
+            "run_id TEXT NOT NULL,round_no INTEGER NOT NULL CHECK(round_no BETWEEN 1 AND 10),"
+            "stall_category TEXT NOT NULL CHECK(stall_category IN "
+            "('identical_error_signature','patch_oscillation',"
+            "'failed_count_non_decreasing','scope_boundary_blocked')),repeated_signature_sh"
+            "a256 TEXT NOT NULL "
+            "CHECK(length(repeated_signature_sha256)=64),streak_count INTEGER NOT NULL "
+            "CHECK(streak_count>=2),"
+            "action_taken TEXT NOT NULL CHECK(action_taken IN "
+            "('inject_anti_oscillation_constraint','halt_repair_stalled')),"
+            "PRIMARY KEY(run_id,round_no),FOREIGN KEY(run_id,round_no) "
+            "REFERENCES run_rounds(run_id,round_no) ON DELETE CASCADE"
+        ),
+        "worktree_leases": (
+            "lease_id TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES runs(run_id) ON "
+            "DELETE CASCADE,"
+            "case_id TEXT NOT NULL REFERENCES cases(case_id) ON DELETE CASCADE,round_no "
+            "INTEGER NOT NULL,"
+            "phase TEXT NOT NULL CHECK(phase IN ('baseline','candidate')),"
+            "isolation_kind TEXT NOT NULL CHECK(isolation_kind='snapshot_copy'),"
+            "base_tree_sha256 TEXT NOT NULL CHECK(length(base_tree_sha256)=64),"
+            "state TEXT NOT NULL CHECK(state IN ('active','released','cleanup_failed')),"
+            "acquired_at TEXT NOT NULL,released_at TEXT,FOREIGN KEY(run_id,round_no) "
+            "REFERENCES run_rounds(run_id,round_no) ON DELETE CASCADE"
+        ),
+    }
+)
 
 
 _HUNKS_WORKER = r"""import difflib,hashlib,json,os,stat,sys
@@ -215,6 +280,27 @@ class VerifiedIndexCatalog:
                 connection.execute("PRAGMA journal_mode=WAL")
                 for name, columns in _TABLES.items():
                     connection.execute(f"CREATE TABLE IF NOT EXISTS {name} ({columns})")
+                for table, optional_columns in {
+                    "failure_lessons": {
+                        "resolved_in_round": "INTEGER",
+                        "resolved_patch_sha256": "TEXT",
+                    },
+                    "model_calls": {
+                        "cache_read_tokens": "INTEGER",
+                        "cache_write_tokens": "INTEGER",
+                        "cache_prefix_sha256": "TEXT",
+                    },
+                }.items():
+                    existing = {r[1] for r in connection.execute(f"PRAGMA table_info({table})")}
+                    for name, definition in optional_columns.items():
+                        if name not in existing:
+                            connection.execute(
+                                f"ALTER TABLE {table} ADD COLUMN {name} {definition}"
+                            )
+                connection.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_lessons_signature "
+                    "ON failure_lessons(error_signature_sha256,resolved_in_round,created_at DESC)"
+                )
                 connection.execute(
                     "CREATE INDEX IF NOT EXISTS lesson_lookup "
                     "ON failure_lessons(case_id,check_id,created_at DESC,lesson_id)"
@@ -440,6 +526,9 @@ class VerifiedIndexCatalog:
             "run_id",
         )
         for table in (
+            "context_digests",
+            "stall_diagnoses",
+            "worktree_leases",
             "run_rounds",
             "check_results",
             "file_changes",
@@ -505,6 +594,9 @@ class VerifiedIndexCatalog:
                     "state": r["state"],
                     "input_tokens": r.get("input_tokens"),
                     "output_tokens": r.get("output_tokens"),
+                    "cache_read_tokens": r.get("cache_read_tokens"),
+                    "cache_write_tokens": r.get("cache_write_tokens"),
+                    "cache_prefix_sha256": r.get("cache_prefix_sha256"),
                     "reserved_cost_microusd": r["reserved_micro_usd"],
                     "actual_cost_microusd": r.get("calculated_micro_usd"),
                     "prompt_sha256": next(
@@ -525,12 +617,19 @@ class VerifiedIndexCatalog:
                     ),
                 },
             )
+        for field in ("context_digests", "stall_diagnoses"):
+            for row in run.get(field, []):
+                self._child(db, field, {"run_id": ident, **row})
+        for row in run.get("workspace_leases", []):
+            self._child(db, "worktree_leases", {"run_id": ident, "case_id": run["case_id"], **row})
         if run["operation"] == "repair":
             self._lessons(db, run)
         db.execute("INSERT INTO failure_lessons_fts(failure_lessons_fts) VALUES('rebuild')")
 
-    def _lessons(self, db: sqlite3.Connection, run: Record) -> None:
-        failures = [r for r in run["results"] if r["status"] == "failed"]
+    def _lesson_rows(self, run: Record) -> list[Record]:
+        failures = [
+            r for r in run["results"] if r["phase"] == "candidate" and r["status"] == "failed"
+        ]
         failures += [
             {
                 "check_id": "repair",
@@ -539,21 +638,35 @@ class VerifiedIndexCatalog:
                 "artifact_ids": [],
             }
             for a in run["actions"]
-            if a["code"] in {"repair_no_progress", "repair_outside_scope"}
+            if a["code"] in {"repair_no_progress", "repair_outside_scope", "repair_stalled"}
         ]
         artifacts = {r["artifact_id"]: r for r in run["artifacts"]}
         rounds = {r["round_no"]: r for r in run["rounds"]}
+        rows: list[Record] = []
         for result in failures:
-            summary = result["reason_code"] or "check_failed"
-            for key in result["artifact_ids"]:
-                a = artifacts.get(key)
-                if a and a["kind"] in {"log", "data", "ax_snapshot"}:
-                    raw = read_regular(
-                        self.store.path_for("run", run["run_id"]) / a["path"], a["size_bytes"]
-                    )
-                    summary += "\n" + redact_string(raw.decode("utf-8", errors="replace"))[:4096]
-            summary = redact_string(summary)[:4096]
             reason = result["reason_code"] or "check_failed"
+            diagnostics: list[tuple[str, bytes]] = []
+            excerpts = [reason]
+            for key in result["artifact_ids"]:
+                artifact = artifacts.get(key)
+                if artifact and artifact["kind"] in {"log", "trace", "data", "ax_snapshot"}:
+                    raw = read_regular(
+                        self.store.path_for("run", run["run_id"]) / artifact["path"],
+                        artifact["size_bytes"],
+                    )
+                    if (
+                        len(raw) != artifact["size_bytes"]
+                        or hashlib.sha256(raw).hexdigest() != artifact["sha256"]
+                    ):
+                        raise ValueError("stored_file_integrity")
+                    diagnostics.append((artifact["kind"], raw))
+                    try:
+                        excerpts.append(compact_diagnostic(artifact["kind"], raw).content.decode())
+                    except UnicodeError:
+                        excerpts.append("binary diagnostic: " + artifact["sha256"])
+            summary = (
+                redact_string("\n".join(excerpts)).encode()[:4096].decode("utf-8", errors="ignore")
+            )
             seed = [
                 run["run_id"],
                 result["round_no"],
@@ -573,24 +686,55 @@ class VerifiedIndexCatalog:
                 ]
                 if proposals:
                     patch = proposals[-1]["sha256"]
-            row = {
-                "lesson_id": lesson,
-                "case_id": run["case_id"],
-                "run_id": run["run_id"],
-                "round_no": result["round_no"],
-                "check_id": result["check_id"],
-                "reason_code": reason,
-                "error_signature_sha256": hashlib.sha256(summary.encode()).hexdigest(),
-                "failed_patch_sha256": patch,
-                "affected_paths_json": _json(sorted(r["path"] for r in run["changes"])),
-                "diagnostic_summary": summary,
-                "created_at": run["started_at"],
-            }
+            latest = run["latest_round"]
+            resolved = (
+                latest
+                if (
+                    run["decision"] == "ready"
+                    and latest is not None
+                    and latest > result["round_no"]
+                    and result.get("phase") == "candidate"
+                    and any(
+                        r["round_no"] == latest
+                        and r["phase"] == "candidate"
+                        and r["check_id"] == result["check_id"]
+                        and r["status"] == "passed"
+                        for r in run["results"]
+                    )
+                )
+                else None
+            )
+            rows.append(
+                {
+                    "lesson_id": lesson,
+                    "case_id": run["case_id"],
+                    "run_id": run["run_id"],
+                    "round_no": result["round_no"],
+                    "check_id": result["check_id"],
+                    "reason_code": reason,
+                    "error_signature_sha256": error_signature(
+                        result["check_id"], reason, diagnostics
+                    ),
+                    "failed_patch_sha256": patch,
+                    "affected_paths_json": _json(sorted(r["path"] for r in run["changes"])),
+                    "diagnostic_summary": summary,
+                    "created_at": run["started_at"],
+                    "resolved_in_round": resolved,
+                    "resolved_patch_sha256": rounds[resolved]["changes_sha256"]
+                    if resolved is not None
+                    else None,
+                }
+            )
+        return rows
+
+    def _lessons(self, db: sqlite3.Connection, run: Record) -> None:
+        for row in self._lesson_rows(run):
             self._put(db, "failure_lessons", row, "lesson_id")
 
     def upsert_run(self, record: Record) -> None:
         with self._connect() as db:
             self._run(db, self.store.status(record["run_id"]))
+            self._refresh_gates(db)
 
     def _transaction(self, db: sqlite3.Connection, verified: Record) -> None:
         self._run(db, self.store.run(verified["run_id"]))
@@ -626,27 +770,78 @@ class VerifiedIndexCatalog:
     def upsert_transaction(self, record: Record) -> None:
         with self._connect() as db:
             self._transaction(db, self.store.load_apply(record["apply_id"]))
+            self._refresh_gates(db)
+
+    def _refresh_gates(self, db: sqlite3.Connection, records: list[Record] | None = None) -> None:
+        from ddk.services.verified_gate import latest_runs, run_headers
+
+        all_records = records if records is not None else run_headers(self.store)
+        db.execute("DELETE FROM gate_verdicts")
+        for case_id in sorted({r["case_id"] for r in all_records}):
+            newest = latest_runs(all_records, case_id)
+            run = self.store.status(newest[0]["run_id"])
+            case = self.store.case(case_id)
+            kinds = {c["check_id"]: c["kind"] for c in case["checks"]}
+            planes = {"all"} | {
+                kinds[r["check_id"]]
+                for r in run["results"]
+                if r["phase"] == "candidate" and r["round_no"] == run["latest_round"]
+            }
+            verdict = (
+                run["decision"] if len(newest) == 1 and run["status"] == "completed" else "blocked"
+            )
+            for plane in sorted(planes):
+                self._child(
+                    db,
+                    "gate_verdicts",
+                    {
+                        "case_id": case_id,
+                        "plane": plane,
+                        "run_id": run["run_id"],
+                        "case_sha256": run["case_sha256"],
+                        "bound_tree_sha256": run["candidate_tree_sha256"],
+                        "evaluator_sha256": run["evaluator_sha256"],
+                        "verdict": verdict or "blocked",
+                        "assurance_level": run["assurance"],
+                        "verified_at": run["finished_at"],
+                        "selection_status": "selected" if len(newest) == 1 else "ambiguous",
+                    },
+                )
+
+    def _canonical_records(self) -> tuple[list[Record], list[Record], list[Record]]:
+        def records(kind: str, loader: Callable[[str], Record]) -> list[Record]:
+            root = self.store.base_path / kind
+            if not root.exists():
+                return []
+            result: list[Record] = []
+            for path in sorted(root.iterdir()):
+                if path.is_symlink() or not path.is_dir():
+                    raise ValueError("unsafe_canonical_directory")
+                result.append(loader(path.name))
+            return result
+
+        return (
+            records("cases", self.store.case),
+            records("runs", self.store.status),
+            records("applies", self.store.load_apply),
+        )
+
+    @staticmethod
+    def _source_digest(groups: tuple[list[Record], list[Record], list[Record]]) -> str:
+        digest = hashlib.sha256()
+        for group in groups:
+            for record in group:
+                digest.update(record_digest(record).encode())
+            digest.update(b"\n")
+        return digest.hexdigest()
 
     def reindex_all(self) -> Record:
         """Publish a fully validated rebuild while all catalog clients share a lock."""
         from ddk.services.durable_files import sync_directory
 
         with self._lock():
-            cases = [
-                self.store.case(p.name)
-                for p in sorted((self.store.base_path / "cases").iterdir())
-                if p.is_dir()
-            ]
-            runs = [
-                self.store.status(p.name)
-                for p in sorted((self.store.base_path / "runs").iterdir())
-                if p.is_dir()
-            ]
-            applies = [
-                self.store.load_apply(p.name)
-                for p in sorted((self.store.base_path / "applies").iterdir())
-                if p.is_dir()
-            ]
+            cases, runs, applies = self._canonical_records()
+            source_digest = self._source_digest((cases, runs, applies))
             original = self.path
             temporary = original.with_name("index-rebuild-" + uuid4().hex + ".sqlite3")
             try:
@@ -658,9 +853,12 @@ class VerifiedIndexCatalog:
                         self._run(db, run)
                     for record in applies:
                         self._transaction(db, record)
+                    self._refresh_gates(db, runs)
                 with self._connect(readonly=True, locked=True) as db:
                     if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                         raise ValueError("catalog_integrity_failed")
+                if self._source_digest(self._canonical_records()) != source_digest:
+                    raise ValueError("catalog_source_changed")
                 self.path = original
                 self._safe_files()
                 with temporary.open("rb") as data:
@@ -703,29 +901,58 @@ class VerifiedIndexCatalog:
                 )
             ]
 
-    def lessons(self, case_id: str, check_id: str, query: str = "") -> list[Record]:
+    def lessons(
+        self, case_id: str, check_id: str, query: str = "", *, signature: str | None = None
+    ) -> list[Record]:
         if not self.path.exists():
             return []
         try:
+            self.store.case(case_id)
             with self._connect(readonly=True) as db:
                 tokens = re.findall(r"\w+", query)[:16]
                 if tokens:
-                    phrase = " OR ".join('"' + t + '"' for t in tokens)
-                    rows = db.execute(
-                        "SELECT l.* FROM failure_lessons l "
-                        "JOIN failure_lessons_fts f ON l.rowid=f.rowid "
-                        "WHERE failure_lessons_fts MATCH ? AND l.case_id=? AND l.check_id=? "
-                        "ORDER BY rank,l.lesson_id LIMIT 3",
-                        (phrase, case_id, check_id),
+                    phrase = " OR ".join('"' + token + '"' for token in tokens)
+                    candidates = list(
+                        db.execute(
+                            "SELECT l.lesson_id,l.run_id FROM failure_lessons l "
+                            "JOIN failure_lessons_fts f ON l.rowid=f.rowid "
+                            "WHERE failure_lessons_fts MATCH ? AND l.check_id=? "
+                            "ORDER BY (l.resolved_in_round IS NOT NULL) DESC,"
+                            "(l.error_signature_sha256=?) DESC,rank,"
+                            "l.created_at DESC,l.lesson_id LIMIT 12",
+                            (phrase, check_id, signature or ""),
+                        )
                     )
                 else:
-                    rows = db.execute(
-                        "SELECT * FROM failure_lessons WHERE case_id=? AND check_id=? "
-                        "ORDER BY created_at DESC,lesson_id LIMIT 3",
-                        (case_id, check_id),
+                    candidates = list(
+                        db.execute(
+                            "SELECT lesson_id,run_id FROM failure_lessons WHERE check_id=? "
+                            "AND (case_id=? OR error_signature_sha256=?) "
+                            "ORDER BY (resolved_in_round IS NOT NULL) DESC,"
+                            "created_at DESC,lesson_id LIMIT 12",
+                            (check_id, case_id, signature or ""),
+                        )
                     )
-                return [dict(row) for row in rows]
-        except (sqlite3.Error, OSError, ValueError):
+            validated: dict[str, list[Record]] = {}
+            answer: list[Record] = []
+            for candidate in candidates:
+                ident = candidate["run_id"]
+                if ident not in validated:
+                    validated[ident] = self._lesson_rows(self.store.status(ident))
+                row = next(
+                    (
+                        r
+                        for r in validated[ident]
+                        if r["lesson_id"] == candidate["lesson_id"] and r["check_id"] == check_id
+                    ),
+                    None,
+                )
+                if row is not None and row not in answer:
+                    answer.append(row)
+                if len(answer) == 3:
+                    break
+            return answer
+        except (sqlite3.Error, OSError, ValueError, KeyError):
             logging.getLogger(__name__).warning("catalog_lessons_unavailable: reindex recommended")
             return []
 

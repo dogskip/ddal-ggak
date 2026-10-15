@@ -18,6 +18,8 @@ from ddk.models.verified_change import (
 )
 from ddk.security.file_access import read_regular
 from ddk.security.repo_paths import normalize_change_path
+from ddk.services.case_criteria import compile_checks
+from ddk.services.case_discovery import configuration_binding, has_acceptance
 from ddk.services.source_snapshot import (
     SnapshotFile,
     capture_git_source,
@@ -62,13 +64,41 @@ def configuration_for(repository: Path) -> Record:
     path = repository / "pyproject.toml"
     if path.is_file():
         value = tomllib.loads(read_regular(path, 2 * 1024**2).decode())
-        return dict(value.get("tool", {}).get("ddk", {}).get("verify", {}))
+        config = dict(value.get("tool", {}).get("ddk", {}).get("verify", {}))
+        if config:
+            return config
+    path = repository / ".ddk/verify.draft.toml"
+    if path.exists() or path.is_symlink():
+        return {**tomllib.loads(read_regular(path, 2 * 1024**2).decode()), "draft": True}
     return {}
 
 
 class CaseBootstrapper:
     def __init__(self, repository: Path) -> None:
         self.repository = repository.resolve()
+
+    async def discover(
+        self,
+        preview_url_or_cmd: str | None = None,
+        *,
+        viewport: tuple[int, int] = (1280, 800),
+        confirm_execution: bool = False,
+        dry_run: bool = False,
+    ) -> Record:
+        from ddk.services.case_discovery import discover
+
+        return await discover(
+            self.repository,
+            preview_url_or_cmd,
+            viewport=viewport,
+            confirm_execution=confirm_execution,
+            dry_run=dry_run,
+        )
+
+    def approve_draft(self, *, dry_run: bool = False) -> Record:
+        from ddk.services.case_discovery import approve_draft
+
+        return approve_draft(self.repository, dry_run=dry_run)
 
     async def initialize(
         self,
@@ -82,9 +112,22 @@ class CaseBootstrapper:
         observed_environment: tuple[Record, str | None] | None = None,
         supersedes_case_id: str | None = None,
     ) -> Record:
+        binding = configuration_binding(self.repository, explicit=configuration is not None)
         config = copy.deepcopy(
             configuration if configuration is not None else configuration_for(self.repository)
         )
+        if config.get("draft", False) is not False:
+            return {
+                "status": "blocked",
+                "case_id": None,
+                "dry_run": dry_run,
+                "actions": [
+                    {
+                        "code": "draft_criteria_unapproved",
+                        "message": "Review and approve the draft before compiling a case.",
+                    }
+                ],
+            }
         if from_design is not None:
             design = decode_json(read_regular(from_design / "manifest.json", 2 * 1024**2))
             if (from_design / "verification.json").is_file():
@@ -92,13 +135,20 @@ class CaseBootstrapper:
                     decode_json(read_regular(from_design / "verification.json", 2 * 1024**2))
                 )
             config["design_requirements"] = design.get("requirements", [])
+        if config.get("draft", False) is not False:
+            return {
+                "status": "blocked",
+                "case_id": None,
+                "dry_run": dry_run,
+                "actions": [
+                    {
+                        "code": "draft_criteria_unapproved",
+                        "message": "Review and approve the draft before compiling a case.",
+                    }
+                ],
+            }
         checks = object_records(config.get("checks", []))
-        roles = {
-            c.get("role")
-            for c in checks
-            if c.get("kind", "browser") in {"browser", "visual"} and c.get("required", True)
-        }
-        if not {"target", "preserve"} <= roles:
+        if not has_acceptance(config):
             return {
                 "status": "blocked",
                 "case_id": None,
@@ -160,71 +210,11 @@ class CaseBootstrapper:
         payloads["environment/host.json"] = canonical_json(env)
         payloads["environment/tools.json"] = canonical_json(observe_tools(self.repository))
         compiled: list[Record] = []
-        criteria = ["criteria/execution.json"]
-        for index, definition in enumerate(checks):
-            ident = definition.get("check_id", f"check-{index}")
-            if (
-                not isinstance(ident, str)
-                or not ident
-                or any(
-                    c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
-                    for c in ident
-                )
-            ):
-                raise ValueError("invalid_check_identifier")
-            kind = definition.get("kind", "browser")
-            path = f"criteria/{ident}.json"
-            if kind in {"browser", "visual"}:
-                steps: list[Record] = []
-                for number, raw in enumerate(object_records(definition.get("steps", []))):
-                    selector = raw.get("selector")
-                    if isinstance(selector, str):
-                        selector = {"strategy": "css", "value": selector, "name": None}
-                    steps.append(
-                        {
-                            "step_id": f"step-{number}",
-                            "action": raw["action"],
-                            "selector": selector,
-                            "value": raw.get("value"),
-                            "count": raw.get("count"),
-                            "reference_path": raw.get("reference_path"),
-                            "rgb_tolerance": raw.get("rgb_tolerance"),
-                            "max_mismatch_ppm": raw.get("max_mismatch_ppm"),
-                            "timeout_ms": raw.get("timeout_ms", 5000),
-                        }
-                    )
-                flow: Record = {
-                    "record_type": "flow",
-                    "schema_version": "verified-change/1",
-                    "flow_id": ident,
-                    "check_id": ident,
-                    "entry_path": definition.get("entry_path", "/"),
-                    "fixture_sha256": env["fixture_sha256"],
-                    "steps": steps,
-                }
-                validate_record(flow)
-                data = canonical_json(flow)
-            else:
-                data = canonical_json(definition.get("policy", {}) if kind == "policy" else {})
-            payloads[path] = data
-            criteria.append(path)
-            check: Record = {
-                "check_id": ident,
-                "role": definition["role"],
-                "required": definition.get("required", True),
-                "kind": kind,
-                "definition_path": path,
-                "definition_sha256": hashlib.sha256(data).hexdigest(),
-                "command_argv": definition.get("command_argv", []),
-                "viewport": definition.get("viewport", {"width": 1280, "height": 800})
-                if kind in {"browser", "visual"}
-                else None,
-                "timeout_ms": definition.get("timeout_ms", 30000),
-            }
-            for key in ("allow_skipped", "report_adapter"):
-                if key in definition:
-                    check[key] = definition[key]
-            compiled.append(check)
+        criteria = ["criteria/execution.json", "criteria/bootstrap.json"]
+        payloads["criteria/bootstrap.json"] = canonical_json(binding)
+        compiled, definitions = compile_checks(config, env["fixture_sha256"])
+        payloads.update(definitions)
+        criteria.extend(definitions)
         requirements: list[Record] = (
             object_records(config["requirements"])
             if config.get("requirements")
@@ -346,6 +336,8 @@ class CaseBootstrapper:
         }
         if commit:
             case["git_base_ref"] = commit
+        if configuration_binding(self.repository, explicit=configuration is not None) != binding:
+            raise ValueError("bootstrap_configuration_changed")
         store = VerifiedChangeStore(self.repository)
         return store.publish_case(case, payloads)
 

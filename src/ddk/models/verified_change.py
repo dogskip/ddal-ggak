@@ -322,6 +322,9 @@ def semantic_errors(record: Record, cases: Record, runs: Record) -> list[str]:
         require(case is not None, "orphan_case")
         if case is None:
             return errors
+        from ddk.models.verified_harness import harness_errors
+
+        errors.extend(harness_errors(record, case))
         require(record["case_sha256"] == record_digest(case), "case_hash_mismatch")
         checks = {item["check_id"]: item for item in case["checks"]}
         requirements = {item["requirement_id"] for item in case["requirements"]}

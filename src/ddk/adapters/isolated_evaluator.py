@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import math
-import tempfile
 import time
 from collections.abc import Mapping
 from dataclasses import replace
@@ -37,6 +36,7 @@ from ddk.services.verified_change_engine import (
     EvaluationOutcome,
     EvaluationRequest,
 )
+from ddk.services.workspace_lease import WorkspaceLease
 
 _MODULES = (
     "adapters/verified_worker.py",
@@ -182,7 +182,9 @@ async def evaluate_isolated(
         artifact_bytes += len(artifact.content)
         results[-1]["artifact_ids"].append(artifact.artifact_id)
 
-    with tempfile.TemporaryDirectory(prefix="ddk-isolated-evaluate-") as folder:
+    with WorkspaceLease(
+        request.input_tree_sha256, request.phase, request.round_no, request.workspace_event
+    ) as folder:
         root = Path(folder).resolve()
         app = root / "app"
         app.mkdir(mode=0o700)

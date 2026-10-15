@@ -23,6 +23,8 @@ from ddk.models.verified_change import (
 from ddk.security.file_access import read_regular
 from ddk.security.redact import redact_string
 from ddk.security.repo_paths import ensure_distinct_paths, normalize_change_path
+from ddk.services.context_compactor import compact_diagnostic
+from ddk.services.repair_diagnostics import RepairStallTracker, failure_state
 from ddk.services.source_snapshot import (
     SnapshotFile,
     SourceSnapshot,
@@ -62,6 +64,9 @@ class RepairRequest:
     prompt: str
     input_limit: int
     output_limit: int
+    context_digests: tuple[Record, ...] = ()
+    context_artifacts: tuple[EvaluationArtifact, ...] = ()
+    cache_prefix_sha256: str | None = None
 
 
 _SYSTEM = (
@@ -85,7 +90,13 @@ def _request(
     input_limit: int,
     output_limit: int,
     lessons: tuple[Record, ...] = (),
+    *,
+    baseline_outcome: EvaluationOutcome | None = None,
+    run_id: str | None = None,
+    stall_constraints: tuple[Record, ...] = (),
 ) -> RepairRequest:
+    digests: list[Record] = []
+    compacted: list[EvaluationArtifact] = []
     try:
         files = [
             {"path": item.path, "content": redact_string(item.content.decode("utf-8"))}
@@ -93,57 +104,143 @@ def _request(
             if item.path in paths
         ]
         evidence = {item.artifact_id: item for item in outcome.artifacts}
+        baseline_artifacts = (
+            {a.artifact_id: a for a in baseline_outcome.artifacts} if baseline_outcome else {}
+        )
+        baseline_results = (
+            {r["check_id"]: r for r in baseline_outcome.results} if baseline_outcome else {}
+        )
+        excerpts: dict[str, Record] = {}
 
-        def diagnostics(ids: list[str]) -> list[Record]:
-            excerpts: list[Record] = []
-            for key in ids:
+        def diagnostics(result: Record) -> list[Record]:
+            items: list[Record] = []
+            previous = baseline_results.get(result["check_id"], {})
+
+            def matching_ax(artifact: EvaluationArtifact) -> bytes | None:
+                if artifact.kind != "ax_snapshot":
+                    return None
+                try:
+                    step = decode_json(artifact.content).get("step_id")
+                    matches = [
+                        baseline_artifacts[key].content
+                        for key in previous.get("artifact_ids", [])
+                        if key in baseline_artifacts
+                        and baseline_artifacts[key].kind == "ax_snapshot"
+                        and isinstance(step, str)
+                        and decode_json(baseline_artifacts[key].content).get("step_id") == step
+                    ]
+                    return matches[0] if len(matches) == 1 else None
+                except ValueError:
+                    return None
+
+            for key in result["artifact_ids"]:
                 artifact = evidence.get(key)
                 if artifact is None or artifact.kind not in {"log", "trace", "data", "ax_snapshot"}:
                     continue
-                try:
-                    text = redact_string(artifact.content.decode("utf-8", errors="strict"))[:4096]
-                except UnicodeError:
-                    continue
-                excerpts.append(
-                    {"content": redact_string(text), "truncated": len(artifact.content) > 4096}
-                )
-            return excerpts
+                if key not in excerpts:
+                    try:
+                        value = compact_diagnostic(
+                            artifact.kind,
+                            artifact.content,
+                            matching_ax(artifact),
+                        )
+                    except UnicodeError:
+                        continue
+                    ident = f"context-{round_no}-{len(compacted)}"
+                    compressed = EvaluationArtifact(
+                        ident,
+                        "data",
+                        f"artifacts/context/round-{round_no}/{len(compacted)}.txt",
+                        value.content,
+                    )
+                    compacted.append(compressed)
+                    digests.append(
+                        {
+                            "round_no": round_no,
+                            "source_artifact_id": key,
+                            "compacted_artifact_id": ident,
+                            "compressor_kind": value.compressor_kind,
+                            "raw_bytes": value.raw_bytes,
+                            "compacted_bytes": value.compacted_bytes,
+                            "raw_sha256": value.raw_sha256,
+                            "compacted_sha256": value.compacted_sha256,
+                        }
+                    )
+                    excerpts[key] = {
+                        "content": value.content.decode(),
+                        "truncated": value.truncated,
+                        "evidence": {
+                            "run_id": run_id,
+                            "artifact_id": key,
+                            "sha256": value.raw_sha256,
+                        },
+                    }
+                items.append(excerpts[key])
+            return items
 
         failures = [
             {
                 "check_id": item["check_id"],
                 "status": item["status"],
                 "reason_code": redact_string(item["reason_code"] or ""),
-                "diagnostics": diagnostics(item["artifact_ids"]),
+                "diagnostics": diagnostics(item),
             }
             for item in outcome.results
             if item["status"] != "passed"
         ]
+        prefix = {
+            "request": redact_string(case["request"]),
+            "requirements": [
+                {**r, "description": redact_string(r["description"])} for r in case["requirements"]
+            ],
+            "scope_paths": sorted(paths),
+            "case_sha256": record_digest(case),
+            "baseline_tree_sha256": case["baseline_tree_sha256"],
+            "environment_sha256": case["environment_sha256"],
+            "evaluator_sha256": case["evaluator_sha256"],
+        }
         prompt = canonical_json(
             {
-                "request": redact_string(case["request"]),
-                "files": files,
-                "failed_checks": failures,
-                "previous_failures": [
-                    {
-                        k: redact_string(str(row.get(k, "")))[:4096]
-                        for k in (
-                            "check_id",
-                            "reason_code",
-                            "failed_patch_sha256",
-                            "diagnostic_summary",
-                        )
-                    }
-                    for row in lessons
-                ],
+                "immutable_prefix": prefix,
+                "round_context": {
+                    "round_no": round_no,
+                    "files": files,
+                    "failed_checks": failures,
+                    "previous_failures": [
+                        {
+                            k: redact_string(row[k]) if isinstance(row.get(k), str) else row.get(k)
+                            for k in (
+                                "check_id",
+                                "reason_code",
+                                "failed_patch_sha256",
+                                "diagnostic_summary",
+                                "error_signature_sha256",
+                                "resolved_in_round",
+                                "resolved_patch_sha256",
+                            )
+                        }
+                        for row in lessons
+                    ],
+                    "stall_constraints": list(stall_constraints),
+                },
             }
         ).decode()
     except (UnicodeError, ValueError) as error:
         raise VerificationStoppedError("repair_context_invalid") from error
     if type(input_limit) is not int or len((_SYSTEM + prompt).encode()) > input_limit:
         raise VerificationStoppedError("repair_input_limit")
+    prefix_hash = hashlib.sha256(_SYSTEM.encode() + b"\n" + canonical_json(prefix)).hexdigest()
     return RepairRequest(
-        case["case_id"], round_no, price.model, _SYSTEM, prompt, input_limit, output_limit
+        case["case_id"],
+        round_no,
+        price.model,
+        _SYSTEM,
+        prompt,
+        input_limit,
+        output_limit,
+        tuple(digests),
+        tuple(compacted),
+        prefix_hash,
     )
 
 
@@ -321,7 +418,7 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
         def interrupted() -> bool:
             return bool(time.monotonic_ns() >= deadline)
 
-        frozen = self._fixed_inputs(case)
+        frozen = self.fixed_inputs(case)
         capture_options = {
             "max_file_bytes": case["limits"]["max_file_bytes"],
             "max_total_bytes": case["limits"]["max_artifact_bytes"],
@@ -417,6 +514,8 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
                 interrupted,
                 limits,
                 before,
+                round_no=round_no,
+                workspace_event=self._workspace_observer(record, payloads),
             )
             outcome = _observations(
                 await self._evaluate(evaluation, limits["cleanup_timeout_ms"]), phase, round_no
@@ -435,6 +534,8 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
             baseline_outcome = await evaluate("baseline", before, 0)
             self._phase_result(case, "baseline", baseline_outcome, case["baseline_tree_sha256"])
             seen = {candidate_hash}
+            stall_tracker = RepairStallTracker()
+            stall_constraints: tuple[Record, ...] = ()
             for round_no in range(case["limits"]["max_fix_attempts"] + 1):
                 outcome = await evaluate("candidate", current, round_no)
                 issue: VerificationStoppedError | None = None
@@ -461,6 +562,24 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
                 if issue is None:
                     check_time()
                     return self._finish(record, case, started, payloads, source_runs=contexts)
+                current_failures = failure_state(
+                    outcome, {c["check_id"] for c in case["checks"] if c["required"]}
+                )
+                diagnosis = stall_tracker.observe(current_failures, round_no)
+                if diagnosis is not None:
+                    record.setdefault("stall_diagnoses", []).append(diagnosis)
+                    self._progress(record, payloads)
+                    if diagnosis["action_taken"] == "halt_repair_stalled":
+                        raise VerificationStoppedError("repair_stalled")
+                    stall_constraints = (
+                        {
+                            "stall_category": diagnosis["stall_category"],
+                            "forbidden_patch_hashes": [record["candidate_tree_sha256"]],
+                            "instruction": "Try a different structural correction.",
+                        },
+                    )
+                else:
+                    stall_constraints = ()
                 if round_no >= case["limits"]["max_fix_attempts"]:
                     raise VerificationStoppedError("fix_limit")
                 if not links:
@@ -476,7 +595,17 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
                     for item in outcome.results
                     if item["status"] == "failed"
                     for lesson in catalog.lessons(
-                        case["case_id"], item["check_id"], item["reason_code"] or ""
+                        case["case_id"],
+                        item["check_id"],
+                        item["reason_code"] or "",
+                        signature=next(
+                            (
+                                r["error_signature_sha256"]
+                                for r in current_failures
+                                if r["check_id"] == item["check_id"]
+                            ),
+                            None,
+                        ),
                     )
                 )[:3]
                 lessons = (*lessons, *catalog.lessons(case["case_id"], "repair"))[:3]
@@ -490,6 +619,9 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
                     input_limit,
                     output_limit,
                     lessons,
+                    baseline_outcome=baseline_outcome,
+                    run_id=run_id,
+                    stall_constraints=stall_constraints,
                 )
                 prompt_artifact = EvaluationArtifact(
                     f"prompt-round-{round_no}",
@@ -499,7 +631,10 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
                         {"system": proposal_request.system, "prompt": proposal_request.prompt}
                     ),
                 )
-                _retain(record, case, [prompt_artifact], payloads)
+                _retain(
+                    record, case, [*proposal_request.context_artifacts, prompt_artifact], payloads
+                )
+                record.setdefault("context_digests", []).extend(proposal_request.context_digests)
                 self._progress(record, payloads)
                 try:
                     answer = await budget.call(
@@ -508,6 +643,7 @@ class VerifiedRepairEngine(VerifiedChangeEngine):
                         input_limit=input_limit,
                         output_limit=output_limit,
                         provider=partial(self.provider, proposal_request),
+                        cache_prefix_sha256=proposal_request.cache_prefix_sha256,
                     )
                 except BudgetError as error:
                     raise VerificationStoppedError(str(error)) from error

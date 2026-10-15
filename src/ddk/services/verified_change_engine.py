@@ -69,6 +69,8 @@ class EvaluationRequest:
     cancelled: Callable[[], bool]
     limits: Mapping[str, int]
     baseline_snapshot: SourceSnapshot | None = None
+    round_no: int = 0
+    workspace_event: Callable[[Record], None] | None = None
 
 
 @dataclass(frozen=True)
@@ -174,7 +176,7 @@ class VerifiedChangeEngine:
         try:
             if commit is None and (baseline is None or candidate is None):
                 raise VerificationStoppedError("ambiguous_baseline")
-            frozen = self._fixed_inputs(case)
+            frozen = self.fixed_inputs(case)
             file_limits = {
                 "max_file_bytes": case["limits"]["max_file_bytes"],
                 "max_total_bytes": case["limits"]["max_artifact_bytes"],
@@ -248,6 +250,7 @@ class VerifiedChangeEngine:
                     interrupted,
                     limits,
                     baseline_snapshot,
+                    workspace_event=self._workspace_observer(record, payloads),
                 )
                 record["integrity"]["cleanup_complete"] = False
                 outcome = await self._evaluate(evaluation, case["limits"]["cleanup_timeout_ms"])
@@ -270,7 +273,7 @@ class VerifiedChangeEngine:
         except VerificationStoppedError as error:
             return self._finish(record, case, started, payloads, error)
 
-    def _fixed_inputs(self, case: Record) -> tuple[SnapshotFile, ...]:
+    def fixed_inputs(self, case: Record) -> tuple[SnapshotFile, ...]:
         files: list[SnapshotFile] = []
         for item in case["inputs"]:
             payload = read_regular(
@@ -487,6 +490,22 @@ class VerifiedChangeEngine:
     def _progress(self, record: Record, payloads: Mapping[str, bytes]) -> None:
         self.store.stage_artifacts(record, payloads)
         self.store.save_pending(record)
+
+    def _workspace_observer(
+        self, record: Record, payloads: dict[str, bytes]
+    ) -> Callable[[Record], None]:
+        def changed(receipt: Record) -> None:
+            leases = record.setdefault("workspace_leases", [])
+            existing = next((r for r in leases if r["lease_id"] == receipt["lease_id"]), None)
+            if existing is None:
+                leases.append(receipt)
+            else:
+                existing.update(receipt)
+            if receipt["state"] != "released":
+                record["integrity"]["cleanup_complete"] = False
+            self._progress(record, payloads)
+
+        return changed
 
     async def _evaluate(self, request: EvaluationRequest, cleanup_ms: int) -> EvaluationOutcome:
         assert self.evaluator is not None

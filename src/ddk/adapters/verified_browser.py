@@ -33,6 +33,7 @@ from playwright.async_api import (
     async_playwright,
     expect,
 )
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from ddk.adapters.screenshot_diff_local import flatten_to_rgb
 from ddk.models.verified_change import (
@@ -612,9 +613,12 @@ async def run_flow(
                     deadline, time.monotonic_ns() + approved_step["timeout_ms"] * 1_000_000
                 )
                 async with asyncio.timeout(max(0, (step_deadline - time.monotonic_ns()) / 1e9)):
-                    await asyncio.create_task(
-                        _step(approved_step, page, origin, references, observation, publish)
-                    )
+                    try:
+                        await asyncio.create_task(
+                            _step(approved_step, page, origin, references, observation, publish)
+                        )
+                    except PlaywrightTimeoutError as error:
+                        raise TimeoutError(str(error)) from error
                 if time.monotonic_ns() >= step_deadline:
                     raise TimeoutError
             while observation.pending:

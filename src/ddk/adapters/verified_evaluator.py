@@ -7,7 +7,6 @@ import hashlib
 import io
 import math
 import platform
-import tempfile
 import time
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -29,6 +28,7 @@ from ddk.models.verified_change import (
     record_digest,
     safe_path,
 )
+from ddk.models.verified_commands import command_arguments as _argv
 from ddk.security.file_access import read_regular
 from ddk.security.repo_paths import ensure_distinct_paths
 from ddk.services.source_snapshot import SnapshotFile, manifest_digest, source_matches
@@ -37,6 +37,7 @@ from ddk.services.verified_change_engine import (
     EvaluationOutcome,
     EvaluationRequest,
 )
+from ddk.services.workspace_lease import WorkspaceLease
 
 EXECUTION_PLAN_PATH = "criteria/execution.json"
 _PLAN_KEYS = {
@@ -90,20 +91,6 @@ def _paths(value: object, files: dict[str, SnapshotFile]) -> list[str]:
     result = cast(list[str], paths)
     ensure_distinct_paths(result)
     return result
-
-
-def _argv(value: object, *, allow_empty: bool = False) -> list[str]:
-    _require(isinstance(value, list), "invalid_command_argv")
-    parts = cast(list[object], value)
-    _require(allow_empty or bool(parts), "invalid_command_argv")
-    _require(
-        len(parts) <= 100
-        and all(
-            isinstance(arg, str) and 0 < len(arg) <= 2048 and "\x00" not in arg for arg in parts
-        ),
-        "invalid_command_argv",
-    )
-    return cast(list[str], parts)
 
 
 def _prepare(request: EvaluationRequest, *, trusted_local: bool) -> _Inputs:
@@ -406,7 +393,9 @@ class VerifiedEvaluator:
                 results[-1].update(status="unavailable", reason_code="source_changed")
                 halted = "source_changed"
 
-        with tempfile.TemporaryDirectory(prefix="ddk-evaluate-") as folder:
+        with WorkspaceLease(
+            request.input_tree_sha256, request.phase, request.round_no, request.workspace_event
+        ) as folder:
             root = Path(folder).resolve()
             app, output = root / "app", root / "results"
             app.mkdir(mode=0o700)

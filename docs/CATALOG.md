@@ -25,6 +25,11 @@ the original lives in the case's frozen source input. Apply root hashes cover th
 set (path/hash/mode, including absence); they do not claim a hash of unrelated repository files.
 Legacy model calls without retained prompt/response artifacts keep those digests null.
 
+The catalog has sixteen logical tables including one FTS5 virtual table. FTS maintenance tables
+are excluded. Optional Run.context_digests[], stall_diagnoses[] and workspace_leases[] are the only
+source of new metadata rows. Old absent fields remain absent/NULL; lock files are not record authority.
+Reindex compares frozen canonical record digests again before publishing the replacement.
+
 ## cases
 
 One row per frozen case. Host assurance has no invented container network policy.
@@ -180,7 +185,7 @@ Verified evidence paths/digests, private/public flags and AX snapshots.
 
 ## model_calls
 
-Reservation/settlement records with observed model/provider, tokens and retained request/response digests.
+Reservation/settlement records with observed model/provider, tokens and retained request/response digests. Cache counts are observations, not evidence of a discount. Unknown cache charges block ready. A stable prefix digest does not assert a provider cache hit.
 
 | Column | SQLite type | Required / key |
 | --- | --- | --- |
@@ -196,6 +201,9 @@ Reservation/settlement records with observed model/provider, tokens and retained
 | `actual_cost_microusd` | INTEGER | nullable |
 | `prompt_sha256` | TEXT | nullable |
 | `response_sha256` | TEXT | nullable |
+| `cache_read_tokens` | INTEGER | nullable |
+| `cache_write_tokens` | INTEGER | nullable |
+| `cache_prefix_sha256` | TEXT | nullable |
 
 ## apply_transactions
 
@@ -217,7 +225,7 @@ Durable apply/recovery receipts projected with exact target and applied state di
 
 ## failure_lessons
 
-Deterministic lesson IDs, redacted summaries, failure signatures and candidate/proposal digests. Rebuild uses only canonical runs/evidence.
+Deterministic lesson IDs, redacted summaries, failure signatures and candidate/proposal digests. Rebuild uses only canonical runs/evidence. Resolution is attributed only to the same check in a later ready round. Lookup prefers resolved lessons and includes same-signature or FTS-ranked cases in this repository, up to three. Selected advice is regenerated from canonical artifacts; database edits cannot forge diagnostic text.
 
 | Column | SQLite type | Required / key |
 | --- | --- | --- |
@@ -232,19 +240,113 @@ Deterministic lesson IDs, redacted summaries, failure signatures and candidate/p
 | `affected_paths_json` | TEXT | required |
 | `diagnostic_summary` | TEXT | required |
 | `created_at` | TEXT | required |
+| `resolved_in_round` | INTEGER | nullable |
+| `resolved_patch_sha256` | TEXT | nullable |
+
+## gate_verdicts
+
+Latest canonical run per case/plane, including pending/running blockers and ambiguous timestamp ties. IDs are not chronology. gate revalidates JSON, artifacts, costs, full current source and configuration; SQLite never authorizes delivery.
+
+| Column | SQLite type | Required / key |
+| --- | --- | --- |
+| `case_id` | TEXT | primary key 1 |
+| `plane` | TEXT | primary key 2 |
+| `run_id` | TEXT | required |
+| `case_sha256` | TEXT | required |
+| `bound_tree_sha256` | TEXT | nullable |
+| `evaluator_sha256` | TEXT | required |
+| `verdict` | TEXT | required |
+| `assurance_level` | TEXT | nullable |
+| `verified_at` | TEXT | nullable |
+| `selection_status` | TEXT | required |
+
+Exact derived constraints:
+
+```sql
+CREATE TABLE gate_verdicts (case_id TEXT NOT NULL REFERENCES cases(case_id) ON DELETE CASCADE,plane TEXT NOT NULL CHECK(plane IN ('all','command','test','browser','visual','policy')),run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,case_sha256 TEXT NOT NULL CHECK(length(case_sha256)=64),bound_tree_sha256 TEXT CHECK(bound_tree_sha256 IS NULL OR length(bound_tree_sha256)=64),evaluator_sha256 TEXT NOT NULL CHECK(length(evaluator_sha256)=64),verdict TEXT NOT NULL CHECK(verdict IN ('ready','blocked','manual-review')),assurance_level TEXT,verified_at TEXT,selection_status TEXT NOT NULL CHECK(selection_status IN ('selected','ambiguous')),PRIMARY KEY(case_id,plane));
+```
+
+## context_digests
+
+Run.context_digests[] links original and compacted artifacts to an existing round. Raw size/hash describe the retained original; compacted size/hash describe the fully redacted excerpt. Bounds are 65,536 bytes (repair default 4,096). AX diffs/masking can expand small inputs; compacted <= raw is not required.
+
+| Column | SQLite type | Required / key |
+| --- | --- | --- |
+| `run_id` | TEXT | primary key 1 |
+| `round_no` | INTEGER | primary key 2 |
+| `source_artifact_id` | TEXT | primary key 3 |
+| `compacted_artifact_id` | TEXT | required |
+| `compressor_kind` | TEXT | required |
+| `raw_bytes` | INTEGER | required |
+| `compacted_bytes` | INTEGER | required |
+| `raw_sha256` | TEXT | required |
+| `compacted_sha256` | TEXT | required |
+
+Exact derived constraints:
+
+```sql
+CREATE TABLE context_digests (run_id TEXT NOT NULL,round_no INTEGER NOT NULL,source_artifact_id TEXT NOT NULL,compacted_artifact_id TEXT NOT NULL,compressor_kind TEXT NOT NULL CHECK(compressor_kind IN ('raw','log_frame_extract','ax_tree_diff','json_schema_crush')),raw_bytes INTEGER NOT NULL CHECK(raw_bytes>=0),compacted_bytes INTEGER NOT NULL CHECK(compacted_bytes BETWEEN 0 AND 65536),raw_sha256 TEXT NOT NULL CHECK(length(raw_sha256)=64),compacted_sha256 TEXT NOT NULL CHECK(length(compacted_sha256)=64),PRIMARY KEY(run_id,round_no,source_artifact_id),FOREIGN KEY(run_id,round_no) REFERENCES run_rounds(run_id,round_no) ON DELETE CASCADE,FOREIGN KEY(run_id,source_artifact_id) REFERENCES artifacts(run_id,artifact_id) ON DELETE CASCADE,FOREIGN KEY(run_id,compacted_artifact_id) REFERENCES artifacts(run_id,artifact_id) ON DELETE CASCADE);
+```
+
+## stall_diagnoses
+
+Run.stall_diagnoses[] records progress control. The first exact repeated failure set requests a strategy change; the next exact repeat halts repair_stalled. Failure count alone never halts. Standard pytest summary durations and JUnit timing/hostname attributes are normalized; assertion values and source lines remain significant.
+
+| Column | SQLite type | Required / key |
+| --- | --- | --- |
+| `run_id` | TEXT | primary key 1 |
+| `round_no` | INTEGER | primary key 2 |
+| `stall_category` | TEXT | required |
+| `repeated_signature_sha256` | TEXT | required |
+| `streak_count` | INTEGER | required |
+| `action_taken` | TEXT | required |
+
+Exact derived constraints:
+
+```sql
+CREATE TABLE stall_diagnoses (run_id TEXT NOT NULL,round_no INTEGER NOT NULL CHECK(round_no BETWEEN 1 AND 10),stall_category TEXT NOT NULL CHECK(stall_category IN ('identical_error_signature','patch_oscillation','failed_count_non_decreasing','scope_boundary_blocked')),repeated_signature_sha256 TEXT NOT NULL CHECK(length(repeated_signature_sha256)=64),streak_count INTEGER NOT NULL CHECK(streak_count>=2),action_taken TEXT NOT NULL CHECK(action_taken IN ('inject_anti_oscillation_constraint','halt_repair_stalled')),PRIMARY KEY(run_id,round_no),FOREIGN KEY(run_id,round_no) REFERENCES run_rounds(run_id,round_no) ON DELETE CASCADE);
+```
+
+## worktree_leases
+
+Run.workspace_leases[] records actual owned snapshot-copy lifetimes, including multiple copies per run/round. Creation precedes active persistence; successful removal precedes released. Unknown removal records cleanup_failed. All retained leases must be released for ready/manual-review. No Git worktree or Docker volume receipt is invented.
+
+| Column | SQLite type | Required / key |
+| --- | --- | --- |
+| `lease_id` | TEXT | primary key 1 |
+| `run_id` | TEXT | required |
+| `case_id` | TEXT | required |
+| `round_no` | INTEGER | required |
+| `phase` | TEXT | required |
+| `isolation_kind` | TEXT | required |
+| `base_tree_sha256` | TEXT | required |
+| `state` | TEXT | required |
+| `acquired_at` | TEXT | required |
+| `released_at` | TEXT | nullable |
+
+Exact derived constraints:
+
+```sql
+CREATE TABLE worktree_leases (lease_id TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,case_id TEXT NOT NULL REFERENCES cases(case_id) ON DELETE CASCADE,round_no INTEGER NOT NULL,phase TEXT NOT NULL CHECK(phase IN ('baseline','candidate')),isolation_kind TEXT NOT NULL CHECK(isolation_kind='snapshot_copy'),base_tree_sha256 TEXT NOT NULL CHECK(length(base_tree_sha256)=64),state TEXT NOT NULL CHECK(state IN ('active','released','cleanup_failed')),acquired_at TEXT NOT NULL,released_at TEXT,FOREIGN KEY(run_id,round_no) REFERENCES run_rounds(run_id,round_no) ON DELETE CASCADE);
+```
 
 ## failure_lessons_fts
 
-The twelfth table is an FTS5 virtual table with `check_id`, `reason_code`, `affected_paths_json`,
-and `diagnostic_summary`. External content is `failure_lessons`, with rowid as its private join key.
-Rebuild regenerates the FTS contents. Search is parameter-bound, case/check filtered, ranked and
-limited to three lessons; rowids are not public identities. Lookup failure omits advisory history.
-A five-millisecond lookup is a benchmark target, not an unconditional hardware-independent guarantee.
-SQLite creates internal FTS maintenance tables in addition to the twelve logical tables.
+FTS5 external content is failure_lessons, joined by private rowid. Parameter-bound search is advisory; missing, corrupt or busy lookup omits history. Physical rowids and a five-millisecond target are not reproducibility or latency guarantees.
 
-The only foreign references are case/run ownership and run ancestry; child tables are regenerated
-from their parent records, not edited through a second write API. Use `ddk change reindex` after a
-missing/corrupt/stale catalog warning. Never repair canonical JSON by editing SQLite rows.
+| Column | SQLite type | Required / key |
+| --- | --- | --- |
+| `check_id` | untyped | nullable |
+| `reason_code` | untyped | nullable |
+| `affected_paths_json` | untyped | nullable |
+| `diagnostic_summary` | untyped | nullable |
+
+New round/artifact foreign keys bind metadata to canonical parents. Refresh deletes dependent
+metadata before artifacts/rounds. Contexts and diagnoses are append-only; leases permit only
+active -> released/cleanup_failed. Reindex freezes input records, validates all evidence, checks
+integrity, compares source digests again, fsyncs and atomically replaces the database. Logical rows,
+not physical SQLite/WAL bytes, are reproducible. Use `ddk change reindex` after stale/corrupt warnings.
+Never repair JSON by editing SQL rows.
 
 Primary references: [SQLite FTS5](https://www.sqlite.org/fts5.html),
 [SQLite PRAGMA reference](https://www.sqlite.org/pragma.html).

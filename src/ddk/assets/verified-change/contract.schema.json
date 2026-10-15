@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Ddalggak Verified Change Contract",
-  "description": "미구현 목표 계약; 문법 검증과 관계 검증을 함께 사용한다.",
+  "description": "Fixed verification records; structural and semantic validation are both required.",
   "oneOf": [
     {
       "$ref": "#/$defs/Case"
@@ -952,6 +952,41 @@
           "minimum": 0,
           "maximum": 10,
           "description": "수정할 입력 후보의 회차; 생성할 다음 후보의 회차가 아님"
+        },
+        "cache_read_tokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cache_write_tokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cache_prefix_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1277,6 +1312,27 @@
               "type": "null"
             }
           ]
+        },
+        "context_digests": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+            "$ref": "#/$defs/ContextDigest"
+          }
+        },
+        "stall_diagnoses": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+            "$ref": "#/$defs/StallDiagnosis"
+          }
+        },
+        "workspace_leases": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+            "$ref": "#/$defs/WorkspaceLease"
+          }
         }
       },
       "required": [
@@ -2173,6 +2229,173 @@
         "pid",
         "process_start_token",
         "created_at"
+      ],
+      "additionalProperties": false
+    },
+    "ContextDigest": {
+      "type": "object",
+      "properties": {
+        "round_no": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "source_artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "compacted_artifact_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "compressor_kind": {
+          "type": "string",
+          "enum": [
+            "raw",
+            "log_frame_extract",
+            "ax_tree_diff",
+            "json_schema_crush"
+          ]
+        },
+        "raw_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "compacted_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "compacted_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "round_no",
+        "source_artifact_id",
+        "compacted_artifact_id",
+        "compressor_kind",
+        "raw_bytes",
+        "compacted_bytes",
+        "raw_sha256",
+        "compacted_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "StallDiagnosis": {
+      "type": "object",
+      "properties": {
+        "round_no": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "stall_category": {
+          "type": "string",
+          "enum": [
+            "identical_error_signature",
+            "patch_oscillation",
+            "failed_count_non_decreasing",
+            "scope_boundary_blocked"
+          ]
+        },
+        "repeated_signature_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "streak_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 11
+        },
+        "action_taken": {
+          "type": "string",
+          "enum": [
+            "inject_anti_oscillation_constraint",
+            "halt_repair_stalled"
+          ]
+        }
+      },
+      "required": [
+        "round_no",
+        "stall_category",
+        "repeated_signature_sha256",
+        "streak_count",
+        "action_taken"
+      ],
+      "additionalProperties": false
+    },
+    "WorkspaceLease": {
+      "type": "object",
+      "properties": {
+        "lease_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUID v4 식별자"
+        },
+        "round_no": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "baseline",
+            "candidate"
+          ]
+        },
+        "isolation_kind": {
+          "const": "snapshot_copy"
+        },
+        "base_tree_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "active",
+            "released",
+            "cleanup_failed"
+          ]
+        },
+        "acquired_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "released_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "lease_id",
+        "round_no",
+        "phase",
+        "isolation_kind",
+        "base_tree_sha256",
+        "state",
+        "acquired_at",
+        "released_at"
       ],
       "additionalProperties": false
     }

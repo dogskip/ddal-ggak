@@ -238,10 +238,11 @@ class VerifiedChangeStore:
             "reserved_micro_usd",
             "created_at",
             "round_no",
+            "cache_prefix_sha256",
         )
         for previous in existing["model_calls"]:
             current = calls.get(previous["call_id"])
-            if current is None or any(current[key] != previous[key] for key in immutable):
+            if current is None or any(current.get(key) != previous.get(key) for key in immutable):
                 raise ContractError("reservation_history_changed")
             if previous["state"] in {"settled", "unknown"} and current != previous:
                 raise ContractError("reservation_history_changed")
@@ -262,6 +263,9 @@ class VerifiedChangeStore:
         artifacts = {item["artifact_id"]: item for item in incoming["artifacts"]}
         if any(artifacts.get(item["artifact_id"]) != item for item in existing["artifacts"]):
             raise ContractError("artifact_history_changed")
+        from ddk.models.verified_harness import retain_harness_history
+
+        retain_harness_history(existing, incoming)
 
     def save_pending(self, record: Record) -> None:
         case = self._validate_run(record)

@@ -56,6 +56,8 @@ class ProviderUsage:
     input_tokens: int | None
     output_tokens: int | None
     extra_micro_usd: int | None
+    cache_read_tokens: int | None = None
+    cache_write_tokens: int | None = None
 
 
 @dataclass(frozen=True)
@@ -132,6 +134,82 @@ def _verify_price(price: VerifiedPrice, evaluator_sha256: str) -> None:
         valid = False
     if not valid:
         raise BudgetError("price_unavailable")
+
+
+def _usage_complete(usage: ProviderUsage) -> bool:
+    return all(
+        _integer(v) for v in (usage.input_tokens, usage.output_tokens, usage.extra_micro_usd)
+    ) and all(
+        v is None or type(v) is int and v == 0
+        for v in (usage.cache_read_tokens, usage.cache_write_tokens)
+    )
+
+
+def _artifact_json(store: VerifiedChangeStore, record: Record, artifact_id: str) -> Record:
+    artifact = next(a for a in record["artifacts"] if a["artifact_id"] == artifact_id)
+    payload = read_regular(
+        store.path_for("run", record["run_id"]) / artifact["path"],
+        min(MAX_RECORD_BYTES, artifact["size_bytes"]),
+    )
+    if (
+        len(payload) != artifact["size_bytes"]
+        or hashlib.sha256(payload).hexdigest() != artifact["sha256"]
+    ):
+        raise ValueError("stored_file_integrity")
+    value = decode_json(payload)
+    if canonical_json(value) != payload:
+        raise ValueError("noncanonical_budget_artifact")
+    return value
+
+
+def audit_run_costs(store: VerifiedChangeStore, record: Record) -> None:
+    directory = store.path_for("run", record["run_id"])
+    prices = directory / "artifacts/prices"
+    if _exists(prices):
+        if not stat.S_ISDIR(prices.lstat().st_mode):
+            raise ValueError("invalid_price_directory")
+        declared = {a["path"] for a in record["artifacts"] if a["kind"] == "price"}
+        for path in prices.iterdir():
+            if path.relative_to(directory).as_posix() not in declared:
+                raise ValueError("orphan_price")
+    for call in record["model_calls"]:
+        fixed = _artifact_json(store, record, call["price_artifact_id"])
+        price = VerifiedPrice(**fixed["price"])
+        _verify_price(price, record["evaluator_sha256"])
+        if (
+            fixed["pricing_model"] != _VERSION
+            or fixed["call_id"] != call["call_id"]
+            or price.provider != call["provider"]
+            or price.model != call["model"]
+            or not all(_integer(fixed[key]) for key in ("input_limit", "output_limit"))
+            or not isinstance(fixed["budget_code_sha256"], str)
+            or len(fixed["budget_code_sha256"]) != 64
+            or _cost(price, fixed["input_limit"], fixed["output_limit"], price.extra_max_micro_usd)
+            != call["reserved_micro_usd"]
+        ):
+            raise ValueError("invalid_price_reservation")
+        if call["state"] == "settled":
+            observed = _artifact_json(store, record, "usage-" + call["call_id"])
+            usage = ProviderUsage(**observed["usage"])
+            assert usage.input_tokens is not None
+            assert usage.output_tokens is not None
+            assert usage.extra_micro_usd is not None
+            if (
+                observed["call_id"] != call["call_id"]
+                or observed["provider"] != price.provider
+                or observed["model"] != price.model
+                or not _usage_complete(usage)
+                or usage.input_tokens != call["input_tokens"]
+                or usage.output_tokens != call["output_tokens"]
+                or any(
+                    call.get(k) != getattr(usage, k)
+                    for k in ("cache_read_tokens", "cache_write_tokens")
+                )
+                or observed["calculated_micro_usd"] != call["calculated_micro_usd"]
+                or _cost(price, usage.input_tokens, usage.output_tokens, usage.extra_micro_usd)
+                != call["calculated_micro_usd"]
+            ):
+                raise ValueError("invalid_usage_settlement")
 
 
 class RunBudget:
@@ -255,62 +333,8 @@ class RunBudget:
             self._audit_price_files(directory, record)
         return record
 
-    def _artifact_json(self, record: Record, artifact_id: str) -> Record:
-        artifact = next(a for a in record["artifacts"] if a["artifact_id"] == artifact_id)
-        payload = read_regular(
-            self._store.path_for("run", record["run_id"]) / artifact["path"],
-            min(MAX_RECORD_BYTES, artifact["size_bytes"]),
-        )
-        value = decode_json(payload)
-        if canonical_json(value) != payload:
-            raise ValueError("noncanonical_budget_artifact")
-        return value
-
     def _audit_price_files(self, directory: Path, record: Record) -> None:
-        prices = directory / "artifacts/prices"
-        if _exists(prices):
-            if not stat.S_ISDIR(prices.lstat().st_mode):
-                raise ValueError("invalid_price_directory")
-            declared = {a["path"] for a in record["artifacts"] if a["kind"] == "price"}
-            for path in prices.iterdir():
-                if path.relative_to(directory).as_posix() not in declared:
-                    raise ValueError("orphan_price")
-        for call in record["model_calls"]:
-            fixed = self._artifact_json(record, call["price_artifact_id"])
-            price = VerifiedPrice(**fixed["price"])
-            _verify_price(price, record["evaluator_sha256"])
-            if (
-                fixed["pricing_model"] != _VERSION
-                or fixed["call_id"] != call["call_id"]
-                or price.provider != call["provider"]
-                or price.model != call["model"]
-                or not all(_integer(fixed[key]) for key in ("input_limit", "output_limit"))
-                or not isinstance(fixed["budget_code_sha256"], str)
-                or len(fixed["budget_code_sha256"]) != 64
-                or _cost(
-                    price, fixed["input_limit"], fixed["output_limit"], price.extra_max_micro_usd
-                )
-                != call["reserved_micro_usd"]
-            ):
-                raise ValueError("invalid_price_reservation")
-            if call["state"] == "settled":
-                observed = self._artifact_json(record, "usage-" + call["call_id"])
-                usage = ProviderUsage(**observed["usage"])
-                assert usage.input_tokens is not None
-                assert usage.output_tokens is not None
-                assert usage.extra_micro_usd is not None
-                if (
-                    observed["call_id"] != call["call_id"]
-                    or observed["provider"] != price.provider
-                    or observed["model"] != price.model
-                    or not all(_integer(v) for v in asdict(usage).values())
-                    or usage.input_tokens != call["input_tokens"]
-                    or usage.output_tokens != call["output_tokens"]
-                    or observed["calculated_micro_usd"] != call["calculated_micro_usd"]
-                    or _cost(price, usage.input_tokens, usage.output_tokens, usage.extra_micro_usd)
-                    != call["calculated_micro_usd"]
-                ):
-                    raise ValueError("invalid_usage_settlement")
+        audit_run_costs(self._store, record)
 
     def _audit(self) -> None:
         try:
@@ -401,6 +425,7 @@ class RunBudget:
         input_limit: int,
         output_limit: int,
         provider: Callable[[], Awaitable[ProviderResult]],
+        cache_prefix_sha256: str | None = None,
     ) -> BudgetCallOutcome:
         """Reserve before one callback; blocked returns an already completed run.
 
@@ -470,6 +495,8 @@ class RunBudget:
                 "completed_at": None,
                 "round_no": round_no,
             }
+            if cache_prefix_sha256 is not None:
+                call["cache_prefix_sha256"] = cache_prefix_sha256
             record["model_calls"].append(call)
             record["status"] = "running"
             self._remaining(deadline)
@@ -495,7 +522,7 @@ class RunBudget:
             usage = response.usage
             complete = (
                 isinstance(usage, ProviderUsage)
-                and all(_integer(v) for v in asdict(usage).values())
+                and _usage_complete(usage)
                 and response.provider == price.provider
                 and response.model == price.model
             )
@@ -539,6 +566,10 @@ class RunBudget:
                     else None,
                     completed_at=_now_utc(),
                 )
+            if isinstance(usage, ProviderUsage):
+                for key in ("cache_read_tokens", "cache_write_tokens"):
+                    value = getattr(usage, key)
+                    call[key] = value if _integer(value) else None
             if isinstance(usage, ProviderUsage) and any(
                 _integer(value) and value > limit
                 for value, limit in (

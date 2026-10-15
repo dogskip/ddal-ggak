@@ -8,16 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — evidence-bound harness runtime
+
+- `init --discover` creates unapproved static/headless acceptance drafts; explicit approval shares
+  the sealed-case flow/check compiler and never overwrites existing configuration.
+- Deterministic failure/AX/visual excerpts, hash-linked raw evidence retrieval, stable repair prefixes,
+  exact-error stall protection and canonical revalidation of resolved cross-case lessons.
+- `change gate`, optional project Stop/pre-push guards (including actual pushed commit tips),
+  `change replay` and MCP metadata/evidence tools with strict owner and input boundaries.
+- Sixteen logical SQLite/FTS5 tables, optional backward-compatible Run metadata, observed cache usage,
+  actual owned-copy cleanup receipts and source-stable atomic rebuild. Public schema/column parity tests.
+- Independent review counterexamples cover configuration/run races, imported draft bypass, malformed
+  approval, host execution grants, mismatched push commits, timing noise and same-step AX comparison.
+
+
+
 ### Added — one-command verified changes
 
 - Hash-free `ddk init`/`change init`, Git-ref snapshots, explicit deletion authority, and `ddk up`:
   verify → bounded repair → export → candidate-bound apply preview/application.
-- Twelve-table SQLite/FTS5 projection with canonical-write hooks, atomic reindex, masked failure
+- Rebuildable SQLite/FTS5 projection (expanded to sixteen logical tables above) with canonical-write hooks, atomic reindex, masked failure
   lessons and bounded metadata queries. Canonical JSON paths and verdict names remain compatible.
 - Native JUnit/pytest/Jest/Vitest/Playwright reports with explicit skip allowance; owned policy checks;
   headless PNG/AX/DOM probe and immutable reference registration; exact search/replace proposals.
 - Anthropic, compatible API and restricted CLI provider bridges, dated prices and fail-closed unknown
-  billing. Eight verified-change MCP tools with strict inputs and explicit owner/caller grants.
+  billing. Verified-change MCP tools with strict inputs and explicit owner/caller grants.
 - Strict mypy in addition to existing Pyright checks; adversarial deletion/application/catalog tests.
 
 ### Changed

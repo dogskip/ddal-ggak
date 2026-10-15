@@ -40,13 +40,15 @@ attempt passes (SSIM 1.00).
 ## Verify changes already in your repository
 
 `ddk up "Change heading and preserve navigation" --dry-run --json` shows the plan.
-Define hash-free target and preservation checks once, then `ddk up ... --trusted-local` captures Git
+`ddk init --discover --json` suggests an unapproved draft. Review its independent target and preservation
+checks, then publish them with `ddk init --approve-draft --json`. `ddk up ... --trusted-local` captures Git
 changes, freezes the actual environment, checks them in headless Chromium and exports review evidence.
 Add `--repair --confirm-provider` for bounded repair or `--apply` with the storage/quiescence
 confirmations for managed application. Missing acceptance checks block before execution.
 
 [One-command guide](docs/ONECLICK.md) covers `init`, `doctor`, `up`, `probe`, native test reports,
-policy checks, rebuildable SQLite/FTS5, exact patches and the eight verified-change MCP tools.
+policy checks, rebuildable SQLite/FTS5, bounded evidence retrieval, current-source gates, offline replay
+and the eleven verified-change MCP tools.
 The image workflow below remains available with its separate legacy contract.
 
 ## Use it on your own design
@@ -195,7 +197,7 @@ managed apply/recovery. This is a separate path from the image-generation loop a
 ## Agents and MCP
 
 `ddk install --all` adds `/ddk:design` and registers `ddk serve` with supported AI coding tools.
-The server provides eight verified-change tools plus design/preflight/version tools.
+The server provides eleven verified-change tools plus design/preflight/version tools.
 Verification stays isolated-only; repair, apply and probe require explicit server-owner and per-call
 grants, with an additional grant for host execution. See the [one-command guide](docs/ONECLICK.md). Recovery remains CLI-only.
 
@@ -211,8 +213,8 @@ other hosts and real Vite/Next.js repositories still need direct evidence.
 
 `ddk change repair` now proposes scoped source fixes and independently rechecks them under one
 request budget. It requires explicit provider approval and verified maximum prices; failed or unknown
-usage cannot authorize further calls. Next: easier case preparation, common test-report formats and
-broader real-project validation. See the
+usage cannot authorize further calls. Next: paid-model repair effectiveness and independent validation
+across real projects and operating systems. See the
 [roadmap and acceptance criteria](ROADMAP.md). Share a sanitized failing case in an
 [issue](https://github.com/dogskip/ddal-ggak/issues); raw reports can contain private project data.
 

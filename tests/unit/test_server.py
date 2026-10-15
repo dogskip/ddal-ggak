@@ -31,6 +31,9 @@ def test_mcp_server_registers_expected_tools() -> None:
             "ddk_apply",
             "ddk_probe",
             "ddk_query_ledger",
+            "ddk_gate_status",
+            "ddk_read_evidence",
+            "ddk_replay",
         ]
     )
 

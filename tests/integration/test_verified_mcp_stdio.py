@@ -182,8 +182,12 @@ async def test_actual_cli_stdio_lists_existing_tools_and_reports_errors(tmp_path
             "ddk_apply",
             "ddk_probe",
             "ddk_query_ledger",
+            "ddk_gate_status",
+            "ddk_read_evidence",
+            "ddk_replay",
         }
-        assert tools["ddk_verify"].inputSchema["additionalProperties"] is False
+        for name in ("ddk_verify", "ddk_gate_status", "ddk_read_evidence", "ddk_replay"):
+            assert tools[name].inputSchema["additionalProperties"] is False
         assert not (await session.call_tool("ddk_version")).isError
         unknown = await session.call_tool("unknown")
         assert unknown.isError

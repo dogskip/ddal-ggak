@@ -104,6 +104,10 @@ def _emit(payload: Record, as_json: bool) -> None:
 
 
 def _exit_code(payload: Record) -> int:
+    if "replay_decision" in payload:
+        return 0 if payload["evidence_integrity"] else 1
+    if "gate_status" in payload:
+        return 0 if payload["gate_status"] == "passed" else 1
     if payload.get("status") == "cancelled":
         return 130
     if payload.get("status") == "blocked" and payload.get("decision") == "ready":
@@ -395,3 +399,59 @@ def repair_provider(kind: str = "anthropic", endpoint: str | None = None) -> Rep
     from ddk.adapters.verified_provider import provider_for
 
     return _repair_provider() if kind == "anthropic" else provider_for(kind, endpoint)
+
+
+@change_app.command("evidence", help="Read a bounded redacted result diagnostic by artifact ID.")
+def evidence(
+    run_id: str = typer.Option(..., "--run-id"),
+    artifact_id: str = typer.Option(..., "--artifact-id"),
+    repo: Path = typer.Option(Path("."), "--repo"),
+    offset: int = typer.Option(0, "--offset", min=0),
+    limit: int = typer.Option(4096, "--limit", min=1, max=16384),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    from ddk.services.verified_change_store import VerifiedChangeStore
+    from ddk.services.verified_evidence import read_evidence
+
+    execute_command(
+        as_json,
+        lambda: read_evidence(
+            VerifiedChangeStore(repo, create=False), run_id, artifact_id, offset=offset, limit=limit
+        ),
+    )
+
+
+@change_app.command(
+    "gate", help="Check whether the current Git source still matches verified evidence."
+)
+def gate(
+    repo: Path = typer.Option(Path("."), "--repo"),
+    case_id: str | None = typer.Option(None, "--case"),
+    run_id: str | None = typer.Option(None, "--run-id"),
+    pre_push: bool = typer.Option(
+        False, "--pre-push", help="Validate commit tips from Git's bounded pre-push input."
+    ),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    from ddk.services.verified_gate import gate_status, pre_push_status
+
+    def inspect() -> Record:
+        if pre_push:
+            if case_id or run_id:
+                raise ValueError("invalid_gate_selection")
+            return pre_push_status(repo, sys.stdin.buffer.read(MAX_RECORD_BYTES + 1))
+        return gate_status(repo, case_id=case_id, run_id=run_id)
+
+    execute_command(as_json, inspect)
+
+
+@change_app.command("replay", help="Validate sealed evidence offline without repeating execution.")
+def replay(
+    run_id: str = typer.Option(..., "--run-id"),
+    repo: Path = typer.Option(Path("."), "--repo"),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    from ddk.services.verified_change_store import VerifiedChangeStore
+    from ddk.services.verified_replay import replay_run
+
+    execute_command(as_json, lambda: replay_run(VerifiedChangeStore(repo, create=False), run_id))

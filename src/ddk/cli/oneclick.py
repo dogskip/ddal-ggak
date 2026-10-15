@@ -32,17 +32,28 @@ def initialize(
     repo: Path = typer.Option(Path("."), "--repo"),
     git_base: str = typer.Option("HEAD", "--git-base"),
     from_design: Path | None = typer.Option(None, "--from-design"),
+    discover: bool = typer.Option(False, "--discover"),
+    approve_draft: bool = typer.Option(False, "--approve-draft"),
+    preview: str | None = typer.Option(None, "--url"),
+    confirm_execution: bool = typer.Option(False, "--confirm-execution"),
     dry_run: bool = typer.Option(False, "--dry-run"),
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
-    execute_command(
-        as_json,
-        lambda: asyncio.run(
-            CaseBootstrapper(repo).initialize(
-                request, git_base=git_base, from_design=from_design, dry_run=dry_run
+    async def execute() -> Record:
+        if (discover and approve_draft) or (preview is not None and not discover):
+            raise ValueError("invalid_init_selection")
+        bootstrapper = CaseBootstrapper(repo)
+        if discover:
+            return await bootstrapper.discover(
+                preview, confirm_execution=confirm_execution, dry_run=dry_run
             )
-        ),
-    )
+        if approve_draft:
+            return bootstrapper.approve_draft(dry_run=dry_run)
+        return await bootstrapper.initialize(
+            request, git_base=git_base, from_design=from_design, dry_run=dry_run
+        )
+
+    execute_command(as_json, lambda: asyncio.run(execute()))
 
 
 @change_app.command("reindex", help="Rebuild the disposable catalog from validated canonical JSON.")

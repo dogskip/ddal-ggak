@@ -1,13 +1,17 @@
-"""ddalggak 인스톨러 — AI 코딩 도구에 슬래시 커맨드 및 MCP 서버 등록."""
+"""Install command assets and MCP settings while preserving unrelated configuration."""
 
 from __future__ import annotations
 
-import json
-import shutil
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import cast
+
+from ddk.security.file_access import read_regular
+from ddk.services.durable_files import atomic_write, ensure_directory
+from ddk.services.verified_hooks import install_hooks as install_hooks
+from ddk.services.verified_hooks import prepare_hooks as prepare_hooks
+from ddk.services.verified_hooks import read_settings, write_settings
 
 # 번들 커맨드 템플릿 디렉토리
 _ASSETS_DIR = Path(__file__).parent / "assets" / "commands"
@@ -38,8 +42,9 @@ class InstallResult:
 def install_claude(target_dir: Path | None = None) -> InstallResult:
     """Claude Code에 ddk 슬래시 커맨드 + MCP 서버 등록."""
     project_dir = target_dir or Path.cwd()
+    read_settings(project_dir / ".claude/settings.json")
     cmd_dir = project_dir / ".claude" / "commands" / "ddk"
-    cmd_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(cmd_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "claude", cmd_dir)
 
@@ -57,7 +62,7 @@ def install_gemini(target_dir: Path | None = None) -> InstallResult:
     """Gemini CLI에 ddk 슬래시 커맨드 설치."""
     project_dir = target_dir or Path.cwd()
     cmd_dir = project_dir / ".gemini" / "commands" / "ddk"
-    cmd_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(cmd_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "gemini", cmd_dir)
     return InstallResult(
@@ -69,7 +74,7 @@ def install_opencode(target_dir: Path | None = None) -> InstallResult:
     """OpenCode에 ddk 슬래시 커맨드 + MCP 서버 등록."""
     project_dir = target_dir or Path.cwd()
     cmd_dir = project_dir / ".opencode" / "commands" / "ddk"
-    cmd_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(cmd_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "opencode", cmd_dir)
 
@@ -87,7 +92,7 @@ def install_codex(target_dir: Path | None = None) -> InstallResult:
     """OpenAI Codex CLI에 ddk 슬래시 커맨드 설치."""
     project_dir = target_dir or Path.cwd()
     cmd_dir = project_dir / ".codex" / "commands" / "ddk"
-    cmd_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(cmd_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "codex", cmd_dir)
     return InstallResult(
@@ -100,7 +105,7 @@ def install_copilot(target_dir: Path | None = None) -> InstallResult:
     project_dir = target_dir or Path.cwd()
     # Copilot 커스텀 커맨드는 .github/extensions/ 또는 .github/copilot-instructions.md
     cmd_dir = project_dir / ".github" / "extensions"
-    cmd_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(cmd_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "copilot", cmd_dir, prefix="ddk-")
     return InstallResult(
@@ -112,7 +117,7 @@ def install_cursor(target_dir: Path | None = None) -> InstallResult:
     """Cursor에 ddk 커맨드 규칙 설치."""
     project_dir = target_dir or Path.cwd()
     rules_dir = project_dir / ".cursor" / "rules"
-    rules_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(rules_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "cursor", rules_dir)
     return InstallResult(
@@ -124,7 +129,7 @@ def install_kiro(target_dir: Path | None = None) -> InstallResult:
     """Kiro에 ddk 슬래시 커맨드 설치."""
     project_dir = target_dir or Path.cwd()
     cmd_dir = project_dir / ".kiro" / "steering"
-    cmd_dir.mkdir(parents=True, exist_ok=True)
+    ensure_directory(cmd_dir)
 
     installed = _copy_commands(_ASSETS_DIR / "kiro", cmd_dir, prefix="ddk-")
     return InstallResult(tool="kiro", success=True, installed_files=installed, message=str(cmd_dir))
@@ -192,7 +197,7 @@ def _copy_commands(src_dir: Path, dst_dir: Path, prefix: str = "") -> list[Path]
         return copied
     for src_file in src_dir.glob("*.md"):
         dst = dst_dir / f"{prefix}{src_file.name}"
-        shutil.copy2(src_file, dst)
+        atomic_write(dst, read_regular(src_file, 2 * 1024**2), mode=0o644)
         copied.append(dst)
     return copied
 
@@ -203,22 +208,12 @@ def _register_mcp_claude(
     server_config: dict[str, object],
 ) -> None:
     """Claude Code settings.json에 MCP 서버를 등록(없으면 생성)."""
-    settings: dict[str, object] = {}
-    if settings_path.exists():
-        try:
-            settings = json.loads(settings_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            settings = {}
-
+    settings, identity = read_settings(settings_path)
     mcp_servers = settings.setdefault("mcpServers", {})
-    if isinstance(mcp_servers, dict):
-        cast(dict[str, object], mcp_servers)[server_name] = server_config
-
-    settings_path.parent.mkdir(parents=True, exist_ok=True)
-    settings_path.write_text(
-        json.dumps(settings, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    if not isinstance(mcp_servers, dict):
+        raise ValueError("invalid_mcp_configuration")
+    mcp_servers[server_name] = server_config
+    write_settings(settings_path, settings, identity)
 
 
 def _register_mcp_opencode(
@@ -227,22 +222,12 @@ def _register_mcp_opencode(
     server_config: dict[str, object],
 ) -> None:
     """OpenCode config.json에 MCP 서버를 등록(없으면 생성)."""
-    config: dict[str, object] = {}
-    if config_path.exists():
-        try:
-            config = json.loads(config_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            config = {}
-
+    config, identity = read_settings(config_path)
     mcp = config.setdefault("mcp", {})
-    if isinstance(mcp, dict):
-        mcp_typed = cast(dict[str, object], mcp)
-        servers = mcp_typed.setdefault("servers", {})
-        if isinstance(servers, dict):
-            cast(dict[str, object], servers)[server_name] = server_config
-
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(
-        json.dumps(config, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    if not isinstance(mcp, dict):
+        raise ValueError("invalid_mcp_configuration")
+    servers = cast(dict[str, object], mcp).setdefault("servers", {})
+    if not isinstance(servers, dict):
+        raise ValueError("invalid_mcp_configuration")
+    cast(dict[str, object], servers)[server_name] = server_config
+    write_settings(config_path, config, identity)

@@ -155,6 +155,7 @@ def install(
         help=t("프로젝트 로컬 설치 (기본) vs 홈 폴더 전역 설치"),
     ),
     detect: bool = typer.Option(False, "--detect", help=t("설치 없이 감지된 도구만 출력")),
+    with_hooks: bool = typer.Option(False, "--with-hooks"),
 ) -> None:
     """Register the /ddk:design command and the MCP server with AI coding tools."""
     from ddk.installer import INSTALLERS, detect_tools  # noqa: PLC0415
@@ -170,6 +171,13 @@ def install(
         else:
             console.print(t("[yellow]감지된 AI 도구 없음[/yellow]"))
         return
+
+    if with_hooks:
+        if not project:
+            raise typer.BadParameter("--with-hooks requires a project installation")
+        from ddk.installer import prepare_hooks
+
+        prepare_hooks(Path.cwd())
 
     # 설치 대상 결정
     selected: list[str] = []
@@ -210,6 +218,11 @@ def install(
                 success_count += 1
         except Exception as e:  # noqa: BLE001
             console.print(f"  ❌ [bold]{tool_name}[/bold]: {e}")
+
+    if with_hooks:
+        from ddk.installer import install_hooks
+
+        install_hooks(Path.cwd())
 
     console.print(
         t(

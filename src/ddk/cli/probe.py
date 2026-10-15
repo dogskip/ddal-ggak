@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import asyncio
-import shlex
-import tempfile
 from pathlib import Path
 from uuid import uuid4
 
 import typer
 
-from ddk.adapters.verified_probe import capture_probe, register_reference
+from ddk.adapters.verified_probe import register_reference
 from ddk.models.verified_change import Record, decode_json
 from ddk.security.file_access import read_regular
+from ddk.services.probe_capture import capture_preview_probe
 from ddk.services.verified_change_store import VerifiedChangeStore
 
 from .app import app
@@ -51,40 +50,16 @@ def probe(
                 )
             )
             frozen_time = plan["frozen_time"]
-        if url.startswith(("http://", "https://")):
-            result = await capture_probe(
-                url,
-                output,
-                viewport=size,
-                selector=selector,
-                repository=repo,
-                reference=reference,
-                frozen_time=frozen_time,
-            )
-        else:
-            if not confirm_execution:
-                raise ValueError("preview_execution_confirmation_required")
-            from ddk.adapters.subprocess_preview import SubprocessPreviewLauncher
-            from ddk.services.source_snapshot import capture_git_worktree, materialize_snapshot
-
-            with tempfile.TemporaryDirectory(prefix="ddk-probe-") as folder:
-                app_dir = Path(folder).resolve() / "app"
-                materialize_snapshot(capture_git_worktree(repo), app_dir)
-                session = await SubprocessPreviewLauncher().start(
-                    shlex.split(url), app_dir, timeout_s=15
-                )
-                try:
-                    result = await capture_probe(
-                        session.url,
-                        output,
-                        viewport=size,
-                        selector=selector,
-                        repository=repo,
-                        reference=reference,
-                        frozen_time=frozen_time,
-                    )
-                finally:
-                    await session.stop()
+        result = await capture_preview_probe(
+            url,
+            output,
+            viewport=size,
+            selector=selector,
+            repository=repo,
+            reference=reference,
+            frozen_time=frozen_time,
+            confirm_execution=confirm_execution,
+        )
         if update_reference is not None:
             assert case_id is not None
             result["case_id"] = register_reference(

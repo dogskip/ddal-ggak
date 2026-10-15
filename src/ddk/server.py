@@ -35,6 +35,9 @@ _VERIFIED_TOOLS = frozenset(
         "ddk_probe",
         "ddk_apply",
         "ddk_query_ledger",
+        "ddk_read_evidence",
+        "ddk_gate_status",
+        "ddk_replay",
     }
 )
 _UNAVAILABLE_CODES = frozenset({"isolation_unavailable", "environment_gap"})
@@ -338,6 +341,10 @@ async def ddk_init(
     git_base: Annotated[str, Field(strict=True, min_length=1, max_length=128)] = "HEAD",
     approved: bool = False,
     dry_run: bool = True,
+    discover: bool = False,
+    approve_draft: bool = False,
+    preview: Annotated[str | None, Field(strict=True, min_length=1, max_length=4096)] = None,
+    confirm_execution: bool = False,
 ) -> str:
     """Compile reviewed checks into a fixed case; writes require an owner init grant."""
     if not dry_run:
@@ -345,10 +352,23 @@ async def ddk_init(
     from ddk.services.case_bootstrapper import CaseBootstrapper
 
     try:
+        if (discover and approve_draft) or (preview is not None and not discover):
+            raise ValueError("invalid_init_selection")
+        bootstrapper = CaseBootstrapper(Path(repository))
+        if discover:
+            if preview is not None and not dry_run:
+                _owner_grant("probe", repository, approved)
+                if not preview.startswith(("http://", "https://")):
+                    _owner_grant("trusted-local", repository, approved)
+            return canonical_json(
+                await bootstrapper.discover(
+                    preview, dry_run=dry_run, confirm_execution=confirm_execution
+                )
+            ).decode()
+        if approve_draft:
+            return canonical_json(bootstrapper.approve_draft(dry_run=dry_run)).decode()
         return canonical_json(
-            await CaseBootstrapper(Path(repository)).initialize(
-                request, git_base=git_base, dry_run=dry_run
-            )
+            await bootstrapper.initialize(request, git_base=git_base, dry_run=dry_run)
         ).decode()
     except (ValueError, OSError) as error:
         raise _service_error(error) from None
@@ -548,6 +568,28 @@ def ddk_query_ledger(
             "total_cost_microusd",
             "size_bytes",
             "assurance_level",
+            "plane",
+            "bound_tree_sha256",
+            "evaluator_sha256",
+            "case_sha256",
+            "selection_status",
+            "source_artifact_id",
+            "compacted_artifact_id",
+            "compressor_kind",
+            "raw_bytes",
+            "compacted_bytes",
+            "stall_category",
+            "streak_count",
+            "action_taken",
+            "resolved_in_round",
+            "resolved_patch_sha256",
+            "cache_read_tokens",
+            "cache_write_tokens",
+            "cache_prefix_sha256",
+            "lease_id",
+            "isolation_kind",
+            "acquired_at",
+            "released_at",
         }
         rows = VerifiedIndexCatalog(VerifiedChangeStore(Path(repository), create=False)).query(
             table, limit=limit, columns=safe
@@ -563,3 +605,69 @@ def ddk_query_ledger(
         raise _service_error(ValueError("catalog_reindex_required")) from None
     except (ValueError, OSError) as error:
         raise _service_error(error) from None
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+)
+def ddk_read_evidence(
+    run_id: _Identifier,
+    artifact_id: Annotated[str, Field(strict=True, min_length=1, max_length=128)],
+    repository: _PathValue = ".",
+    offset: Annotated[int, Field(strict=True, ge=0, le=9007199254740991)] = 0,
+    limit: Annotated[int, Field(strict=True, ge=1, le=16384)] = 4096,
+    approved: bool = False,
+) -> str:
+    """Retrieve private diagnostics after the owner's repair capability approval."""
+    _owner_grant("repair", repository, approved)
+    from ddk.services.verified_change_store import VerifiedChangeStore
+    from ddk.services.verified_evidence import read_evidence
+
+    try:
+        return canonical_json(
+            read_evidence(
+                VerifiedChangeStore(Path(repository), create=False),
+                run_id,
+                artifact_id,
+                offset=offset,
+                limit=limit,
+            )
+        ).decode()
+    except (ValueError, OSError) as error:
+        raise _service_error(error) from None
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+)
+def ddk_gate_status(
+    repository: _PathValue = ".",
+    case_id: _Identifier | None = None,
+    run_id: _Identifier | None = None,
+) -> str:
+    """Recheck canonical evidence and current Git source without project execution."""
+    from ddk.services.verified_gate import gate_status
+
+    return canonical_json(gate_status(Path(repository), case_id=case_id, run_id=run_id)).decode()
+
+
+@mcp.tool(
+    structured_output=False,
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    ),
+)
+def ddk_replay(run_id: _Identifier, repository: _PathValue = ".") -> str:
+    """Validate existing evidence offline and return only verdict metadata."""
+    from ddk.services.verified_change_store import VerifiedChangeStore
+    from ddk.services.verified_replay import replay_run
+
+    return canonical_json(
+        replay_run(VerifiedChangeStore(Path(repository), create=False), run_id)
+    ).decode()

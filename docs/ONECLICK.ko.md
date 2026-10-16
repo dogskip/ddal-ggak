@@ -139,6 +139,10 @@ ddk change evidence --run-id RUN_UUID --artifact-id ARTIFACT_ID --offset 0 --lim
 이 경우에도 실행한 시험이 한 개 이상 있어야 합니다. Playwright의 불안정 결과는 실패로 처리합니다.
 실제 시험 도구와 의존성은 미리 준비해야 하며 형식 지원을 모든 제품 버전의 실행 증거로 확대하지 않습니다.
 
+격리 실행의 시험 보고서는 앱의 임시 사본에 보관합니다. 앱은 관찰자의 기준과 결과에 접근할 수
+없습니다. 보고서 조회는 크기를 제한하고 링크·조회 중 변경을 거부하며, 원문은 표준 출력·오류와
+함께 실행 증거에 보존합니다.
+
 Policy는 `forbidden_paths`, `forbid_secret_patterns`, `forbid_regex`, `max_changed_files`,
 `max_changed_lines`를 지원합니다. 경로 비교는 대소문자를 구분합니다. 정규식은 그룹·후방 참조·
 여러 수량자를 거부합니다. 진단은 검출 값을 제외한 경로·줄 번호·사유만 보관합니다. 변경 줄 수는

@@ -151,6 +151,10 @@ Missing, malformed, contradictory and zero-execution reports block. Skips block 
 Flaky Playwright results remain failures. Native project tools/dependencies must already be available;
 parsing a format does not establish every framework/version's execution support.
 
+In isolated execution, native report files stay inside the app's private copy. The app cannot access
+the observer's criteria or results. Bounded regular-file reads reject links and changing files, and
+the report bytes are retained with stdout/stderr in the run's evidence.
+
 Policy definitions accept `forbidden_paths`, `forbid_secret_patterns`, `forbid_regex`,
 `max_changed_files` and `max_changed_lines`. Globs are case-sensitive relative paths. Regex support
 rejects groups/backreferences and multiple quantifiers rather than guessing intent. Text scans report

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import replace
+from pathlib import PurePosixPath
 from unittest.mock import AsyncMock
 
 import pytest
@@ -131,6 +133,71 @@ async def test_default_evaluator_executes_command_in_verified_app_and_preserves_
     assert not isolation.requests[0].app_dir.exists()
     host.run.assert_not_called()
     assert capture_source(original).tree_sha256 == request.input_tree_sha256
+
+
+@pytest.mark.parametrize(
+    ("report_kind", "status"),
+    [
+        ("valid", "passed"),
+        ("nonzero-exit", "failed"),
+        ("missing", "unavailable"),
+        ("symlink", "unavailable"),
+        ("hardlink", "unavailable"),
+        ("oversized", "unavailable"),
+        ("invalid-utf8", "unavailable"),
+    ],
+)
+async def test_native_reports_use_only_the_app_mount_and_remain_bounded(
+    tmp_path, report_kind, status
+):
+    report = b'<testsuite tests="1"><testcase name="real check"/></testsuite>'
+    request, original, _ = isolated_request(
+        tmp_path, kind="test", argv=["node", "tests.cjs", "{report}"]
+    )
+    request = replace(request, checks=({**request.checks[0], "report_adapter": "junit-xml"},))
+
+    class ReportSession(Session):
+        async def app(self, argv, *, timeout_s, stdin=None):
+            if "versions.node" in " ".join(argv):
+                return await super().app(argv, timeout_s=timeout_s, stdin=stdin)
+            self.calls.append(("app", argv))
+            try:
+                relative = PurePosixPath(argv[-1]).relative_to("/workspace")
+            except ValueError:
+                return BuildResult(False, "", "report path is not mounted in the app", 1)
+            path = isolation.requests[-1].app_dir / str(relative)
+            if report_kind in {"symlink", "hardlink"}:
+                other = tmp_path / "other-report"
+                other.write_bytes(report)
+                if report_kind == "symlink":
+                    path.symlink_to(other)
+                else:
+                    os.link(other, path)
+            elif report_kind == "oversized":
+                path.write_bytes(b"x" * (2 * 1024**2 + 1))
+            elif report_kind == "invalid-utf8":
+                path.write_bytes(b"\xff")
+            elif report_kind != "missing":
+                path.write_bytes(report)
+            failed = report_kind == "nonzero-exit"
+            return BuildResult(not failed, "native stdout", "native stderr", int(failed))
+
+    isolation = Isolation(ReportSession())
+    outcome = await VerifiedEvaluator(isolation=isolation).evaluate(request)
+    result = outcome.results[0]
+    assert result["status"] == status
+    assert result["evidence_origin"] == "project-report"
+    assert outcome.cleanup_complete and outcome.assurance == "isolated"
+    assert capture_source(original).tree_sha256 == request.input_tree_sha256
+    logs = b"\n".join(a.content for a in outcome.artifacts if a.kind == "log")
+    assert b"native stdout" in logs and b"native stderr" in logs
+    if report_kind in {"valid", "nonzero-exit"}:
+        assert report in logs
+        assert result["executed_count"] == 1
+        assert outcome.output_bytes >= len(report)
+    else:
+        assert result["reason_code"] == "test_report_unavailable"
+        assert report not in logs
 
 
 @pytest.mark.parametrize(

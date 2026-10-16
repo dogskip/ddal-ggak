@@ -198,6 +198,8 @@ async def evaluate_isolated(
         criteria, output = root / "criteria", root / "results"
         criteria.mkdir()
         output.mkdir()
+        native_output = app / ".ddk/reports"
+        native_output.mkdir(parents=True)
         inputs = criteria / "inputs"
         inputs.mkdir()
         for file in files.values():
@@ -309,29 +311,38 @@ async def evaluate_isolated(
                 if not browser:
                     has_report = any("{report}" in arg for arg in check["command_argv"])
                     report_name = f"command-{request.phase}-{index}.report"
+                    report_path = native_output / report_name
+                    if has_report and (report_path.exists() or report_path.is_symlink()):
+                        raise ValueError("report_path_exists")
                     command = tuple(
-                        arg.replace("{report}", "/results/" + report_name)
+                        arg.replace("{report}", "/workspace/.ddk/reports/" + report_name)
                         for arg in check["command_argv"]
                     )
                     answer = await session.app(command, timeout_s=remaining())
-                    raw_stdout = answer.stdout
+                    payload = (answer.stdout + "\n" + answer.stderr).encode()
                     written += len(answer.stdout.encode()) + len(answer.stderr.encode())
                     if has_report:
                         try:
                             native_report = read_regular(
-                                output / report_name,
+                                report_path,
                                 min(2 * 1024**2, request.limits["max_output_bytes"]),
                             )
                             written += len(native_report)
-                            answer = replace(
-                                answer, stdout=native_report.decode("utf-8", errors="strict")
+                            results[-1] = command_report(
+                                request,
+                                check,
+                                replace(
+                                    answer, stdout=native_report.decode("utf-8", errors="strict")
+                                ),
                             )
-                        except (ValueError, OSError) as error:
+                            payload += b"\nREPORT:\n" + native_report
+                        except (ValueError, OSError):
                             results[-1].update(
                                 status="unavailable", reason_code="test_report_unavailable"
                             )
-                            raise ValueError("test_report_unavailable") from error
-                    results[-1] = command_report(request, check, answer)
+                            halted, output_bytes = "output_unknown", None
+                    else:
+                        results[-1] = command_report(request, check, answer)
                     results[-1]["duration_ms"] = (time.monotonic_ns() - started) // 1_000_000
                     if answer.returncode in {124, 125}:
                         output_bytes = None
@@ -341,7 +352,7 @@ async def evaluate_isolated(
                             f"{request.phase}-command-{index}",
                             "log",
                             f"artifacts/{request.phase}/command-{index}.log",
-                            (raw_stdout + "\n" + answer.stderr).encode(),
+                            payload,
                         )
                     )
                     return BuildResult(True, "", "", 0)

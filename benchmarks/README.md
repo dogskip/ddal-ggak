@@ -18,6 +18,10 @@ must appear as a gap or denied claim; do not create placeholders or substitute u
 to turn a result green. `ddk proof` currently checks two such files for the identity gate, so identity
 is also denied on a clean public checkout. Normal reporting still works; strict mode may exit 1.
 
+The [repository reproduction suite](REPRODUCTION.md) separately exercises Python, JavaScript and
+browser fixtures through real native tests, headless observation, replay and current-source gates.
+Its expected failures are acceptance counterexamples, not a comparative score or model repair rate.
+
 ## Run the checks
 
 ```bash

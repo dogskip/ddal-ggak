@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Isolated native test reports now use the app's private source copy instead of the observer-only
+  `/results` mount. Bounded regular-file checks reject missing, linked, oversized and invalid UTF-8
+  reports; native report bytes remain in hash-bound evidence alongside stdout and stderr.
+  App access to observer criteria and results remains prohibited.
+
+### Added
+
+- Python, JavaScript and browser repository reproduction fixtures with valid-change, missed-target
+  and preservation-regression variants, host and Linux-container execution, installed-wheel checks,
+  and a receipt summarizer that rejects incomplete matrices and skipped checks.
+
 ### Added — evidence-bound harness runtime
 
 - `init --discover` creates unapproved static/headless acceptance drafts; explicit approval shares

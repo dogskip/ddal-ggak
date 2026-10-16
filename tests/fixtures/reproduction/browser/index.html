@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Counter test fixture</title>
+<style>
+  body { color: #000; background: #fff; font-family: system-ui, sans-serif; }
+  output { display: block; margin-bottom: 8px; }
+  button { min-height: 44px; padding: 8px 12px; }
+</style>
+<main>
+  <h1>Counter test fixture</h1>
+  <output id="value" aria-live="polite">0</output>
+  <button id="add" type="button">Add one</button>
+  <button id="reset" type="button">Reset count</button>
+</main>
+<script src="counter.js"></script>
+<script>
+  const value = document.querySelector('#value');
+  document.querySelector('#add').onclick = () => {
+    value.textContent = increment(Number(value.textContent));
+  };
+  document.querySelector('#reset').onclick = () => { value.textContent = reset(); };
+</script>
+</html>

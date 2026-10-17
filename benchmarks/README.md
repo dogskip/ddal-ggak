@@ -37,13 +37,15 @@ validated behavior-receipt ingestion path, so parity, superset and superiority r
 when every path resolves. A calibrated baseline or comparative file alone cannot authorize them.
 `ddk audit` reports declared clause-mapping coverage, never standards conformance.
 
-## Future comparative evidence
+## Comparative preparation and remaining evidence
 
 Before enabling comparative claims, define a fixed reference corpus and protocol, pin both tool
 revisions, record equivalent inputs/environment/criteria, and preserve successes, failures, elapsed
 time and cost. Add a receipt contract with freshness and integrity validation, then independently
 review the measured category-bounded comparison. Set `calibrated: true` only after that protocol
-passes. This measurement program is unfinished; see the [roadmap](../ROADMAP.md).
+passes. The [paired protocol](PAIRING.md), fixed upstream corpus, preparation/oracle runner and `ddk bench`
+receipt checks are implemented. Paid model comparisons and independent review remain unexecuted;
+review-to-calibration ingestion is not implemented. See the [roadmap](../ROADMAP.md).
 
 Add a capability with real evidence paths and rerun proof. Let the resolver report missing evidence;
 never hand-edit a computed state or treat a synthetic test count as proof of product value.

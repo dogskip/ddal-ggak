@@ -145,6 +145,8 @@ Know the limits before trusting a green result:
 | `ddk workspace-init` | Create the legacy `.ddk/` workspace; formerly `ddk init PATH` |
 | `ddk design new "<idea>"` | Design Studio: turn an idea into design documents |
 | `ddk install --all` | Install canonical DDK skills for detected hosts; register MCP where documented |
+| `ddk stats --json` | Local cost/usage totals; unknown cost stays null; no source or prompt output |
+| `ddk bench --json` | Validate records for the [fixed comparison protocol](benchmarks/PAIRING.md); no model calls |
 | `ddk proof`, `ddk audit` | Check capability claims and standards coverage against the evidence on disk |
 
 `run`, `status`, `certify` and `apply` take `--json`. Run `ddk <command> --help` for every option.

@@ -494,5 +494,12 @@ ENGLISH.update(
             "ANTHROPIC_API_KEY is not set. Set DDK_ANTHROPIC_API_KEY before design generation."
         ),
         "LLM API 키": "LLM API key",
+        "로컬 비용 기록을 원문 없이 집계합니다.": (
+            "Aggregate local cost records without source or prompt text."
+        ),
+        "같은 조건의 비교 기록을 검증합니다. 모델은 호출하지 않습니다.": (
+            "Validate comparison receipts with matched conditions; no model calls."
+        ),
+        "비교 기록 JSON 파일": "Comparison receipts JSON file",
     }
 )

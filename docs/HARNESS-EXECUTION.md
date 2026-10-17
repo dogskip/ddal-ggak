@@ -28,13 +28,15 @@ The pre-change ordinary test suite passed 2,496 tests (72 deselected) on macOS A
 
 | Stage | Commit | Gate evidence | Remaining risk | Approval needed |
 | --- | --- | --- | --- | --- |
-| P1-1 | P1 stage commit | 35 command routes / 25 JSON routes; old-name warnings and separate case-path/ID options; all-command English/Korean help checks | Preflight now follows doctor's optional-provider warning; unsupported legacy runtime settings still block | None |
-| P1-2 | P1 stage commit | Six precedence/origin/privacy checks and existing settings diagnostics passed | Listed application settings only; provider charging still needs explicit grants | None |
-| P1-3 | P1 stage commit | Import-reference check: 167 modules / 0 unreferenced; nine removed modules / 466 source lines (four requested plus five newly unreachable model dependencies) | Literal dynamic imports are covered; arbitrary computed imports require review | None |
-| P1-4 | P1 stage commit | Generated commands, exits, support tables and Claude adapters current; five guide pairs have matching structures and command sets | Parity is structural, not a semantic translation audit | None |
-| P1-5 | P1 stage commit | Fourteen canonical MCP tools plus two aliases; 54 contract/server/real-stdio tests passed with MCP 1.30.0 | SDK/client coverage is bounded to tested revisions | None |
-| P1-6 | P1 stage commit | Claude 2.1.302 strict validator: 0 errors / 0 warnings; native control initialization lists `/ddk:verify`; three skills, one Stop hook and MCP | Discovery does not prove model obedience; no paid prompt was sent | None |
-| P1-7 | P1 stage commit | No known dependency vulnerabilities after removing the obsolete ignore and upgrading MCP; public-copy CLI reports two stable identity-refusal codes | Local unpublished DDK distribution itself is skipped by pip-audit | None |
+| P2-1 | P2 stage commit | G0 all six commands passed on macOS and Linux: 2,579 ordinary tests each. Fixed 3-source preparation: 18 fresh contexts/hash matches; independent oracle: 9 source states / 27 checks with 6 expected counterexample failures. Sixteen paired-record tests passed | No paid model episodes or reviewed measurements; command-only Case approval/compilation remains explicit; calibration ingestion is absent | Approve criteria, host/model and spend ceiling before any paid comparison |
+| P2-2 | P2 stage commit | Fourteen cost/privacy/unknown/integrity tests passed; 27 JSON routes and 37 CLI routes; all source modules referenced | Per-record observations, not invoice settlement or a global atomic snapshot | None |
+| P1-1 | `584aaeb` | 35 command routes / 25 JSON routes; old-name warnings and separate case-path/ID options; all-command English/Korean help checks | Preflight now follows doctor's optional-provider warning; unsupported legacy runtime settings still block | None |
+| P1-2 | `584aaeb` | Six precedence/origin/privacy checks and existing settings diagnostics passed | Listed application settings only; provider charging still needs explicit grants | None |
+| P1-3 | `584aaeb` | Import-reference check: 167 modules / 0 unreferenced; nine removed modules / 466 source lines (four requested plus five newly unreachable model dependencies) | Literal dynamic imports are covered; arbitrary computed imports require review | None |
+| P1-4 | `584aaeb` | Generated commands, exits, support tables and Claude adapters current; five guide pairs have matching structures and command sets | Parity is structural, not a semantic translation audit | None |
+| P1-5 | `584aaeb` | Fourteen canonical MCP tools plus two aliases; 54 contract/server/real-stdio tests passed with MCP 1.30.0 | SDK/client coverage is bounded to tested revisions | None |
+| P1-6 | `584aaeb` | Claude 2.1.302 strict validator: 0 errors / 0 warnings; native control initialization lists `/ddk:verify`; three skills, one Stop hook and MCP | Discovery does not prove model obedience; no paid prompt was sent | None |
+| P1-7 | `584aaeb` | No known dependency vulnerabilities after removing the obsolete ignore and upgrading MCP; public-copy CLI reports two stable identity-refusal codes | Local unpublished DDK distribution itself is skipped by pip-audit | None |
 | P0-5 | `54758af` | G5: wheel/sdist asset/privacy checks passed; clean environment printed `ddk 2.0.0` with both version interfaces; 25 focused tests passed. G0: all six commands passed; 2,588 passed / 72 deselected | Release is prepared locally; distribution checks are not runtime acceptance | Tag, push and PyPI publication |
 | P0-4 | `ef66c46` | G0 passed on macOS ARM64 / Python 3.12.12 and Linux aarch64 container / Python 3.12.3: 2,564 passed, 72 deselected on each. G4: actionlint 1.7.12 passed; 37 focused tests passed; same-byte/reused-identity counterexample failed before the fix | One open reference per permitted source file; exhaustion blocks capture. Separate Linux host and Python 3.13 runtime evidence remain open | Remote CI run after an approved push |
 | P0-3 | `8dde8c2` | G3: 23 CLI routes with success/usage-error coverage; 14 MCP tool contracts; real stdio checks. G0: all six commands passed; pytest 2,560 passed / 72 deselected | Public response boundary is breaking; canonical bytes retained | None |
@@ -141,8 +143,8 @@ The five public guide pairs have section, fenced-example and actual-command pari
 Command/exit/support references and Claude adapters have deterministic regeneration checks.
 The native Claude 2.1.302 loader prioritizes a source skill's `name` over a manifest command-map
 key. A canonical source file therefore produced `/ddk:ddk-verify` in the first loader probe.
-The three generated plugin adapters only shorten that name and retain the canonical bodies
-and references. Native initialization now exposes `/ddk:design`, `/ddk:evidence`, `/ddk:verify`.
+The generated manifest command map omits source frontmatter names and binds the canonical
+bodies/references. This avoids duplicate skill assets and preserves private-directory exclusions. Native initialization now exposes `/ddk:design`, `/ddk:evidence`, `/ddk:verify`.
 The probe sent one initialize control request and **zero user messages**. It establishes native
 command discovery, not model compliance or paid-model effectiveness. Native strict manifest
 validation and component inventory also passed. Other host runtime discovery is unverified.
@@ -166,3 +168,83 @@ restores explicit host-permission/no-OS-isolation disclosure and checks unsuppor
 SDK availability and sandbox modes in doctor. Invalid settings are still checked before run I/O;
 the tests use that canonical diagnostic path. Optional provider credentials warn because pure
 verification does not require a model. No execution grant is inferred from that warning.
+
+## P2 preparation and local reporting
+
+`ddk bench` reads strict paired host/oracle/gate records. It checks cohort, initial/request/source
+hashes, unique sessions, artifact integrity and completed canonical gate records, retaining failed
+and incomplete observations. Its input provenance is declarative: changing that label cannot promote
+records into reviewed measurements or calibrated claims. The published baseline remains unchanged
+with `calibrated: false`; model comparisons and review-to-calibration ingestion remain unexecuted.
+See [the protocol](../benchmarks/PAIRING.md) and [Korean protocol](../benchmarks/PAIRING.ko.md).
+
+The three pinned sources were fetched read-only into task-owned temporary clones. Preparation
+created 18 independent contexts and local `bench-source` baseline commits. Native oracle checks
+covered original, controlled-broken and manually restored source states for all three projects.
+The physical results are in `/tmp/ddk-harness-work/oracle-matrix/summary.json`. These are preparation
+and oracle checks, with zero product model calls; they are not a repair-effectiveness experiment or
+DDK acceptance of three independent production repositories. Case approval for these native-only
+projects remains explicit; browser-oriented bootstrap does not automatically compile them.
+
+`ddk stats` uses bounded, read-only metadata access and the existing canonical record/price/usage
+validation. It exposes numeric aggregates only. Missing or unsettled cost stays null, unknown
+legacy error charges are not zero, and corruption, duplicated calls, links and excessive input
+are rejected. Completed canonical records take precedence over pending copies. It neither settles
+invoices nor provides an atomic snapshot across all changing records.
+
+P2 focused acceptance: 294 tests passed, including 14 local-stat checks, 16 paired-record checks,
+execution-grant/output-preservation checks, all-command language coverage and regenerated references.
+Static checks currently pass for 170 source modules; the import-reference check reports 0 unused.
+The public tree has 37 command routes, 27 accepting JSON. No network telemetry, provider call,
+remote publication, tag or repository setting change was performed.
+
+The final archive check found that a generated public plugin directory named `evidence/` collided
+with the unchanged private-material exclusion. The fix renders the same three canonical bodies
+as documented inline manifest command aliases alongside the three canonical skills instead. No exclusion or security counterexample was relaxed.
+Native loading and distribution validation are repeated for this final representation.
+
+## Final local acceptance
+
+The final source passed every G0 command on macOS ARM64 / Python 3.12.12 and the
+Linux aarch64 / Python 3.12.3 test container. Each ordinary run passed **2,579** tests
+with 72 deliberately excluded. All 72 were exercised separately from macOS: **47**
+headless end-to-end tests, **5** headless integration tests and **20** Docker tests
+passed with no skips among selected tests. These sets cover all 2,651 collected tests.
+Docker tests include the nine isolated repository reproduction variants; their coordinator
+is macOS, so this is not a native Linux run of every browser test.
+
+```sh
+DDK_E2E=1 uv run pytest tests/e2e -m 'playwright and not docker' -q --tb=short
+DDK_E2E=1 uv run pytest tests/integration -m playwright -q --tb=short
+# Existing immutable app/checker image IDs were supplied for this command.
+DDK_E2E=1 DDK_DOCKER_E2E=1 uv run pytest tests/e2e -m docker -q --tb=short
+```
+
+Receipts: `/tmp/ddk-harness-work/p2-accepted-g0.json`,
+`/tmp/ddk-harness-work/p2-linux-final/g0.json` and `final-test-receipts.json`.
+The final source export's per-file hashes are in `final-public-r2-sha256.json`.
+Actionlint passed. The audit reports no known dependency vulnerabilities, with the local
+unpublished DDK distribution explicitly skipped. The four remote OS/Python CI combinations
+remain unverified. Python 3.13.7 was used for the separate clean wheel installation smoke test,
+not the full ordinary test suite.
+
+Both wheel and source archive pass privacy/runtime checks. All **188** packaged runtime files
+match the current source bytes. A separate Python 3.13 environment prints `ddk 2.0.0` through
+both version interfaces, loads all three corpus tasks, returns a valid empty `stats` envelope
+without creating storage, and returns an unmeasured `bench` envelope with exit 1.
+Native Claude strict validation has no errors/warnings; its three canonical skills and friendly
+`/ddk:design`, `/ddk:evidence`, `/ddk:verify` aliases load from the local plugin. No user prompt
+was sent. Other hosts' configuration formats have tests; their interactive discovery remains open.
+
+The original browser doctor resolved a different global Python/Playwright version with a missing
+browser. Running the same diagnostic with the project interpreter passed both headless DOM and
+Playwright API checks. Existing binaries were reused; no browser was installed for this task.
+
+Fresh, unmodified model-comparison inputs are retained separately from the manual oracle
+counterexamples: `/tmp/ddk-harness-work/paired-contexts-unmeasured`. All 18 initial hashes were
+rechecked. The macOS `/tmp` alias was resolved before that descriptor-based check; the earlier
+alias-path rejection was not bypassed or weakened. These contexts still require approved Case
+criteria and model/spending authorization. No repair success percentage is reported.
+
+No push, tag, PyPI publication, issue/PR, remote setting change or paid product-model invocation
+was executed. Protected source paths were excluded from agent inspection and modification.

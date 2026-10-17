@@ -91,3 +91,7 @@ must contain zero model calls; machine time and other infrastructure costs are n
 
 Raw evidence stays local under an ignored output directory. Any public result must omit local paths,
 credentials and private project material, and identify the runtime and source hashes used.
+
+The separate [paired comparison protocol](PAIRING.md) pins actual upstream sources with controlled
+regressions. Its preparation/oracle checks do not convert these synthetic acceptance results into
+a model-effectiveness benchmark.

@@ -1,0 +1,45 @@
+{
+  "format": "ddk-paired-corpus/1",
+  "seeds": [
+    1729,
+    2718,
+    3141
+  ],
+  "task_kind": "controlled-regression-on-upstream-source",
+  "tasks": [
+    {
+      "id": "click-short-name",
+      "repository": "https://github.com/pallets/click",
+      "ref": "8.3.0",
+      "commit": "00fadb8904387158ce6e9aa1573be770446895c1",
+      "source_path": "src/click/utils.py",
+      "before": "filename = os.path.basename(filename)",
+      "after": "filename = os.fspath(filename)",
+      "request": "Restore filename shortening, including invalid UTF-8 bytes. Preserve full paths when shorten is false.",
+      "source_sha256": "8025287b0740840f902c15141f1acb878ba3ea6ed3d568d964c34fbd1d08ed80"
+    },
+    {
+      "id": "clsx-object-flags",
+      "repository": "https://github.com/lukeed/clsx",
+      "ref": "v2.1.1",
+      "commit": "925494cf31bcd97d3337aacd34e659e80cae7fe2",
+      "source_path": "src/index.js",
+      "before": "if (mix[y]) {",
+      "after": "if (!mix[y]) {",
+      "request": "Restore truthy object-key class selection. Preserve nested string arrays and omission of falsy arguments.",
+      "source_sha256": "a577c500f65ed167cea489dd39c149c36880f959fc6ca24e4e1cc545cb7a53e1"
+    },
+    {
+      "id": "hyperapp-events",
+      "repository": "https://github.com/hyperapp/hyperapp",
+      "ref": "2.0.22",
+      "commit": "876d3f44d0ae601de181714c583a07d83d3472c9",
+      "source_path": "index.js",
+      "before": "node.addEventListener(key, listener)",
+      "after": "node.removeEventListener(key, listener)",
+      "request": "Restore event registration so the counter increments on clicks. Preserve initial rendering and reset behavior.",
+      "source_sha256": "975dd5b1b45f27e2897d658ca58e8d4f0c71567feff6df22048ff2ff205fc9ea"
+    }
+  ],
+  "oracle_sha256": "6383f2cf974e701483a315bc5557369a131f840417b39183b1874dbbee6caf3d"
+}

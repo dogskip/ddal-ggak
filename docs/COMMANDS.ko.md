@@ -35,6 +35,15 @@
 | `--write` | `boolean` | `false` | benchmarks/compliance-matrix.json 생성 |
 | `--strict` | `boolean` | `false` | gap이 있으면 비정상 종료(코드 1) |
 
+## ddk bench
+
+같은 조건의 비교 기록을 검증합니다. 모델은 호출하지 않습니다.
+
+| 인자·옵션 | 자료형 | 기본값 | 설명 |
+| --- | --- | --- | --- |
+| `--receipts` | `path` | `null` | 비교 기록 JSON 파일 |
+| `--json` | `boolean` | `false` | JSON으로 출력 |
+
 ## ddk certify
 
 저장된 판정 결과를 조회합니다.
@@ -365,6 +374,15 @@ AI 도구에 DDK 스킬과 MCP 설정을 설치합니다.
 ## ddk serve
 
 MCP 서버를 stdio 방식으로 시작합니다 (Claude Code, Cursor 등이 호출).
+
+## ddk stats
+
+로컬 비용 기록을 원문 없이 집계합니다.
+
+| 인자·옵션 | 자료형 | 기본값 | 설명 |
+| --- | --- | --- | --- |
+| `--repo` | `path` | `"."` | 대상 저장소 폴더 |
+| `--json` | `boolean` | `false` | JSON으로 출력 |
 
 ## ddk status
 

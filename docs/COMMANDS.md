@@ -35,6 +35,15 @@ Check which clauses of the listed standards map to an artifact (a coverage check
 | `--write` | `boolean` | `false` | Write benchmarks/compliance-matrix.json |
 | `--strict` | `boolean` | `false` | Exit with code 1 when there is a gap |
 
+## ddk bench
+
+Validate comparison receipts with matched conditions; no model calls.
+
+| Argument / option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--receipts` | `path` | `null` | Comparison receipts JSON file |
+| `--json` | `boolean` | `false` | Print JSON |
+
 ## ddk certify
 
 Show the saved verdict of a case.
@@ -365,6 +374,15 @@ Run the whole loop on a design image: generate, build, compare in a browser, aut
 ## ddk serve
 
 Start the MCP server on stdio (called by Claude Code, Cursor and similar tools).
+
+## ddk stats
+
+Aggregate local cost records without source or prompt text.
+
+| Argument / option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--repo` | `path` | `"."` | Target repository folder |
+| `--json` | `boolean` | `false` | Print JSON |
 
 ## ddk status
 

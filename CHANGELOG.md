@@ -61,6 +61,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Read-only `stats --json` aggregates allowlisted local cost/usage numbers, retains unknown charges,
+  validates canonical usage evidence and emits no stored free text.
+- `bench --json` validates paired host/oracle/gate receipts against three commit-pinned upstream
+  tasks. Preparation creates 18 independent contexts; native oracles distinguish original,
+  controlled-regression and manually restored source states. No model call or calibration is implied.
+
 - Eager global `ddk --version`; the existing `ddk version` command remains available.
   Distribution metadata and the package version are 2.0.0.
 

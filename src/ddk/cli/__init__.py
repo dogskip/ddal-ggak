@@ -7,6 +7,7 @@ from . import configuration as configuration
 from . import delivery as delivery
 from . import demo as demo
 from . import evidence as evidence
+from . import measurements as measurements
 from . import oneclick as oneclick
 from . import probe as probe
 from . import studio as studio

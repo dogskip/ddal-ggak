@@ -143,6 +143,8 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk workspace-init` | 기존 `.ddk/` 작업 폴더 생성 |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
 | `ddk install --all` | 감지한 도구에 정본 스킬 설치; 공식 사양이 있는 MCP 설정 등록 |
+| `ddk stats --json` | 로컬 비용·사용량 집계. 미정 비용은 null이며 원문을 출력하지 않음 |
+| `ddk bench --json` | [고정 비교 절차](benchmarks/PAIRING.ko.md)의 기록 검증. 모델 호출 없음 |
 | `ddk proof`, `ddk audit` | 디스크의 증거로 기능 주장과 표준 적용 범위 점검 |
 
 `run`, `status`, `certify`, `apply` 는 `--json` 을 지원합니다. 모든 옵션은 `ddk <명령> --help` 에 있습니다.

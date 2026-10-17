@@ -240,3 +240,20 @@ still be private. Gate/replay tools expose only bounded metadata and share the C
 A ready result proves the frozen required checks and integrity/cleanup/cost conditions for that run.
 It does not establish defect-free software, paid-model repair effectiveness, independent adoption or
 superiority over another harness. See the [roadmap](../ROADMAP.md) for the next evidence priorities.
+
+## Local cost and comparison records
+
+```sh
+ddk stats --repo . --json
+ddk bench --json
+```
+
+`stats` aggregates stored numeric observations without printing or transmitting source, prompts,
+model names or error text. Unknown/error-call charges are never assigned zero. Legacy dollar
+amounts round to integer micro-USD; a completed Run takes precedence over its pending copy.
+Corruption, duplicate calls and links are rejected. The report is a per-record read snapshot,
+not an invoice settlement or an atomic snapshot across the repository. Reservation totals retain
+the original authorization ceiling after settlement.
+
+`bench` exits unmeasured when no records exist. See the [comparison protocol](../benchmarks/PAIRING.md).
+It does not invoke paid models, approve criteria or publish results.

@@ -12,6 +12,7 @@ from typer.testing import CliRunner
 from ddk.cli import app
 from tests.fakes.images import write_png
 from tests.fakes.runtime_services import stub_runtime_services
+from tests.public_contract import public_payload
 
 runner = CliRunner()
 
@@ -29,7 +30,7 @@ def _run(repo: Path) -> dict[str, object]:
     image = write_png(repo / "design.png")
     with patch("ddk.cli.delivery.build_runtime_services", lambda _cfg: stub_runtime_services()):
         result = runner.invoke(app, ["run", str(image), "--repo", str(repo), "--json"])
-    return json.loads(result.stdout)
+    return public_payload(result.stdout)
 
 
 def test_the_report_is_written_and_named_in_the_json(tmp_path: Path) -> None:

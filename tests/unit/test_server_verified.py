@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
@@ -11,6 +10,7 @@ import pytest
 from mcp.server.fastmcp.exceptions import ToolError
 
 from ddk import server
+from tests.public_contract import public_payload
 
 CASE_ID = "00000000-0000-4000-8000-000000000001"
 RUN_ID = "00000000-0000-4000-8000-000000000055"
@@ -67,7 +67,7 @@ async def test_verified_tools_expose_bounded_input_and_accurate_annotations():
 async def test_verify_uses_shared_service_without_host_permission(service):
     factory, value = service
     result = await server.mcp.call_tool("ddk_verify", arguments())
-    assert json.loads(result[0].text)["decision"] == "blocked"
+    assert public_payload(result[0].text)["decision"] == "blocked"
     factory.assert_called_once_with("/repository")
     value.verify.assert_awaited_once_with(
         CASE_ID,
@@ -83,7 +83,7 @@ async def test_verify_uses_shared_service_without_host_permission(service):
 async def test_status_uses_shared_service(service):
     factory, value = service
     result = await server.mcp.call_tool("ddk_status", {"run_id": RUN_ID})
-    assert json.loads(result[0].text)["status"] == "completed"
+    assert public_payload(result[0].text)["status"] == "completed"
     factory.assert_called_once_with(".")
     value.status.assert_called_once_with(RUN_ID)
 

@@ -38,7 +38,7 @@ class TestDoctorInstallBrowser:
 
         result = runner.invoke(app, ["doctor", "--install-browser"])
 
-        assert result.exit_code == 1
+        assert result.exit_code == 4
         assert "내려받지 못했습니다" in result.output
         assert "Headless Chromium" not in result.output
 
@@ -88,7 +88,7 @@ class TestRunFailsEarly:
     ) -> None:
         code, output = _run(tmp_path, _services_with(_MissingBrowser()))
 
-        assert code == 1
+        assert code == 4
         assert "ddk doctor --install-browser" in output
         assert "--no-visual" in output
         assert not (tmp_path / ".ddk").exists()

@@ -80,14 +80,14 @@ class TestMessages:
     @pytest.mark.usefixtures("no_browser_start")
     def test_doctor_readiness_labels_follow_the_selected_language(self, tmp_path: Path) -> None:
         result = runner.invoke(app, ["doctor", "--repo", str(tmp_path)], env=ENGLISH)
-        assert result.exit_code in (0, 2), result.output
+        assert result.exit_code in (0, 1), result.output
         assert "settings" in result.output.lower()
         assert not HANGUL.search(result.output)
 
     def test_unreadable_settings_name_the_variable(self) -> None:
         result = runner.invoke(app, ["run", "x.png"], env={**ENGLISH, "DDK_COST_CAP_USD": "plenty"})
 
-        assert result.exit_code == 2
+        assert result.exit_code == 3
         assert "Invalid settings" in result.output
         assert "DDK_COST_CAP_USD" in result.output
         assert "got: 'plenty'" in result.output
@@ -100,7 +100,7 @@ class TestMessages:
             env={**ENGLISH, "DDK_ANTHROPIC_API_KEY": "", "ANTHROPIC_API_KEY": ""},
         )
 
-        assert result.exit_code == 1
+        assert result.exit_code == 3
         assert "No Anthropic API key found" in result.output
         assert not HANGUL.search(result.output)
 
@@ -111,7 +111,7 @@ class TestMessages:
             env={**ENGLISH, "DDK_ANTHROPIC_API_KEY": "sk-ant-test"},
         )
 
-        assert result.exit_code == 1
+        assert result.exit_code == 3
         assert "Design image not found" in result.output
         assert not HANGUL.search(result.output)
 

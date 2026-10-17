@@ -21,6 +21,7 @@ from ddk.services.source_snapshot import capture_source
 from ddk.services.verified_change_engine import VerifiedChangeEngine
 from ddk.services.verified_change_store import VerifiedChangeStore
 from tests.e2e.test_verified_evaluator import scenario
+from tests.public_contract import public_payload
 from tests.unit.adapters.test_verified_browser import FIXTURE, environment
 from tests.unit.test_verified_change_engine import RUN_ID, fixed_file
 
@@ -200,7 +201,7 @@ def test_real_default_cli_and_mcp_share_isolated_result(tmp_path, isolated_setti
         ],
     )
     assert answer.exit_code == 0, answer.output
-    record = json.loads(answer.stdout)
+    record = public_payload(answer.stdout)
     assert record["decision"] == "ready" and record["assurance"] == "isolated"
     assert record["integrity"]["cleanup_complete"] and record["model_calls"] == []
 
@@ -210,7 +211,7 @@ def test_real_default_cli_and_mcp_share_isolated_result(tmp_path, isolated_setti
                 "ddk_status", {"run_id": RUN_ID, "repository": str(store.repository)}
             )
             assert not result.isError
-            assert json.loads(result.content[0].text) == record
+            assert public_payload(result.content[0].text) == record
             result = await session.call_tool(
                 "ddk_verify",
                 {
@@ -223,7 +224,7 @@ def test_real_default_cli_and_mcp_share_isolated_result(tmp_path, isolated_setti
                 },
             )
             assert not result.isError
-            assert json.loads(result.content[0].text) == record
+            assert public_payload(result.content[0].text) == record
 
     asyncio.run(check_mcp())
     assert owned_containers() == before

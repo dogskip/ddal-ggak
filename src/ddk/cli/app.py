@@ -9,9 +9,11 @@ import typer
 from ddk.i18n import t
 
 from .common import load_settings, state
+from .contract import ContractGroup
 
 app = typer.Typer(
     name="ddk",
+    cls=ContractGroup,
     help=t(
         "딸깍 — 디자인 이미지에서 코드를 생성하고, 실제 브라우저로 화면을 비교하고, "
         "자동 수정과 증거 기반 판정을 거칩니다."

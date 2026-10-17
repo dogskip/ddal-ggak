@@ -7,13 +7,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import typer
 from pydantic import ValidationError
 from rich.console import Console
 
 from ddk.i18n import t
 from ddk.models.config import DdalggakConfig
 from ddk.workspace.manager import WorkspaceManager
+
+from .contract import CommandFailureError, capture
 
 console = Console()
 err_console = Console(stderr=True, style="red")
@@ -49,7 +50,7 @@ def load_settings() -> None:
 
 
 def get_config() -> DdalggakConfig:
-    """The settings, or a message naming each malformed variable and exit code 2."""
+    """The settings, or a message naming each malformed variable and exit code 3."""
     if state.config_error is not None:
         err_console.print(t("❌ 설정 오류 — 환경 변수나 .env 값을 확인하세요:"))
         for problem in state.config_error.errors():
@@ -58,7 +59,7 @@ def get_config() -> DdalggakConfig:
             if not _is_secret(name):
                 shown = t(" (입력값: {value})", value=repr(problem.get("input")))
             err_console.print(f"   {name}: {problem['msg']}{shown}", markup=False, highlight=False)
-        raise typer.Exit(2)
+        raise CommandFailureError("configuration", "invalid_settings")
     return state.config or DdalggakConfig()
 
 
@@ -78,7 +79,7 @@ def require_api_key(cfg: DdalggakConfig) -> None:
         err_console.print(t("   설정 방법: export DDK_ANTHROPIC_API_KEY=sk-ant-..."))
         err_console.print(t("            또는 export ANTHROPIC_API_KEY=sk-ant-..."))
         err_console.print(t("   또는 .env 파일에 DDK_ANTHROPIC_API_KEY=... 추가"))
-        raise typer.Exit(1)
+        raise CommandFailureError("configuration", "api_key_required")
 
 
 def resolve_case_path(repo: Path, case_id: str | None) -> Path:
@@ -87,11 +88,11 @@ def resolve_case_path(repo: Path, case_id: str | None) -> Path:
     resolved_case_id = case_id or manager.latest_case_id()
     if resolved_case_id is None:
         err_console.print(t("❌ 조회할 case가 없습니다. 먼저 `ddk run`을 실행하세요."))
-        raise typer.Exit(1)
+        raise CommandFailureError("blocked", "case_not_found")
     case_path = manager.case_dir(resolved_case_id)
     if not case_path.exists():
         err_console.print(t("❌ case 폴더를 찾을 수 없습니다: {path}", path=case_path))
-        raise typer.Exit(1)
+        raise CommandFailureError("blocked", "case_not_found")
     return case_path
 
 
@@ -102,6 +103,8 @@ def print_json(payload: dict[str, Any]) -> None:
     markup or hard-wrapping long lines, both of which corrupt machine-parsable
     JSON for large payloads.
     """
+    if capture(payload):
+        return
     console.print(
         json.dumps(payload, ensure_ascii=False, indent=2),
         markup=False,

@@ -12,6 +12,7 @@ from ddk.adapters.llm.recording import RecordingLLMAdapter, ReplayLLMAdapter
 from ddk.cli import app
 from ddk.installer import ASSETS
 from tests.fakes.fake_llm_adapter import FakeLLMAdapter
+from tests.public_contract import public_payload
 from tests.unit.test_case_bootstrapper import setup_repo
 
 
@@ -39,8 +40,8 @@ async def test_recorded_verify_skill_dry_run_keeps_execution_unapproved(tmp_path
         invocation
     )
     result = await asyncio.to_thread(CliRunner().invoke, app, invocation)
-    assert result.exit_code == 0, result.output
-    record = json.loads(result.stdout)
+    assert result.exit_code == 1, result.output
+    record = public_payload(result.stdout)
     assert record["dry_run"] is True
     assert record["status"] == "blocked"
     assert record["actions"]

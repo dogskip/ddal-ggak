@@ -17,6 +17,7 @@ from mcp import ClientSession, StdioServerParameters, types
 from mcp.client import stdio
 from mcp.shared.exceptions import McpError
 
+from tests.public_contract import public_payload
 from tests.unit.adapters.test_verified_evaluator import request_for
 from tests.unit.test_verified_change_engine import RUN_ID
 from tests.unit.test_verified_change_engine import scenario as scenario
@@ -164,7 +165,7 @@ def request(scenario):
 
 def content(result):
     assert result.content[0].type == "text"
-    return json.loads(result.content[0].text)
+    return public_payload(result.content[0].text)
 
 
 async def test_actual_cli_stdio_lists_existing_tools_and_reports_errors(tmp_path, monkeypatch):

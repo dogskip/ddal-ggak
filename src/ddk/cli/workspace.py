@@ -13,6 +13,7 @@ from ddk.workspace.manager import WorkspaceManager
 
 from .app import app
 from .common import console, err_console, get_config
+from .contract import CommandFailureError
 
 
 @app.command()
@@ -92,7 +93,7 @@ def doctor(
             err_console.print(
                 t("❌ Chromium 을 내려받지 못했습니다. 네트워크를 확인하거나 Chrome 을 설치하세요.")
             )
-            raise typer.Exit(1)
+            raise CommandFailureError("unavailable", "browser_install_failed")
 
     if as_json:
         execute_command(True, lambda: asyncio.run(readiness(repo)))
@@ -111,7 +112,7 @@ def doctor(
         )
     console.print(table)
     if result["status"] == "blocked":
-        raise typer.Exit(2)
+        raise typer.Exit(1)
 
 
 @app.command(

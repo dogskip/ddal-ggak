@@ -14,11 +14,12 @@ from jsonschema import Draft202012Validator
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from mcp.server.stdio import stdio_server
-from mcp.types import ContentBlock, ToolAnnotations
+from mcp.types import ContentBlock, TextContent, ToolAnnotations
 from mcp.types import Tool as MCPTool
 from pydantic import Field
 
-from ddk.models.verified_change import ContractError, Record, canonical_json
+from ddk.cli.contract import envelope, operation_exit, response
+from ddk.models.verified_change import ContractError, Record, canonical_json, object_record
 from ddk.security.mcp_stdio import BoundedStdin
 from ddk.services.verified_repair import RepairProvider
 
@@ -72,24 +73,63 @@ class _BoundedFastMCP(FastMCP):
     async def list_tools(self) -> list[MCPTool]:
         tools = await super().list_tools()
         for tool in tools:
-            if tool.name in _VERIFIED_TOOLS:
-                tool.inputSchema["additionalProperties"] = False
+            tool.inputSchema["additionalProperties"] = False
         return tools
 
     async def call_tool(
         self, name: str, arguments: dict[str, Any]
     ) -> Sequence[ContentBlock] | dict[str, Any]:
-        if name in _VERIFIED_TOOLS:
-            try:
-                canonical_json({"name": name, "arguments": arguments})
-            except ContractError as error:
-                code = "request_size_limit" if str(error) == "record_size_limit" else "invalid_json"
-                raise ToolError("invalid_tool_input:" + code) from None
-            tool = next(tool for tool in await self.list_tools() if tool.name == name)
-            validator = cast(Any, Draft202012Validator(tool.inputSchema))
+        try:
+            canonical_json({"name": name, "arguments": arguments})
+            registered = next((tool for tool in await self.list_tools() if tool.name == name), None)
+            if registered is None:
+                raise ToolError("unknown_tool")
+            validator = cast(Any, Draft202012Validator(registered.inputSchema))
             if next(validator.iter_errors(arguments), None):
                 raise ToolError("invalid_tool_input:schema")
-        return await super().call_tool(name, arguments)
+            result = await super().call_tool(name, arguments)
+            if isinstance(result, dict):
+                record = object_record(result)
+            else:
+                texts = [block.text for block in result if isinstance(block, TextContent)]
+                if len(texts) != 1:
+                    raise ToolError("invalid_tool_result")
+                if name == "ddk_version":
+                    record = {"version": texts[0]}
+                else:
+                    record = object_record(json.loads(texts[0]))
+            exit_code = operation_exit(name, record)
+            if name == "preflight":
+                exit_code = 0 if record.get("all_ok") is True else 1
+            if name == "design_new" and record.get("success") is not True:
+                answer = envelope(name, record, status="error", code="api_key_required")
+            else:
+                answer = response(name, record, exit_code)
+            return [TextContent(type="text", text=canonical_json(answer).decode())]
+        except ContractError as error:
+            code = "request_size_limit" if str(error) == "record_size_limit" else "invalid_json"
+            raise _contract_tool_error(name, "invalid_tool_input:" + code) from None
+        except (ToolError, ValueError, OSError) as error:
+            message = str(error)
+            prefix = f"Error executing tool {name}: "
+            if message.startswith(prefix):
+                message = message[len(prefix) :]
+            raise _contract_tool_error(name, message) from None
+
+
+def _contract_tool_error(name: str, message: str) -> ToolError:
+    match = re.match(r"[a-z][a-z0-9_]{0,79}(?=[:;\s]|$)", message)
+    code = match[0] if match else "tool_failed"
+    safe = code
+    if code in _UNAVAILABLE_CODES:
+        run_id = re.search(r"run_id=([0-9a-f-]{36})", message)
+        if run_id:
+            safe += f":run_id={run_id[1]}; query ddk_status"
+    elif re.fullmatch(r"[a-z_]+:[a-z_-]+", message):
+        safe = message
+    return ToolError(
+        canonical_json(envelope(name, {}, status="error", code=code, message=safe)).decode()
+    )
 
 
 mcp = _BoundedFastMCP("ddk")
@@ -172,7 +212,7 @@ def ddk_status(run_id: _Identifier, repository: _PathValue = ".") -> str:
         raise _service_error(error) from None
 
 
-@mcp.tool()
+@mcp.tool(structured_output=False)
 async def design_new(
     idea: str,
     output_dir: str = ".",
@@ -246,7 +286,7 @@ async def design_new(
     )
 
 
-@mcp.tool()
+@mcp.tool(structured_output=False)
 def preflight() -> str:
     """DDK 환경 점검 — API 키, Python 버전, 의존성 확인.
 
@@ -287,7 +327,7 @@ def preflight() -> str:
     return json.dumps({"all_ok": all_ok, "checks": results}, ensure_ascii=False)
 
 
-@mcp.tool()
+@mcp.tool(structured_output=False)
 def ddk_version() -> str:
     """현재 설치된 DDK 버전 반환.
 

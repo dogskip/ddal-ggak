@@ -117,9 +117,8 @@ async def test_real_workspace_receipts_project_only_after_owned_cleanup(scenario
 
 
 async def test_mcp_ledger_exposes_new_metadata_without_private_text(blocked):
-    import json
-
     from ddk.server import mcp
+    from tests.public_contract import public_payload
 
     (store, _, _, _), _ = blocked
 
@@ -131,6 +130,6 @@ async def test_mcp_ledger_exposes_new_metadata_without_private_text(blocked):
         "ddk_query_ledger", {"repository": str(store.repository), "table": "context_digests"}
     )
     text = reply[0][0].text if isinstance(reply, tuple) else reply[0].text
-    rows = json.loads(text)["rows"]
+    rows = public_payload(text)["rows"]
     assert rows and "raw_bytes" in rows[0] and "compacted_bytes" in rows[0]
     assert "record_json" not in text and "diagnostic_summary" not in text

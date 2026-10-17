@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import re
 import sys
 from collections.abc import Callable
 from contextlib import redirect_stdout
@@ -18,6 +17,7 @@ from ddk.models.verified_change import MAX_RECORD_BYTES, Record, decode_json
 from ddk.security.file_access import read_regular
 
 from .app import app
+from .contract import capture, command_name, exception_failure, operation_exit
 
 if TYPE_CHECKING:
     from ddk.services.verified_budget import ProviderResult
@@ -82,15 +82,10 @@ def _mapping(path: Path | None, *, arrays: bool = False) -> Record | None:
     return value
 
 
-def _error_code(error: ValueError | OSError) -> str:
-    code = str(error).partition(":")[0]
-    if re.fullmatch(r"[a-z][a-z0-9_]*", code):
-        return code
-    return "file_unavailable" if isinstance(error, OSError) else "invalid_request"
-
-
 def _emit(payload: Record, as_json: bool) -> None:
     if as_json:
+        if capture(payload):
+            return
         typer.echo(json.dumps(payload, ensure_ascii=False, allow_nan=False))
         return
     for key in ("status", "decision", "assurance", "case_id", "run_id", "apply_id", "state"):
@@ -104,28 +99,7 @@ def _emit(payload: Record, as_json: bool) -> None:
 
 
 def _exit_code(payload: Record) -> int:
-    if "replay_decision" in payload:
-        return 0 if payload["evidence_integrity"] else 1
-    if "gate_status" in payload:
-        return 0 if payload["gate_status"] == "passed" else 1
-    if payload.get("status") == "cancelled":
-        return 130
-    if payload.get("status") == "blocked" and payload.get("decision") == "ready":
-        return 1
-    if "decision" in payload:
-        if payload["decision"] == "blocked" and any(
-            action.get("code") in _INPUT_OR_EXECUTION_UNAVAILABLE
-            for action in payload.get("actions", [])
-        ):
-            return 2
-        return {"ready": 0, "blocked": 1, "manual-review": 1}.get(payload["decision"], 2)
-    if "state" in payload:
-        return {"applied": 0, "rolled_back": 0, "conflict": 1, "unknown": 1}.get(
-            payload["state"], 2
-        )
-    if payload.get("status") == "blocked" and not payload.get("dry_run"):
-        return 2
-    return 0
+    return operation_exit(command_name(), payload)
 
 
 def _execute(
@@ -134,26 +108,15 @@ def _execute(
     try:
         with redirect_stdout(sys.stderr):
             payload = operation()
-    except (ValueError, OSError) as error:
-        _emit(
-            {
-                "schema_version": "verified-change/1",
-                **(identifiers or {}),
-                "error": {"code": _error_code(error)},
-            },
-            as_json,
-        )
-        raise typer.Exit(2) from error
-    except (KeyboardInterrupt, asyncio.CancelledError) as error:
-        _emit(
-            {
-                "schema_version": "verified-change/1",
-                **(identifiers or {}),
-                "error": {"code": "cancelled"},
-            },
-            as_json,
-        )
-        raise typer.Exit(130) from error
+    except (ValueError, OSError, KeyboardInterrupt, asyncio.CancelledError) as error:
+        if as_json and identifiers:
+            capture(identifiers)
+        elif not as_json and identifiers:
+            _emit(
+                {**identifiers, "error": {"code": exception_failure(command_name(), error).code}},
+                False,
+            )
+        raise exception_failure(command_name(), error) from error
     _emit(payload, as_json)
     raise typer.Exit(_exit_code(payload))
 

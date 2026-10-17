@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from ddk.cli import app, verified
 from ddk.services.verified_change_service import VerifiedChangeService
+from tests.public_contract import public_payload
 from tests.unit.test_verified_budget import price
 from tests.unit.test_verified_change_engine import scenario as scenario
 from tests.unit.test_verified_repair import REPAIR_ID, ObservingEvaluator, answer
@@ -61,12 +62,12 @@ def test_repair_command_requires_grant_and_emits_one_json_record(blocked, tmp_pa
     )
     args = arguments(blocked, tmp_path)
     refused = runner.invoke(app, args)
-    assert refused.exit_code == 2, refused.output
-    assert json.loads(refused.stdout)["error"]["code"] == "provider_confirmation_required"
+    assert refused.exit_code == 3, refused.output
+    assert public_payload(refused.stdout)["error"]["code"] == "provider_confirmation_required"
     assert not attempts
     first = runner.invoke(app, [*args, "--confirm-provider"])
     assert first.exit_code == 0, first.output
-    record = json.loads(first.stdout)
+    record = public_payload(first.stdout)
     assert record["decision"] == "ready"
     assert record["operation"] == "repair"
     assert record["source_run_id"] == source["run_id"]
@@ -75,7 +76,7 @@ def test_repair_command_requires_grant_and_emits_one_json_record(blocked, tmp_pa
     )
     replay = runner.invoke(app, [*args, "--confirm-provider"])
     assert replay.exit_code == 0, replay.output
-    assert json.loads(replay.stdout) == record
+    assert public_payload(replay.stdout) == record
     assert len(attempts) == 1
     assert store.run(REPAIR_ID) == record
 
@@ -109,7 +110,7 @@ def test_all_repair_entry_points_select_the_requested_provider(
         args += ["--endpoint", "http://127.0.0.1:1234/v1"]
     result = runner.invoke(app, args)
     assert result.exit_code == 0, result.output
-    assert json.loads(result.stdout)["decision"] == "ready"
+    assert public_payload(result.stdout)["decision"] == "ready"
     assert len(attempts) == 1
     assert store.run(REPAIR_ID)["model_calls"][0]["state"] == "settled"
 

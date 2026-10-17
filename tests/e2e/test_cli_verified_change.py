@@ -16,6 +16,7 @@ from ddk.models.verified_change import canonical_json
 from ddk.services.source_snapshot import capture_source
 from tests.e2e.test_verified_browser import settings as settings
 from tests.e2e.test_verified_evaluator import scenario
+from tests.public_contract import public_payload
 from tests.unit.test_verified_change_engine import RUN_ID
 
 pytestmark = pytest.mark.playwright
@@ -49,13 +50,13 @@ def test_real_cli_verification_requires_authority_and_retains_headless_evidence(
     ]
 
     denied = runner.invoke(app, args)
-    assert denied.exit_code == 2, denied.output
-    assert json.loads(denied.stdout)["error"]["code"] == "trusted_local_confirmation_required"
+    assert denied.exit_code == 3, denied.output
+    assert public_payload(denied.stdout)["error"]["code"] == "trusted_local_confirmation_required"
     assert not store.path_for("run", RUN_ID).exists()
 
     result = runner.invoke(app, [*args, "--trusted-local"])
     assert result.exit_code == 0, result.output
-    record = json.loads(result.stdout)
+    record = public_payload(result.stdout)
     assert record["decision"] == "ready"
     assert record["assurance"] == "trusted-local"
     assert record["model_calls"] == []

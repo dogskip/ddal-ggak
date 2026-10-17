@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import typer
-
 from ddk.adapters.chromium_browser import ChromiumBrowserAdapter
 from ddk.adapters.filesystem import FilesystemAdapter
 from ddk.adapters.local_git import LocalGitAdapter
@@ -18,16 +16,17 @@ from ddk.models.config import DdalggakConfig
 from ddk.services.pipeline_runner import RuntimeServices
 
 from .common import err_console, require_api_key
+from .contract import CommandFailureError
 
 
 def build_runtime_services(cfg: DdalggakConfig) -> RuntimeServices:
     """Build concrete runtime services for graph execution."""
     if cfg.llm_provider != "anthropic":
         err_console.print(t("❌ 아직 지원하지 않는 LLM provider: {name}", name=cfg.llm_provider))
-        raise typer.Exit(1)
+        raise CommandFailureError("configuration", "unsupported_runtime_settings")
     if cfg.sandbox_mode != "tempdir":
         err_console.print(t("❌ 아직 지원하지 않는 sandbox mode: {name}", name=cfg.sandbox_mode))
-        raise typer.Exit(1)
+        raise CommandFailureError("configuration", "unsupported_runtime_settings")
 
     require_api_key(cfg)
 

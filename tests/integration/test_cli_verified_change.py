@@ -11,6 +11,7 @@ from typer.testing import CliRunner
 from ddk.cli import app, verified
 from ddk.models.verified_change import record_digest
 from ddk.services.verified_change_service import VerifiedChangeService
+from tests.public_contract import public_payload
 from tests.unit.services.test_managed_application import ready_store
 from tests.unit.test_verified_change_engine import RUN_ID, Evaluator
 from tests.unit.test_verified_change_engine import scenario as scenario
@@ -51,7 +52,7 @@ def test_cli_import_verify_status_replay_uses_one_real_engine(scenario, tmp_path
 
     first = runner.invoke(app, args)
     assert first.exit_code == 0, first.output
-    result = json.loads(first.stdout)
+    result = public_payload(first.stdout)
     assert result["decision"] == "ready"
     assert result["model_calls"] == []
     assert [request.phase for request in evaluator.requests] == ["baseline", "candidate"]
@@ -70,7 +71,7 @@ def test_cli_import_verify_status_replay_uses_one_real_engine(scenario, tmp_path
     )
     replay = runner.invoke(app, args)
     assert status.exit_code == replay.exit_code == 0, status.output + replay.output
-    assert json.loads(status.stdout) == json.loads(replay.stdout) == result
+    assert public_payload(status.stdout) == public_payload(replay.stdout) == result
     assert len(evaluator.requests) == 2
     assert (baseline / "src/App.tsx").read_bytes() == b"before"
     assert (candidate / "src/App.tsx").read_bytes() == b"after"
@@ -83,7 +84,7 @@ def test_cli_status_export_apply_recover_reach_real_owned_storage(tmp_path):
 
     status = runner.invoke(app, ["change", "status", "--run-id", run["run_id"], *common])
     assert status.exit_code == 0, status.output
-    assert json.loads(status.stdout) == run
+    assert public_payload(status.stdout) == run
 
     destination = tmp_path / "public.zip"
     export = runner.invoke(
@@ -99,7 +100,7 @@ def test_cli_status_export_apply_recover_reach_real_owned_storage(tmp_path):
         ],
     )
     assert export.exit_code == 0, export.output
-    assert json.loads(export.stdout)["included_artifacts"] == []
+    assert public_payload(export.stdout)["included_artifacts"] == []
     with ZipFile(destination) as archive:
         assert archive.namelist() == ["report.json"]
         assert json.loads(archive.read("report.json"))["decision"] == "ready"
@@ -125,7 +126,7 @@ def test_cli_status_export_apply_recover_reach_real_owned_storage(tmp_path):
         ],
     )
     assert apply.exit_code == 0, apply.output
-    applied = json.loads(apply.stdout)
+    applied = public_payload(apply.stdout)
     assert applied["state"] == "applied"
     assert (repository / "src/App.tsx").read_bytes() == b"new\n"
     assert store.load_apply(APPLY_ID) == applied
@@ -144,7 +145,7 @@ def test_cli_status_export_apply_recover_reach_real_owned_storage(tmp_path):
         ],
     )
     assert recovery.exit_code == 0, recovery.output
-    assert json.loads(recovery.stdout) == applied
+    assert public_payload(recovery.stdout) == applied
     assert (repository / "src/App.tsx").read_bytes() == b"new\n"
 
 
@@ -164,8 +165,8 @@ def test_cli_corrupted_saved_artifact_is_an_error_without_replay(tmp_path):
             "--json",
         ],
     )
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout)["error"]["code"]
+    assert result.exit_code == 3, result.output
+    assert public_payload(result.stdout)["error"]["code"]
     assert artifact.read_bytes() == b"corrupt"
     assert (tmp_path / "src/App.tsx").read_bytes() == b"old\n"
 
@@ -195,8 +196,8 @@ def test_cli_host_permission_cannot_lower_an_isolated_case(scenario, monkeypatch
             "--json",
         ],
     )
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout)["error"]["code"] == "assurance_mismatch"
+    assert result.exit_code == 3, result.output
+    assert public_payload(result.stdout)["error"]["code"] == "assurance_mismatch"
     assert evaluator.requests == []
 
 
@@ -213,6 +214,6 @@ def test_cli_preserves_repository_alias_rejection(tmp_path, alias_position):
         ["change", "status", "--repo", str(selected), "--run-id", run["run_id"], "--json"],
     )
 
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout)["error"]["code"]
+    assert result.exit_code == 3, result.output
+    assert public_payload(result.stdout)["error"]["code"]
     assert (repository / "src/App.tsx").read_bytes() == b"old\n"

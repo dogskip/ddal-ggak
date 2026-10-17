@@ -11,6 +11,7 @@ from ddk.cli import app
 from ddk.services.verified_budget import ProviderResult, ProviderUsage
 from ddk.services.verified_change_store import VerifiedChangeStore
 from ddk.services.verified_repair import RepairReply
+from tests.public_contract import public_payload
 from tests.unit.test_case_bootstrapper import setup_repo
 
 pytestmark = pytest.mark.playwright
@@ -96,7 +97,7 @@ def test_up_runs_real_git_bootstrap_browser_export_and_candidate_bound_apply(
         args += ["--repair", "--confirm-provider"]
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 0, (result.output, result.exception)
-    receipt = json.loads(result.stdout)
+    receipt = public_payload(result.stdout)
     assert receipt["status"] == "ready" and receipt["application"]["state"] == "applied"
     assert (
         tmp_path / "index.html"

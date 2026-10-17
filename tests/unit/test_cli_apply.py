@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -14,6 +13,7 @@ from ddk.models.release import ReleaseDecision
 from ddk.services.case_artifact_store import CaseArtifactStore
 from ddk.workspace.manager import WorkspaceManager
 from tests.fakes.images import write_png
+from tests.public_contract import public_payload
 
 runner = CliRunner()
 
@@ -73,7 +73,7 @@ def test_blocked_case_cannot_bypass_the_decision(tmp_path: Path) -> None:
 
     result = _apply(tmp_path, "--allow-blocked")
 
-    assert result.exit_code == 2, result.output  # type: ignore[attr-defined]
+    assert result.exit_code == 3, result.output  # type: ignore[attr-defined]
     assert not (tmp_path / "src/Card.tsx").exists()
 
 
@@ -106,7 +106,7 @@ def test_a_conflict_stops_everything_including_force(tmp_path: Path) -> None:
 
     forced = _apply(tmp_path, "--force")
 
-    assert forced.exit_code == 2, forced.output  # type: ignore[attr-defined]
+    assert forced.exit_code == 3, forced.output  # type: ignore[attr-defined]
     assert (tmp_path / "src/App.tsx").read_text() == "my edit\n"
     assert not (case_path / "artifacts/replaced/src/App.tsx").exists()
     assert not (tmp_path / "src/Card.tsx").exists()
@@ -117,7 +117,7 @@ def test_json_output_lists_every_file(tmp_path: Path) -> None:
 
     result = _apply(tmp_path, "--json")
 
-    payload = json.loads(result.stdout)  # type: ignore[attr-defined]
+    payload = public_payload(result.stdout)  # type: ignore[attr-defined]
     assert payload["case_id"] == "C-001"
     assert payload["files"] == [{"path": "src/Card.tsx", "action": "create", "reason": ""}]
     assert payload["written"] == ["src/Card.tsx"]

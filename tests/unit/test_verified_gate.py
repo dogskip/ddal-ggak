@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 from uuid import uuid4
@@ -13,6 +12,7 @@ from ddk.services.case_bootstrapper import CaseBootstrapper
 from ddk.services.verified_change_engine import VerifiedChangeEngine
 from ddk.services.verified_change_store import VerifiedChangeStore
 from ddk.services.verified_gate import gate_status
+from tests.public_contract import public_payload
 from tests.unit.adapters.test_verified_browser import environment
 from tests.unit.test_case_bootstrapper import setup_repo
 from tests.unit.test_case_discovery import valid_draft
@@ -100,11 +100,11 @@ async def test_gate_cli_exit_and_mcp_schema(gated):
     runner = CliRunner()
     result = runner.invoke(app, ["change", "gate", "--repo", str(store.repository), "--json"])
     assert result.exit_code == 0, result.output
-    assert json.loads(result.stdout)["gate_status"] == "passed"
+    assert public_payload(result.stdout)["gate_status"] == "passed"
     (store.repository / "index.html").write_text("changed")
     assert (
         runner.invoke(app, ["change", "gate", "--repo", str(store.repository), "--json"]).exit_code
-        == 1
+        == 5
     )
     tools = {t.name: t for t in await mcp.list_tools()}
     assert tools["ddk_gate_status"].inputSchema["additionalProperties"] is False
@@ -194,8 +194,8 @@ async def test_actual_pre_push_script_passes_git_stdin_to_commit_gate(gated):
         capture_output=True,
         timeout=30,
     )
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert json.loads(result.stdout)["gate_status"] == "reopened"
+    assert result.returncode == 5, result.stdout + result.stderr
+    assert public_payload(result.stdout)["gate_status"] == "reopened"
 
 
 async def test_pre_push_rechecks_latest_execution_across_all_cases(gated, monkeypatch):

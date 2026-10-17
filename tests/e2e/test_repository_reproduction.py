@@ -28,6 +28,7 @@ from ddk.services.verified_host import observe_environment
 from tests.e2e.test_verified_isolated import images as images
 from tests.e2e.test_verified_isolated import isolated_settings as isolated_settings
 from tests.e2e.test_verified_isolated import owned_containers
+from tests.public_contract import public_payload
 
 FIXTURES = Path(__file__).parents[1] / "fixtures/reproduction"
 SPECS = {
@@ -208,7 +209,7 @@ def reproduce(tmp_path, settings, name, variant, runtime):
     if runtime == "host":
         argv.append("--trusted-local")
     response = CliRunner().invoke(app, argv)
-    record = json.loads(response.stdout)
+    record = public_payload(response.stdout)
     destination = os.environ.get("DDK_REPRO_EVIDENCE_DIR")
     if destination:
         saved = Path(destination) / "runs" / f"{runtime}-{name}-{variant}"
@@ -257,11 +258,11 @@ def reproduce(tmp_path, settings, name, variant, runtime):
             "--json",
         ],
     )
-    replay = json.loads(replay_response.stdout)
+    replay = public_payload(replay_response.stdout)
     assert replay_response.exit_code == 0 and replay["evidence_integrity"], replay
     assert replay["replay_decision"] == wanted and not replay["execution_repeated"]
     gate_response = CliRunner().invoke(app, ["change", "gate", "--repo", str(project), "--json"])
-    gate = json.loads(gate_response.stdout)
+    gate = public_payload(gate_response.stdout)
     assert gate["gate_status"] == ("passed" if wanted == "ready" else "blocked"), gate
     assert capture_git_worktree(project).tree_sha256 == before
     if runtime == "isolated":

@@ -60,7 +60,7 @@ def proof(
         report = ProofLedger(repo.resolve()).verify()
     except MatrixLoadError as exc:
         console.print(t("[red]❌ capability matrix 로드 실패:[/red] {error}", error=exc))
-        raise typer.Exit(2) from exc
+        raise typer.Exit(3) from exc
 
     if as_json:
         print_json(report.model_dump(mode="json"))
@@ -121,7 +121,7 @@ def audit(
         report = auditor.audit()
     except CatalogLoadError as exc:
         console.print(t("[red]❌ 표준 목록 로드 실패:[/red] {error}", error=exc))
-        raise typer.Exit(2) from exc
+        raise typer.Exit(3) from exc
 
     if write:
         out = auditor.write_matrix(report)

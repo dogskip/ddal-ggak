@@ -98,12 +98,12 @@ class TestBuildRuntimeServicesDI:
 
     def test_unimplemented_sandbox_mode_is_rejected(self) -> None:
         """A configured mode must never be silently replaced by a different sandbox."""
-        import typer
-
+        from ddk.cli.contract import CommandFailureError
         from ddk.cli.runtime import build_runtime_services  # noqa: PLC0415
 
-        with pytest.raises(typer.Exit):
+        with pytest.raises(CommandFailureError) as caught:
             build_runtime_services(DdalggakConfig(sandbox_mode="worktree"))
+        assert caught.value.category == "configuration"
 
 
 class TestServerDI:

@@ -30,6 +30,7 @@ from .common import (
     resolve_case_path,
     status_console,
 )
+from .contract import CommandFailureError
 from .runtime import build_runtime_services
 
 # Sent to the model when ``ddk run`` gets an image and no instruction.
@@ -106,13 +107,13 @@ def run(
         err_console.print(
             t("❌ 입력 이미지를 찾을 수 없습니다: {paths}", paths=", ".join(missing_images))
         )
-        raise typer.Exit(1)
+        raise CommandFailureError("configuration", "image_not_found")
     broken_images = [str(p) for p in resolved_images if not is_decodable(p)]
     if broken_images:
         err_console.print(
             t("❌ 이미지로 읽을 수 없는 파일입니다: {paths}", paths=", ".join(broken_images))
         )
-        raise typer.Exit(1)
+        raise CommandFailureError("configuration", "invalid_image")
     if cfg.visual_check:
         _require_browser(services)
 
@@ -182,7 +183,7 @@ def _require_browser(services: RuntimeServices) -> None:
             t("   비교를 건너뛰려면 --no-visual 을 붙이세요 (건너뛴 사실은 보고서에 남습니다)."),
             soft_wrap=True,
         )
-        raise typer.Exit(1) from exc
+        raise CommandFailureError("unavailable", "browser_unavailable") from exc
 
 
 def _write_report_quietly(case_path: Path) -> Path | None:
@@ -285,7 +286,7 @@ def apply(
     """Write the files of a verified case into the repository."""
     if force or allow_blocked:
         err_console.print(t("❌ 강제 반영은 제공하지 않습니다. 내보내기 후 충돌을 해결하세요."))
-        raise typer.Exit(2)
+        raise typer.Exit(3)
     case_path = resolve_case_path(repo, case_id)
     store = CaseArtifactStore(case_path)
     try:
@@ -373,4 +374,4 @@ def rollback(
     err_console.print(
         t("❌ Git 전체 초기화 복구는 제공하지 않습니다. 관리된 반영 기록으로 복구하세요.")
     )
-    raise typer.Exit(2)
+    raise typer.Exit(3)

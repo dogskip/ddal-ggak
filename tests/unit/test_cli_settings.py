@@ -22,7 +22,7 @@ def test_out_of_range_setting_is_named_with_its_value(monkeypatch: pytest.Monkey
 
     result = runner.invoke(app, ["preflight"])
 
-    assert result.exit_code == 2
+    assert result.exit_code == 3
     assert "DDK_SSIM_THRESHOLD" in result.output
     assert "5" in result.output
 
@@ -32,7 +32,7 @@ def test_non_numeric_setting_is_named(monkeypatch: pytest.MonkeyPatch) -> None:
 
     result = runner.invoke(app, ["preflight"])
 
-    assert result.exit_code == 2
+    assert result.exit_code == 3
     assert "DDK_COST_CAP_USD" in result.output
 
 
@@ -53,7 +53,7 @@ def test_doctor_still_runs_and_reports_the_setting_problem(
 
     result = runner.invoke(app, ["doctor"])
 
-    assert result.exit_code == 2
+    assert result.exit_code == 1
     assert "Python" in result.output
     assert "설정 값" in result.output
 

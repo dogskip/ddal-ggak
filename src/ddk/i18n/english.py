@@ -358,3 +358,15 @@ ENGLISH.update(
         ),
     }
 )
+
+ENGLISH.update(
+    {
+        "작업 완료 또는 검증 통과": "Operation completed or verification ready",
+        "인수 기준 미달 또는 사례 없음": "Acceptance not met or required case absent",
+        "명령 사용법 오류": "CLI parsing or usage error",
+        "입력·설정 무효 또는 승인 없음": "Invalid input, configuration or missing approval",
+        "실행 환경 사용 불가": "Execution environment unavailable",
+        "증거 재검사 또는 현재 소스 일치 실패": "Evidence replay or current-source gate failed",
+        "사용자 실행 중단": "Interrupted by the caller",
+    }
+)

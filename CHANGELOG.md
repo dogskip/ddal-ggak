@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed — public response contract
+
+- **Breaking:** all JSON-capable CLI commands and MCP tools use the `ddk/2` response envelope.
+  The canonical on-disk `verified-change/1` records remain unchanged under `data`.
+  Input/approval errors exit 3, unavailable execution exits 4, replay/current-source integrity failures
+  exit 5, usage errors retain 2, acceptance failures use 1 and cancellation retains 130.
+  Missing legacy cases and parsing failures now produce structured JSON.
+  See the generated [exit-code registry](docs/EXIT-CODES.md).
+
 ### Changed — host installation
 
 - **Breaking:** host installation now renders canonical Agent Skills into official host paths.

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import json
 from uuid import UUID
 
 import pytest
 from typer.testing import CliRunner
 
 from ddk.cli import app
+from tests.public_contract import public_payload
 
 runner = CliRunner()
 CASE_ID = "00000000-0000-4000-8000-000000000001"
@@ -136,7 +136,7 @@ def test_verify_forwards_explicit_inputs_and_keeps_json_clean(tmp_path, service)
     )
 
     assert result.exit_code == 0, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result
     assert "service progress" in result.stderr
     assert service.calls == [
         (
@@ -205,8 +205,8 @@ def test_invalid_case_selection_stops_before_service(tmp_path, service, selectio
 
     result = runner.invoke(app, args)
 
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout)["error"]["code"]
+    assert result.exit_code == 3, result.output
+    assert public_payload(result.stdout)["error"]["code"]
     assert service.calls == []
 
 
@@ -225,8 +225,8 @@ def test_invalid_project_input_json_is_rejected_before_import(tmp_path, service,
     document_path = tmp_path / "inputs.json"
     document_path.write_bytes(document)
     result = runner.invoke(app, verify_args(tmp_path) + ["--project-inputs", str(document_path)])
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout)["error"]["code"]
+    assert result.exit_code == 3, result.output
+    assert public_payload(result.stdout)["error"]["code"]
     assert service.calls == []
 
 
@@ -235,7 +235,7 @@ def test_change_requirements_must_map_paths_to_string_arrays(tmp_path, service, 
     path = tmp_path / "requirements.json"
     path.write_text(document)
     result = runner.invoke(app, verify_args(tmp_path) + ["--change-requirements", str(path)])
-    assert result.exit_code == 2, result.output
+    assert result.exit_code == 3, result.output
     assert service.calls == []
 
 
@@ -245,7 +245,7 @@ def test_change_requirements_must_map_paths_to_string_arrays(tmp_path, service, 
         ("ready", 0),
         ("blocked", 1),
         ("manual-review", 1),
-        (None, 2),
+        (None, 3),
     ],
 )
 def test_status_decision_controls_exit_code_without_restarting(
@@ -256,7 +256,7 @@ def test_status_decision_controls_exit_code_without_restarting(
         app, ["change", "status", "--repo", str(tmp_path), "--run-id", RUN_ID, "--json"]
     )
     assert result.exit_code == exit_code, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result
     assert service.calls == [("status", {"run_id": RUN_ID})]
 
 
@@ -312,7 +312,7 @@ def test_apply_forwards_confirmations_and_defaults_to_isolated(tmp_path, service
     }
     result = runner.invoke(app, apply_args(tmp_path))
     assert result.exit_code == 0, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result
     assert service.calls == [
         (
             "apply",
@@ -335,7 +335,7 @@ def test_apply_without_confirmation_never_calls_service(tmp_path, service, flag)
     args = apply_args(tmp_path)
     args.remove(flag)
     result = runner.invoke(app, args)
-    assert result.exit_code == 2, result.output
+    assert result.exit_code == 3, result.output
     assert service.calls == []
 
 
@@ -355,7 +355,7 @@ def test_apply_requires_explicit_identity_and_hashes(tmp_path, service, flag):
         ("rolled_back", 0),
         ("conflict", 1),
         ("unknown", 1),
-        ("applying", 2),
+        ("applying", 3),
     ],
 )
 def test_recovery_requires_all_confirmations_and_reports_result(
@@ -376,7 +376,7 @@ def test_recovery_requires_all_confirmations_and_reports_result(
         ],
     )
     assert result.exit_code == exit_code, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result
     assert service.calls == [
         (
             "recover",
@@ -411,18 +411,18 @@ def test_recovery_without_confirmation_never_calls_service(tmp_path, service, fl
     ]
     args.remove(flag)
     result = runner.invoke(app, args)
-    assert result.exit_code == 2, result.output
+    assert result.exit_code == 3, result.output
     assert service.calls == []
 
 
 @pytest.mark.parametrize(
     "error", [ValueError("request_conflict"), FileNotFoundError("missing_run")]
 )
-def test_service_input_errors_are_structured_and_exit_two(tmp_path, service, error):
+def test_service_input_errors_are_structured_and_exit_three(tmp_path, service, error):
     service.error = error
     result = runner.invoke(app, verify_args(tmp_path))
-    assert result.exit_code == 2, result.output
-    assert str(error) in json.loads(result.stdout)["error"]["code"]
+    assert result.exit_code == 3, result.output
+    assert str(error) in public_payload(result.stdout)["error"]["code"]
 
 
 @pytest.mark.parametrize(
@@ -436,13 +436,14 @@ def test_service_input_errors_are_structured_and_exit_two(tmp_path, service, err
         "invalid_change_requirements",
     ],
 )
-def test_execution_or_input_unavailable_returns_two_with_original_blocked_record(
+def test_registered_unavailable_and_input_categories_preserve_original_record(
     tmp_path, service, code
 ):
     service.result.update(decision="blocked", actions=[{"code": code}])
     result = runner.invoke(app, verify_args(tmp_path))
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout) == service.result
+    expected = 4 if code in {"isolation_unavailable", "environment_gap"} else 3
+    assert result.exit_code == expected, result.output
+    assert public_payload(result.stdout) == service.result
 
 
 @pytest.mark.parametrize("code", ["required_check_failed", "baseline_failed", "protected_change"])
@@ -450,7 +451,7 @@ def test_real_check_or_candidate_policy_failure_stays_exit_one(tmp_path, service
     service.result.update(decision="blocked", actions=[{"code": code}])
     result = runner.invoke(app, verify_args(tmp_path))
     assert result.exit_code == 1, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result
 
 
 @pytest.mark.parametrize(
@@ -458,7 +459,7 @@ def test_real_check_or_candidate_policy_failure_stays_exit_one(tmp_path, service
     [
         (asyncio.CancelledError(), 130),
         (KeyboardInterrupt(), 130),
-        (ValueError("invalid_request"), 2),
+        (ValueError("invalid_request"), 3),
     ],
 )
 @pytest.mark.parametrize("explicit_id", [False, True])
@@ -472,7 +473,7 @@ def test_verify_error_retains_selected_run_id_for_status(
         del args[offset : offset + 2]
     result = runner.invoke(app, args)
     assert result.exit_code == exit_code, result.output
-    payload = json.loads(result.stdout)
+    payload = public_payload(result.stdout)
     assert payload["run_id"] == service.calls[0][1]["run_id"]
     assert UUID(payload["run_id"]).version == 4
     assert payload["case_id"] == CASE_ID
@@ -481,19 +482,19 @@ def test_verify_error_retains_selected_run_id_for_status(
 def test_status_input_error_retains_requested_run_id(service):
     service.error = FileNotFoundError("missing_run")
     result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
-    assert result.exit_code == 2, result.output
-    assert json.loads(result.stdout)["run_id"] == RUN_ID
+    assert result.exit_code == 3, result.output
+    assert public_payload(result.stdout)["run_id"] == RUN_ID
 
 
 def test_saved_cancelled_run_keeps_cancellation_exit_code(service):
     service.result.update(status="cancelled", decision=None)
     result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
     assert result.exit_code == 130, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result
 
 
 def test_blocked_workflow_cannot_exit_zero_with_a_ready_verification(service):
     service.result.update(status="blocked", actions=[{"code": "working_tree_changed"}])
     result = runner.invoke(app, ["change", "status", "--run-id", RUN_ID, "--json"])
     assert result.exit_code == 1, result.output
-    assert json.loads(result.stdout) == service.result
+    assert public_payload(result.stdout) == service.result

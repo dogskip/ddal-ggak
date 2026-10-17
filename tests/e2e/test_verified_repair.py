@@ -15,6 +15,7 @@ from ddk.services.verified_change_service import VerifiedChangeService
 from ddk.services.verified_repair import RepairReply
 from tests.e2e.test_verified_browser import settings as settings
 from tests.e2e.test_verified_evaluator import scenario
+from tests.public_contract import public_payload
 from tests.unit.test_verified_budget import price
 from tests.unit.test_verified_change_engine import RUN_ID
 from tests.unit.test_verified_repair import REPAIR_ID
@@ -129,7 +130,7 @@ def test_cli_repair_and_apply_with_real_headless_checks(tmp_path, monkeypatch):
         ],
     )
     assert checked.exit_code == 1, checked.output
-    source = json.loads(checked.stdout)
+    source = public_payload(checked.stdout)
     assert source["decision"] == "blocked"
     pricing = tmp_path / "price.json"
     pricing.write_text(json.dumps(asdict(price(source))))
@@ -183,7 +184,7 @@ def test_cli_repair_and_apply_with_real_headless_checks(tmp_path, monkeypatch):
         ],
     )
     assert repaired.exit_code == 0, repaired.output
-    result = json.loads(repaired.stdout)
+    result = public_payload(repaired.stdout)
     assert result["decision"] == "ready" and len(calls) == 1
     for name, snapshot in originals.items():
         assert capture_source(tmp_path / name).tree_sha256 == snapshot.tree_sha256
@@ -213,5 +214,5 @@ def test_cli_repair_and_apply_with_real_headless_checks(tmp_path, monkeypatch):
         ],
     )
     assert applied.exit_code == 0, applied.output
-    assert json.loads(applied.stdout)["state"] == "applied"
+    assert public_payload(applied.stdout)["state"] == "applied"
     assert b">Continue<" in (store.repository / "index.html").read_bytes()

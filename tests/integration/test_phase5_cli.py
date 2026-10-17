@@ -16,6 +16,7 @@ from ddk.services.pipeline_runner import RuntimeServices
 from ddk.services.rollback_controller import RollbackController
 from tests.fakes.images import write_png
 from tests.fakes.runtime_services import stub_runtime_services
+from tests.public_contract import public_payload
 
 runner = CliRunner()
 
@@ -86,13 +87,13 @@ def test_cli_run_status_and_certify_roundtrip(tmp_path: Path) -> None:
 
     status_result = runner.invoke(app, ["status", "--repo", str(repo_path), "--json"])
     assert status_result.exit_code == 1, status_result.stdout
-    status_payload = json.loads(status_result.stdout)
+    status_payload = public_payload(status_result.stdout)
     assert status_payload["release_decision"] == "blocked"
     assert status_payload["case_id"] == "C-001"
 
     certify_result = runner.invoke(app, ["certify", "--repo", str(repo_path), "--json"])
     assert certify_result.exit_code == 1, certify_result.stdout
-    certify_payload = json.loads(certify_result.stdout)
+    certify_payload = public_payload(certify_result.stdout)
     assert certify_payload["decision"] == "blocked"
     assert certify_payload["case_id"] == "C-001"
     assert "evidence_pack" in certify_payload
@@ -105,7 +106,7 @@ def test_cli_rollback_rejects_unowned_recovery_without_touching_files(tmp_path: 
         app,
         ["rollback", "--repo", str(tmp_path), "--case-id", "C-123", "--attempt", "2"],
     )
-    assert result.exit_code == 2, result.output
+    assert result.exit_code == 3, result.output
     assert "Git 전체 초기화" in result.output
     assert target.read_bytes() == b"user content"
 
@@ -138,7 +139,7 @@ def test_cli_rollback_preserves_real_git_state_even_with_force(tmp_path: Path) -
         ],
     )
 
-    assert result.exit_code == 2, result.output
+    assert result.exit_code == 3, result.output
     assert tracked_file.read_text(encoding="utf-8") == "changed\n"
     assert untracked.read_bytes() == b"untracked content"
     assert _run_git(repo_path, "status", "--porcelain") == before_status
@@ -159,5 +160,5 @@ def test_cli_run_json_keeps_stdout_machine_readable(tmp_path: Path) -> None:
             app, ["run", str(image_path), "--prompt", "x", "--repo", str(repo_path), "--json"]
         )
 
-    assert json.loads(result.stdout)["case_id"] == "C-001"
+    assert public_payload(result.stdout)["case_id"] == "C-001"
     assert "코드 생성" in result.output

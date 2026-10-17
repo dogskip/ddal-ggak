@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 
 from ddk.cli import app
 from ddk.services.case_bootstrapper import CaseBootstrapper
+from tests.public_contract import public_payload
 from tests.unit.adapters.test_verified_browser import environment
 from tests.unit.test_case_bootstrapper import setup_repo
 
@@ -153,7 +154,7 @@ def test_discovery_and_approval_flags_are_shared_by_both_init_routes(tmp_path):
             app, [*command, "--repo", str(tmp_path), "--discover", "--dry-run", "--json"]
         )
         assert result.exit_code == 0, result.output
-        assert json.loads(result.stdout)["draft"] is True
+        assert public_payload(result.stdout)["draft"] is True
     assert not (tmp_path / ".ddk").exists()
 
 
@@ -168,7 +169,7 @@ async def test_discovery_mcp_uses_the_same_draft_and_owner_grants(tmp_path, monk
         {"request": "Fix login", "repository": str(tmp_path), "discover": True, "dry_run": True},
     )
     text = reply[0][0].text if isinstance(reply, tuple) else reply[0].text
-    assert json.loads(text)["draft"] is True
+    assert public_payload(text)["draft"] is True
     with pytest.raises(ToolError):
         await mcp.call_tool(
             "ddk_init",

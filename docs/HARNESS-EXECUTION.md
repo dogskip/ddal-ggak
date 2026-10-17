@@ -28,7 +28,8 @@ The pre-change ordinary test suite passed 2,496 tests (72 deselected) on macOS A
 
 | Stage | Commit | Gate evidence | Remaining risk | Approval needed |
 | --- | --- | --- | --- | --- |
-| P0-3 | `feat(contract)!` stage commit | G3: 23 CLI routes with success/usage-error coverage; 14 MCP tool contracts; real stdio checks. G0: all six commands passed; pytest 2,560 passed / 72 deselected | Public response boundary is breaking; canonical bytes retained | None |
+| P0-4 | `fix(ci)` stage commit | G0 passed on macOS ARM64 / Python 3.12.12 and Linux aarch64 container / Python 3.12.3: 2,564 passed, 72 deselected on each. G4: actionlint 1.7.12 passed; 37 focused tests passed; same-byte/reused-identity counterexample failed before the fix | One open reference per permitted source file; exhaustion blocks capture. Separate Linux host and Python 3.13 runtime evidence remain open | Remote CI run after an approved push |
+| P0-3 | `8dde8c2` | G3: 23 CLI routes with success/usage-error coverage; 14 MCP tool contracts; real stdio checks. G0: all six commands passed; pytest 2,560 passed / 72 deselected | Public response boundary is breaking; canonical bytes retained | None |
 | P0-2 | `17ae99a` | G2: three skills; all five CLI examples match the command tree; 29 focused tests passed including a recorded-response CLI dry plan. G0: all six commands passed; pytest 2,521 passed / 72 deselected | Recorded replies do not establish agent obedience or paid-model effectiveness | None |
 | P0-1 | `4b76756` | G1: 33 focused installation/hook tests passed; Agent Skills rules checked in tests; generated README tables current. G0: all six commands passed; Ruff 406 files, mypy 175 source files, Pyright 0 errors; pytest 2,518 passed / 72 deselected | Interactive host loading remains unverified | None for local implementation |
 
@@ -70,3 +71,23 @@ existing owner-grant and real stdio tests remain in place.
 Saved blocked decisions retain their actions. Input/environment action categories come from an
 explicit registry; unknown actions cannot upgrade a blocked result. A replay or current-source
 failure exits 5. Empty legacy status exits 1 with `case_not_found`.
+
+## Cross-platform evidence and remote checks
+
+The reported original pair of Linux failures was not reproduced: the six selected baseline tests
+passed. The new source-capture counterexample simulates reused identity/timestamps and fails
+without retained references. Replacement remains forbidden, including equal bytes/mode.
+
+The first Linux dependency bootstrap could not resolve an uncached isolated build dependency
+without network access. A later full run exposed eight process-lifecycle failures in a container
+whose PID 1 was Python: `ps` showed defunct Node children owned by PID 1. With Docker `--init`,
+the same source passed all 13 process-lifecycle tests and then all 2,564 ordinary tests.
+The passing environment uses `ddk-harness-check:20261018`
+(`sha256:6ca3e7546df35bcfd831bb61356f717fd58e5f236ed163e4bb8eec823f6f106b`).
+Source export included only public tracked files and task-owned source/test/script additions.
+The source hashes are recorded in `/tmp/ddk-harness-work/linux-p0-4-sha256.json`.
+
+No GitHub settings were changed. Before calling remote CI healthy, inspect Actions permission,
+workflow enablement, event/branch filters, fork/token permissions and required branch checks.
+After an approved push, the exact HEAD must have a run with all four OS/Python combinations
+successful. Local Linux container results are not that remote result.

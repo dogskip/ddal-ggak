@@ -6,6 +6,7 @@ import hashlib
 import os
 import stat
 from collections.abc import Callable, Iterable
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -148,45 +149,60 @@ def capture_source(
         return entries, folders
 
     try:
-        checkpoint()
-        before, folders = inventory()
-        captured: list[SnapshotFile] = []
-        for relative in sorted(before, key=lambda value: value.encode("utf-8")):
+        with ExitStack() as opened:
             checkpoint()
-            path = root / relative
-            if file_identity(path.lstat()) != before[relative]:
-                raise SnapshotChangedError("snapshot_changed:" + relative)
-            content = read_regular(path, max_file_bytes)
-            value = path.lstat()
-            if file_identity(value) != before[relative]:
-                raise SnapshotChangedError("snapshot_changed:" + relative)
-            captured.append(
-                SnapshotFile(
-                    relative,
-                    content,
-                    hashlib.sha256(content).hexdigest(),
-                    stat.S_IMODE(value.st_mode),
-                    len(content),
-                    before[relative],
+            before, folders = inventory()
+            pins: dict[str, int] = {}
+            for relative, identity in before.items():
+                checkpoint()
+                with parent_descriptor(root / relative) as (parent_fd, name):
+                    descriptor = os.open(
+                        name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent_fd
+                    )
+                    opened.callback(os.close, descriptor)
+                pins[relative] = descriptor
+                if file_identity(os.fstat(descriptor)) != identity:
+                    raise SnapshotChangedError("snapshot_changed:" + relative)
+            captured: list[SnapshotFile] = []
+            for relative in sorted(before, key=lambda value: value.encode("utf-8")):
+                checkpoint()
+                path = root / relative
+                if file_identity(path.lstat()) != before[relative]:
+                    raise SnapshotChangedError("snapshot_changed:" + relative)
+                content = read_regular(path, max_file_bytes)
+                value = path.lstat()
+                if file_identity(value) != before[relative]:
+                    raise SnapshotChangedError("snapshot_changed:" + relative)
+                captured.append(
+                    SnapshotFile(
+                        relative,
+                        content,
+                        hashlib.sha256(content).hexdigest(),
+                        stat.S_IMODE(value.st_mode),
+                        len(content),
+                        before[relative],
+                    )
                 )
-            )
-        after, after_folders = inventory()
-        if before != after or folders != after_folders:
-            raise SnapshotChangedError("snapshot_changed:list")
-        for item in captured:
+            after, after_folders = inventory()
+            if before != after or folders != after_folders:
+                raise SnapshotChangedError("snapshot_changed:list")
+            for item in captured:
+                checkpoint()
+                content = read_regular(root / item.path, max_file_bytes)
+                if (
+                    hashlib.sha256(content).hexdigest() != item.sha256
+                    or file_identity((root / item.path).lstat()) != item.identity
+                ):
+                    raise SnapshotChangedError("snapshot_changed:" + item.path)
+            final, final_folders = inventory()
+            if before != final or folders != final_folders:
+                raise SnapshotChangedError("snapshot_changed:list")
+            for relative, descriptor in pins.items():
+                if file_identity(os.fstat(descriptor)) != before[relative]:
+                    raise SnapshotChangedError("snapshot_changed:" + relative)
             checkpoint()
-            content = read_regular(root / item.path, max_file_bytes)
-            if (
-                hashlib.sha256(content).hexdigest() != item.sha256
-                or file_identity((root / item.path).lstat()) != item.identity
-            ):
-                raise SnapshotChangedError("snapshot_changed:" + item.path)
-        final, final_folders = inventory()
-        if before != final or folders != final_folders:
-            raise SnapshotChangedError("snapshot_changed:list")
-        checkpoint()
-        files = tuple(captured)
-        return SourceSnapshot(files, manifest_digest(files))
+            files = tuple(captured)
+            return SourceSnapshot(files, manifest_digest(files))
     except SnapshotError:
         raise
     except (OSError, ValueError) as error:

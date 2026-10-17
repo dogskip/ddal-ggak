@@ -73,7 +73,14 @@ class TestHelp:
         assert HANGUL.search(_help_pages("ko")["run"])
 
     def test_run_help_explains_the_prompt_is_optional(self, english_help: dict[str, str]) -> None:
-        assert "default: implement the image as it is" in english_help["run"]
+        from typer.main import get_command
+
+        command = get_command(app).commands["run"]
+        prompt = next(parameter for parameter in command.params if parameter.name == "prompt")
+        from ddk.i18n import ENGLISH
+
+        help_text = ENGLISH.get(prompt.help, prompt.help)
+        assert "default: implement the image as it is" in help_text
 
 
 class TestMessages:

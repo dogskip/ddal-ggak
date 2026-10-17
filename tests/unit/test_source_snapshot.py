@@ -191,3 +191,83 @@ def test_real_concurrent_parent_replacement_is_detected(tmp_path):
         worker.join(2)
     assert not worker.is_alive()
     assert (root / "src/App.tsx").read_bytes() == b"foreign replacement"
+
+
+def test_same_byte_replacement_is_rejected_even_with_reused_identity(tmp_path, monkeypatch):
+    """Replacement is a concurrent edit; retained file references reveal unlinked originals."""
+    import stat
+
+    import ddk.services.source_snapshot as module
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    source(root)
+    replacement = tmp_path / "replacement"
+    replacement.write_bytes(b"approved")
+    target = root / "src/App.tsx"
+    replacement.chmod(stat.S_IMODE(target.stat().st_mode))
+    original = module.read_regular
+    changed = False
+
+    def coarse_identity(info):
+        return (info.st_dev, 0, info.st_mode, info.st_nlink, info.st_size, 0, 0)
+
+    def replace_after_first_read(path, max_bytes):
+        nonlocal changed
+        payload = original(path, max_bytes)
+        if not changed:
+            changed = True
+            os.replace(replacement, target)
+        return payload
+
+    monkeypatch.setattr(module, "file_identity", coarse_identity)
+    monkeypatch.setattr(module, "read_regular", replace_after_first_read)
+    with pytest.raises(SnapshotChangedError, match="snapshot_changed"):
+        capture_source(root)
+
+
+@pytest.mark.parametrize("outcome", ["success", "error", "cancel"])
+def test_pinned_files_are_closed_on_every_capture_exit(tmp_path, monkeypatch, outcome):
+    import stat
+
+    import ddk.services.source_snapshot as module
+
+    original_open, original_close = os.open, os.close
+    original_read = module.read_regular
+    active = set()
+    maximum = 0
+    cancelled = False
+
+    def tracked_open(*args, **kwargs):
+        nonlocal maximum
+        descriptor = original_open(*args, **kwargs)
+        if stat.S_ISREG(os.fstat(descriptor).st_mode):
+            active.add(descriptor)
+            maximum = max(maximum, len(active))
+        return descriptor
+
+    def tracked_close(descriptor):
+        active.discard(descriptor)
+        return original_close(descriptor)
+
+    def read(path, limit):
+        nonlocal cancelled
+        assert len(active) >= 2
+        if outcome == "error":
+            raise OSError("read failed")
+        payload = original_read(path, limit)
+        cancelled = outcome == "cancel"
+        return payload
+
+    root = source(tmp_path)
+    monkeypatch.setattr(os, "open", tracked_open)
+    monkeypatch.setattr(os, "close", tracked_close)
+    monkeypatch.setattr(module, "read_regular", read)
+    if outcome == "success":
+        capture_source(root)
+    else:
+        expected = SnapshotCancelledError if outcome == "cancel" else SnapshotChangedError
+        with pytest.raises(expected):
+            capture_source(root, cancelled=lambda: cancelled)
+    assert maximum >= 2
+    assert active == set()

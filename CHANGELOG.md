@@ -29,6 +29,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Source capture retains bounded open file references until all checks finish. Replacing a file
+  with identical bytes and mode during capture is still rejected, even when filesystem identity
+  or timestamp values are reused. Handles are closed on completion, rejection and cancellation.
+- Help tests compare option metadata rather than terminal line wrapping. CI uses frozen
+  dependencies and an Ubuntu/macOS × Python 3.12/3.13 ordinary-test matrix.
+
 - Isolated native test reports now use the app's private source copy instead of the observer-only
   `/results` mount. Bounded regular-file checks reject missing, linked, oversized and invalid UTF-8
   reports; native report bytes remain in hash-bound evidence alongside stdout and stderr.

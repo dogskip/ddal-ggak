@@ -20,7 +20,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --frozen --extra dev
       - name: Ruff lint
         run: uv run ruff check src/ tests/ scripts/
       - name: Ruff format check
@@ -31,17 +31,22 @@ jobs:
         run: uv run pyright src/
 
   test:
-    name: Unit & Integration Tests
-    runs-on: ubuntu-latest
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --frozen --extra dev --python "${{ matrix.python }}"
       - name: Run tests (excluding opt-in browser and Docker tests)
-        run: uv run pytest tests/ -q -m "not playwright and not docker" --tb=short --cov=src/ddk --cov-report=term-missing
+        run: uv run pytest tests/ -q -m "not playwright and not docker and not integration" --tb=short --cov=src/ddk --cov-report=term-missing
 
   package:
     name: Build & install the wheel
@@ -77,7 +82,7 @@ jobs:
         with:
           node-version: "22"
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --frozen --extra dev
       - name: Install headless Chromium and its system libraries
         run: uv run python -m playwright install --with-deps --only-shell chromium
       - name: Run the whole loop for real
@@ -94,6 +99,6 @@ jobs:
         with:
           enable-cache: true
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --frozen --extra dev
       - name: Audit dependencies for known CVEs
         run: uv run pip-audit --ignore-vuln CVE-2026-4539

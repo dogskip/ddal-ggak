@@ -28,8 +28,9 @@ The pre-change ordinary test suite passed 2,496 tests (72 deselected) on macOS A
 
 | Stage | Commit | Gate evidence | Remaining risk | Approval needed |
 | --- | --- | --- | --- | --- |
-| P2-1 | P2 stage commit | G0 all six commands passed on macOS and Linux: 2,579 ordinary tests each. Fixed 3-source preparation: 18 fresh contexts/hash matches; independent oracle: 9 source states / 27 checks with 6 expected counterexample failures. Sixteen paired-record tests passed | No paid model episodes or reviewed measurements; command-only Case approval/compilation remains explicit; calibration ingestion is absent | Approve criteria, host/model and spend ceiling before any paid comparison |
-| P2-2 | P2 stage commit | Fourteen cost/privacy/unknown/integrity tests passed; 27 JSON routes and 37 CLI routes; all source modules referenced | Per-record observations, not invoice settlement or a global atomic snapshot | None |
+| P2 browser Cases | This change, `feat(bench): seal reviewed browser cases for pinned sources` | 58 focused checks; 9 actual-source browser decisions and 9 viewport checks; full G0 and package checks below | No model comparison, reviewed measurement or calibration ingestion | Approve the three draft hashes, execution host/model and budget before a measured episode |
+| P2-1 | `a6749d2` | G0 all six commands passed on macOS and Linux: 2,579 ordinary tests each. Fixed 3-source preparation: 18 fresh contexts/hash matches; independent oracle: 9 source states / 27 checks with 6 expected counterexample failures. Sixteen paired-record tests passed | At this checkpoint, native Case compilation was manual; calibration ingestion remains absent | Approve criteria, host/model and spend ceiling before any paid comparison |
+| P2-2 | `a6749d2` | Fourteen cost/privacy/unknown/integrity tests passed; 27 JSON routes and 37 CLI routes; all source modules referenced | Per-record observations, not invoice settlement or a global atomic snapshot | None |
 | P1-1 | `584aaeb` | 35 command routes / 25 JSON routes; old-name warnings and separate case-path/ID options; all-command English/Korean help checks | Preflight now follows doctor's optional-provider warning; unsupported legacy runtime settings still block | None |
 | P1-2 | `584aaeb` | Six precedence/origin/privacy checks and existing settings diagnostics passed | Listed application settings only; provider charging still needs explicit grants | None |
 | P1-3 | `584aaeb` | Import-reference check: 167 modules / 0 unreferenced; nine removed modules / 466 source lines (four requested plus five newly unreachable model dependencies) | Literal dynamic imports are covered; arbitrary computed imports require review | None |
@@ -183,8 +184,9 @@ created 18 independent contexts and local `bench-source` baseline commits. Nativ
 covered original, controlled-broken and manually restored source states for all three projects.
 The physical results are in `/tmp/ddk-harness-work/oracle-matrix/summary.json`. These are preparation
 and oracle checks, with zero product model calls; they are not a repair-effectiveness experiment or
-DDK acceptance of three independent production repositories. Case approval for these native-only
-projects remains explicit; browser-oriented bootstrap does not automatically compile them.
+DDK acceptance of three independent production repositories. At this checkpoint, browser-oriented
+bootstrap did not compile these native tasks. The browser Case follow-up below addresses that gap
+without relaxing the acceptance contract.
 
 `ddk stats` uses bounded, read-only metadata access and the existing canonical record/price/usage
 validation. It exposes numeric aggregates only. Missing or unsettled cost stays null, unknown
@@ -203,9 +205,9 @@ with the unchanged private-material exclusion. The fix renders the same three ca
 as documented inline manifest command aliases alongside the three canonical skills instead. No exclusion or security counterexample was relaxed.
 Native loading and distribution validation are repeated for this final representation.
 
-## Final local acceptance
+## Local acceptance at a6749d2
 
-The final source passed every G0 command on macOS ARM64 / Python 3.12.12 and the
+The `a6749d2` source passed every G0 command on macOS ARM64 / Python 3.12.12 and the
 Linux aarch64 / Python 3.12.3 test container. Each ordinary run passed **2,579** tests
 with 72 deliberately excluded. All 72 were exercised separately from macOS: **47**
 headless end-to-end tests, **5** headless integration tests and **20** Docker tests
@@ -229,7 +231,7 @@ remain unverified. Python 3.13.7 was used for the separate clean wheel installat
 not the full ordinary test suite.
 
 Both wheel and source archive pass privacy/runtime checks. All **188** packaged runtime files
-match the current source bytes. A separate Python 3.13 environment prints `ddk 2.0.0` through
+match that checkpoint's source bytes. A separate Python 3.13 environment prints `ddk 2.0.0` through
 both version interfaces, loads all three corpus tasks, returns a valid empty `stats` envelope
 without creating storage, and returns an unmeasured `bench` envelope with exit 1.
 Native Claude strict validation has no errors/warnings; its three canonical skills and friendly
@@ -243,8 +245,73 @@ Playwright API checks. Existing binaries were reused; no browser was installed f
 Fresh, unmodified model-comparison inputs are retained separately from the manual oracle
 counterexamples: `/tmp/ddk-harness-work/paired-contexts-unmeasured`. All 18 initial hashes were
 rechecked. The macOS `/tmp` alias was resolved before that descriptor-based check; the earlier
-alias-path rejection was not bypassed or weakened. These contexts still require approved Case
-criteria and model/spending authorization. No repair success percentage is reported.
+alias-path rejection was not bypassed or weakened. These are the previous corpus inputs; the
+follow-up below records the current unmeasured inputs. No repair success percentage is reported.
 
 No push, tag, PyPI publication, issue/PR, remote setting change or paid product-model invocation
 was executed. Protected source paths were excluded from agent inspection and modification.
+
+## P2 browser Case follow-up
+
+Preparation now creates three reviewable JSON drafts and identical browser fixture sources in
+both arms. Target and preservation remain independent required browser checks. Each task permits
+changes only to its original source file; changing the helper is outside scope. `seal` requires
+three exact reviewed draft hashes and compiles one immutable Case per task, shared across the
+three DDK trial directories. All plain directories remain free of DDK state. Neither command
+grants candidate execution or provider spending. Criteria are in [the Case notes](../benchmarks/BROWSER-CASES.md).
+
+Sealing validates all 18 directories before publishing Cases, including request hashes, duplicate
+rows, path containment, fixture bytes and complete pinned upstream source hashes. A changed initial
+tree cannot become valid by replacing the preparation's own hash declarations. Controlled mutation
+reconstruction selects the original file by SHA-256 rather than assuming the changed text occurs
+only once. Draft edits require their new reviewed hashes; unapproved drafts remain blocked.
+
+Review also produced an independent failing counterexample: an inherited Git `post-commit` wrote
+a canary while preparing temporary comparison repositories. Preparation now removes inherited
+Git configuration variables, ignores global/system configuration and attributes, omits templates,
+and disables hooks, filesystem monitors and signing for those new repositories only. The actual
+project's Git configuration and commit checks are unchanged. The focused regression, Case and
+distribution checks pass **58** tests, including **19** preparation/approval/fixture checks.
+
+Browser fixture review passed nine task/viewport combinations (320, 768 and 1280 px), with no
+horizontal overflow or browser console/page errors. Counter Add one and Reset changed actual
+state; Tab, Shift+Tab, Enter and Space operated the controls, with visible focus and 44 px targets.
+The fixed black/white colors have 21:1 contrast. Screenshots and DOM records are in
+`/tmp/ddk-harness-work/p2-case-browser-review/summary.json`; Python empty/error/host-package
+fallback cases are exercised by the focused test command.
+
+Five additional headless checks observed JS loading, module failure and empty-result states using
+explicitly controlled module responses. Those are fixture behavior checks, separate from the
+actual pinned-source scenarios. The draft's per-rule UI check is in the Case notes.
+
+The final source scenarios passed all nine expected decisions: manually restored candidates are
+ready (3), original controlled defects are blocked (3), and restored targets with a preservation
+regression are blocked (3). Every baseline preservation check passed, and each preservation
+counterexample retained a passing candidate target. All nine completed records passed offline
+replay integrity, current-source gate checks and cleanup checks. The independent oracle executed
+27 checks with process exits preserved. No coding model was invoked.
+Receipt: `/tmp/ddk-harness-work/p2-cases-hardened-engineering/engineering-summary.json`.
+
+Fresh unmodified comparison inputs are in `/tmp/ddk-harness-work/p2-cases-hardened-unmeasured`.
+All 18 initial hashes were checked again; none has a `.ddk` directory. The three complete drafts
+and their exact hashes are in `review-packet.json`. This is still owner review material, not an
+approved model experiment. The baseline remains `calibrated: false`.
+
+All six G0 commands passed on the final code on macOS ARM64 / Python 3.12.12 and Linux aarch64 /
+Python 3.12.3. Each ordinary suite passed **2,595** tests with 72 excluded, with no failures.
+Receipts: `/tmp/ddk-harness-work/p2-cases-hardened-g0.json` and
+`/tmp/ddk-harness-work/p2-cases-hardened-linux/g0.json`. The 2,667-test collection includes the
+previously verified 72 browser/Docker/provider-marked tests; those full sets were not rerun in
+this follow-up. The nine actual-source browser scenarios and nine viewport checks above are
+new macOS observations, not Linux browser acceptance or a model-effectiveness experiment.
+
+All four generated document checks passed. The surface still has 37 routes including three
+groups (34 terminal commands), 27 JSON-capable commands and 170 referenced source modules.
+The new public fixture makes 189 runtime files. Publication, paid model episodes and remote
+CI remain unexecuted. No previously protected source or unrelated work was inspected or edited.
+
+The wheel and source archive passed `scripts/check_wheel.py`. All 189 wheel runtime files match
+the source bytes. A clean Python 3.13.7 installation passed both version interfaces, fixture/corpus
+hash checks, empty read-only stats and an unmeasured bench response. Its preparation command also
+created 18 fresh unapproved inputs using the installed package. This is a package smoke test,
+not the full Python 3.13 suite. The package receipt is `/tmp/ddk-harness-work/p2-cases-package.json`.

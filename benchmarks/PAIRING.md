@@ -25,7 +25,8 @@ Pin the actual sampling configuration and record unsupported seed controls.
 Fetch the pinned public tags into private local clones. Preparation accepts existing clones and
 uses the existing Git snapshot/materialization code. It checks the commit, target-file hash and
 unique mutation position, creates independent `bench-source` Git repositories, and records initial
-hashes and exact request hashes. It never fetches dependencies or invokes a model.
+hashes and exact request hashes. The corpus also pins each complete permitted upstream source
+tree and the browser fixture program. It never fetches dependencies or invokes a model.
 
 ```sh
 uv run python scripts/paired_benchmark.py prepare \
@@ -38,9 +39,37 @@ uv run python scripts/paired_benchmark.py prepare \
 The destination must be new; an unsuccessful attempt is retained. `preparation.json` explicitly
 requires criteria approval. Before a model episode, an owner must approve the target/preservation
 criteria, fixed Case hashes, host/model revision, token/deadline limits and a total spend ceiling.
-For command-only projects, use the explicit [Case contract](../src/ddk/assets/verified-change/contract.schema.json);
-the current browser-oriented bootstrap does not automatically compile these three native cases.
-Preparation does not grant `trusted-local` execution or provider permission.
+Preparation produces three JSON `case-drafts/` files with `draft: true`, exact hashes and scope
+limited to the task's original source file. The same fixture program is committed in both arms.
+Click serves the actual Python formatter result, clsx imports the actual candidate module, and
+Hyperapp renders the actual candidate counter. The existing browser target/preservation contract
+is unchanged. Fixture modifications fall outside the approved change scope.
+
+After an owner reviews a draft, `seal` requires its exact SHA-256, not a blanket approval flag:
+
+```sh
+uv run python scripts/paired_benchmark.py seal \
+  --preparation /tmp/ddk-paired/preparation.json \
+  --approved-draft click-short-name=REVIEWED_CLICK_DRAFT_SHA256 \
+  --approved-draft clsx-object-flags=REVIEWED_CLSX_DRAFT_SHA256 \
+  --approved-draft hyperapp-events=REVIEWED_HYPERAPP_DRAFT_SHA256 \
+  --out /tmp/ddk-paired/sealed-cases.json
+```
+
+The uppercase values are explicit placeholders. An edited draft requires its new reviewed hash.
+Before creating a Case, sealing validates all 18 fresh directories, exact fixture bytes, requests,
+pair hashes and the complete pinned upstream tree reconstructed from the controlled regression.
+It rejects links, path escapes, duplicate rows and existing outputs. It compiles one immutable
+Case per task and imports that same record into all three DDK directories. Plain directories
+receive no DDK state. The result lists Case IDs, hashes and paths for the cohort's `case_sha256`.
+If a later operation fails, partial Case records are retained; use fresh preparation for a retry.
+Neither preparation nor sealing grants `trusted-local` execution, provider permission or a spend
+allowance. Compiling a Case observes the host browser but does not run candidate code.
+
+For a DDK episode, select the sealed ID with `ddk up --case-id CASE_ID --repo CANDIDATE --json`;
+add `--trusted-local` only under a separate execution grant. Use the unchanged initial Git commit
+as the baseline. Do not compile a new Case after a model has modified the candidate. See the
+[browser Case notes](BROWSER-CASES.md) for criteria, draft design and local engineering evidence.
 
 ## Matched execution
 

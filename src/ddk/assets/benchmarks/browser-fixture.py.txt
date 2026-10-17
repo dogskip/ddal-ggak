@@ -1,0 +1,97 @@
+"""Local browser fixtures for the pinned controlled-regression tasks."""
+
+import html
+import sys
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlsplit
+
+ROOT = Path(__file__).resolve().parent
+TASK = sys.argv[1]
+HEADER = """<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDK benchmark fixture</title><link rel="icon" href="data:,">
+<style>
+:root { color-scheme: light; color: #000; background: #fff; font: 1rem system-ui; }
+body { margin: 1rem; overflow-wrap: anywhere; }
+button { min-height: 44px; min-width: 44px; margin: .25rem; font: inherit;
+  color: #000; background: #fff; border: 2px solid #000; border-radius: 2px; }
+button:focus-visible { outline: 3px solid #000; outline-offset: 3px; }
+output { display: block; margin-block: 1rem; }
+</style><body><p>Benchmark fixture: draft without direction.</p>"""
+CLASSES = """<main><h1>Classes</h1><output id="result">Loading</output></main>
+<script type="module">
+try {
+  const {clsx} = await import('/src/index.js');
+  const value = location.pathname === '/target'
+    ? clsx({active: true, hidden: false}) : clsx('x', ['y'], null);
+  document.querySelector('#result').textContent = value || 'No result';
+} catch {
+  document.querySelector('#result').textContent = 'Source execution failed';
+}
+</script>"""
+COUNTER = """<div id="app"><p role="status">Loading</p></div>
+<script type="module">
+try {
+  const {app, h, text} = await import('/index.js');
+  const node = document.querySelector('#app');
+  app({init: 0, node, view: state => h('main', {}, [
+    h('h1', {}, text('Counter')), h('output', {id: 'count', 'aria-live': 'polite'}, text(state)),
+    h('button', {id: 'add', onclick: state => state + 1}, text('Add one')),
+    h('button', {id: 'reset', onclick: () => 0}, text('Reset'))
+  ])});
+} catch {
+  document.querySelector('#app').textContent = 'Source execution failed';
+}
+</script>"""
+
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        path = urlsplit(self.path).path
+        allowed_module = {"clsx-object-flags": "/src/index.js", "hyperapp-events": "/index.js"}.get(
+            TASK
+        )
+        if allowed_module and path == allowed_module:
+            content = (ROOT / allowed_module.lstrip("/")).read_bytes()
+            kind = "text/javascript"
+        elif path in {"/", "/target", "/preserve"}:
+            if TASK == "click-short-name":
+                sys.path.insert(0, str(ROOT / "src"))
+                try:
+                    import click
+
+                    if not Path(click.__file__).resolve().is_relative_to(ROOT / "src"):
+                        raise RuntimeError("candidate_package_required")
+                    value = click.format_filename("/scope/name.txt", shorten=path == "/target")
+                    value = value or "No result"
+                except Exception:
+                    value = "Source execution failed"
+                body = (
+                    '<main><h1>Filename</h1><output id="result">'
+                    + html.escape(value)
+                    + "</output></main>"
+                )
+            elif TASK == "clsx-object-flags":
+                body = CLASSES
+            else:
+                body = COUNTER
+            content = (HEADER + body + "</body></html>").encode()
+            kind = "text/html"
+        else:
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", kind + "; charset=utf-8")
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(content)
+
+    def log_message(self, *_):
+        pass
+
+
+if TASK not in {"click-short-name", "clsx-object-flags", "hyperapp-events"}:
+    raise ValueError("unknown_corpus_task")
+ThreadingHTTPServer(("127.0.0.1", int(sys.argv[2])), Handler).serve_forever()

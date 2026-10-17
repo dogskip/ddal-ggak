@@ -13,6 +13,7 @@ from pathlib import Path
 REQUIRED = (
     "ddk/__main__.py",
     "ddk/assets/benchmarks/paired-corpus.json",
+    "ddk/assets/benchmarks/browser-fixture.py.txt",
     "ddk/assets/demo/vite-app/package.json",
     "ddk/assets/demo/vite-app/package-lock.json",
     "ddk/assets/demo/vite-app/index.html",

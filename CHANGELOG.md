@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2.0.0] — 2026-10-18
 
+### Added
+
+- Paired benchmark preparation emits three unapproved browser Case drafts and identical fixture
+  sources in both comparison arms. Exact reviewed draft hashes are required to seal one shared
+  Case per task across three trials. Full upstream source hashes, execution permission and
+  provider spending remain separate checks; no model is invoked by preparation or sealing.
+- Temporary comparison baselines ignore inherited Git configuration, templates, hooks and signing;
+  preparation cannot silently execute an owner's commit hook.
+
 ### Changed — command and host integration
 
 - `change init` is the canonical preparation command; top-level `init`, `preflight`,

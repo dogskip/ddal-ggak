@@ -270,3 +270,5 @@ def test_corpus_pins_the_local_oracle_program():
     plan, _ = corpus()
     script = Path(__file__).resolve().parents[2] / "scripts/paired_benchmark.py"
     assert plan["oracle_sha256"] == hashlib.sha256(script.read_bytes()).hexdigest()
+    fixture = script.parents[1] / "src/ddk/assets/benchmarks/browser-fixture.py.txt"
+    assert plan["fixture_sha256"] == hashlib.sha256(fixture.read_bytes()).hexdigest()

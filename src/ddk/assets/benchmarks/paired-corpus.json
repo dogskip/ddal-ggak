@@ -16,7 +16,8 @@
       "before": "filename = os.path.basename(filename)",
       "after": "filename = os.fspath(filename)",
       "request": "Restore filename shortening, including invalid UTF-8 bytes. Preserve full paths when shorten is false.",
-      "source_sha256": "8025287b0740840f902c15141f1acb878ba3ea6ed3d568d964c34fbd1d08ed80"
+      "source_sha256": "8025287b0740840f902c15141f1acb878ba3ea6ed3d568d964c34fbd1d08ed80",
+      "source_tree_sha256": "c3e92516bd8937ca83d10e1ce57145b2a76cf7cf56940b7606b29e87ba424719"
     },
     {
       "id": "clsx-object-flags",
@@ -27,7 +28,8 @@
       "before": "if (mix[y]) {",
       "after": "if (!mix[y]) {",
       "request": "Restore truthy object-key class selection. Preserve nested string arrays and omission of falsy arguments.",
-      "source_sha256": "a577c500f65ed167cea489dd39c149c36880f959fc6ca24e4e1cc545cb7a53e1"
+      "source_sha256": "a577c500f65ed167cea489dd39c149c36880f959fc6ca24e4e1cc545cb7a53e1",
+      "source_tree_sha256": "dd3de7df69ee1286cf37a27c939345cfa70557d9c4841b2763a15711734591b8"
     },
     {
       "id": "hyperapp-events",
@@ -38,8 +40,10 @@
       "before": "node.addEventListener(key, listener)",
       "after": "node.removeEventListener(key, listener)",
       "request": "Restore event registration so the counter increments on clicks. Preserve initial rendering and reset behavior.",
-      "source_sha256": "975dd5b1b45f27e2897d658ca58e8d4f0c71567feff6df22048ff2ff205fc9ea"
+      "source_sha256": "975dd5b1b45f27e2897d658ca58e8d4f0c71567feff6df22048ff2ff205fc9ea",
+      "source_tree_sha256": "9279c3b7dfc825dc349b5e7a03e84a97b8bed6b9105ca99d59eebf506748abf7"
     }
   ],
-  "oracle_sha256": "6383f2cf974e701483a315bc5557369a131f840417b39183b1874dbbee6caf3d"
+  "oracle_sha256": "df8d8b78f30b42fe251741c78f868e0cab135443498d23dedffe619e7c0e938f",
+  "fixture_sha256": "0fa8970aa3b0fd91df0ff0421112c5b015f4ddfd2b8663d039e60ac462f9850c"
 }

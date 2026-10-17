@@ -24,7 +24,8 @@
 
 고정한 공개 태그의 사본을 별도 폴더에 준비합니다. 준비 명령은 기존 Git 조회·복사 기능을
 사용해 커밋·파일 해시·유일한 변경 위치를 확인하고, 독립된 `bench-source` 저장소를 만듭니다.
-초기 소스·요청 해시를 보관하며 의존성 설치나 모델 호출은 수행하지 않습니다.
+초기 소스·요청 해시를 보관하며 전체 허용 소스와 시험용 프로그램도 해시로 고정합니다.
+의존성 설치나 모델 호출은 수행하지 않습니다.
 
 ```sh
 uv run python scripts/paired_benchmark.py prepare \
@@ -36,10 +37,38 @@ uv run python scripts/paired_benchmark.py prepare \
 
 대상 폴더는 새 경로여야 하며 실패한 시도의 자료도 유지합니다. `preparation.json`의 상태는
 기준 승인 필요입니다. 모델 실행 전에 목표·보존 검사, Case 해시, 실행 도구·모델 판,
-토큰·시간 상한과 총비용을 사용자가 승인해야 합니다. 명령 검사만 있는 프로젝트는
-[명시적 Case 규약](../src/ddk/assets/verified-change/contract.schema.json)을 사용합니다.
-현재 화면 중심의 초기화 기능이 이 세 사례의 기준을 자동 생성하지는 않습니다.
-준비만으로 `trusted-local` 실행이나 제공자 전송을 승인하지 않습니다.
+토큰·시간 상한과 총비용을 사용자가 승인해야 합니다.
+
+준비 결과에는 `draft: true`인 JSON 초안 3개와 각각의 해시가 포함됩니다. 변경 범위는
+기존 과제의 소스 파일 하나입니다. 두 조건에 같은 시험용 프로그램을 포함하며 Click은
+실제 Python 함수 결과를, clsx는 후보 모듈 결과를, Hyperapp은 실제 화면 동작을 확인합니다.
+목표·보존 조건의 브라우저 검사는 기존 Case 규약을 유지합니다. 시험용 프로그램의 변경은
+허용 범위에 포함하지 않습니다.
+
+검토한 초안의 SHA-256을 각각 지정해야 `seal`이 Case를 생성합니다.
+
+```sh
+uv run python scripts/paired_benchmark.py seal \
+  --preparation /tmp/ddk-paired/preparation.json \
+  --approved-draft click-short-name=REVIEWED_CLICK_DRAFT_SHA256 \
+  --approved-draft clsx-object-flags=REVIEWED_CLSX_DRAFT_SHA256 \
+  --approved-draft hyperapp-events=REVIEWED_HYPERAPP_DRAFT_SHA256 \
+  --out /tmp/ddk-paired/sealed-cases.json
+```
+
+대문자 값은 예시용 표시입니다. 초안을 수정했다면 수정본을 검토한 해시가 필요합니다.
+생성 전에 18개 폴더의 초기 소스·요청·시험용 프로그램·중복 여부와 고정한 전체 소스를
+검사합니다. 링크·경로 이탈·기존 출력은 거부합니다. 과제마다 Case 하나를 생성해 DDK
+조건의 세 폴더에 같은 기록을 등록합니다. 일반 조건에는 DDK 기록을 생성하지 않습니다.
+결과에 Case ID·해시·경로를 포함하며 비교 조건의 `case_sha256`에 사용합니다. 후반부에서
+실패하면 부분 기록을 유지하므로 새 준비 자료에서 재시도해야 합니다.
+준비와 Case 생성은 사용자 권한 실행·제공자 전송·비용 지출을 승인하지 않습니다.
+Case 생성은 설치된 브라우저를 확인하지만 후보 코드는 실행하지 않습니다.
+
+DDK 조건은 `ddk up --case-id CASE_ID --repo CANDIDATE --json`으로 같은 Case를 선택하며,
+별도 실행 승인 아래에서만 `--trusted-local`을 추가합니다. 초기 Git 커밋을 기준으로 유지하고
+모델 수정 후 새 Case를 생성하지 않습니다. 기준과 시험 결과는
+[브라우저 Case 설명](BROWSER-CASES.md)에 정리합니다.
 
 ## 같은 조건의 실행
 

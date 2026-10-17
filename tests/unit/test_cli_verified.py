@@ -176,9 +176,13 @@ def test_host_execution_requires_explicit_cli_selection(tmp_path, service):
 
 
 def test_trusted_local_help_discloses_host_authority_and_no_os_isolation():
-    result = runner.invoke(app, ["change", "verify", "--help"], terminal_width=180)
-    assert result.exit_code == 0, result.output
-    text = " ".join(result.output.replace("│", " ").split())
+    from typer.main import get_command
+
+    from ddk.i18n import ENGLISH
+
+    command = get_command(app).commands["change"].commands["verify"]
+    parameter = next(p for p in command.params if "--trusted-local" in p.opts)
+    text = ENGLISH.get(parameter.help, parameter.help)
     assert "host permissions" in text
     assert "no OS isolation" in text
 

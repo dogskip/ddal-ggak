@@ -70,7 +70,8 @@ class TestHelp:
         assert not stray, "Korean in English help:\n" + "\n".join(stray)
 
     def test_korean_help_is_still_korean(self) -> None:
-        assert HANGUL.search(_help_pages("ko")["run"])
+        missing = [name for name, page in _help_pages("ko").items() if not HANGUL.search(page)]
+        assert not missing, missing
 
     def test_run_help_explains_the_prompt_is_optional(self, english_help: dict[str, str]) -> None:
         from typer.main import get_command

@@ -1,0 +1,33 @@
+{
+  "name": "ddk",
+  "version": "2.0.0",
+  "description": "Evidence-based verification and bounded evidence inspection.",
+  "author": {
+    "name": "dogskip"
+  },
+  "license": "MIT",
+  "skills": [
+    "./plugins/claude/skills/"
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ddk change gate --repo \"${CLAUDE_PROJECT_DIR:-.}\" --json >&2 || exit 2",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "ddk": {
+      "command": "ddk",
+      "args": [
+        "serve"
+      ]
+    }
+  }
+}

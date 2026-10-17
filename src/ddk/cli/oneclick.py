@@ -7,6 +7,7 @@ from pathlib import Path
 
 import typer
 
+from ddk.i18n import t
 from ddk.models.verified_change import Record, decode_json
 from ddk.security.file_access import read_regular
 from ddk.services.case_bootstrapper import CaseBootstrapper
@@ -16,6 +17,7 @@ from ddk.services.verified_index import VerifiedIndexCatalog
 from ddk.services.verified_repair import RepairProvider, RepairRequest
 
 from .app import app
+from .contract import command_name, warn_deprecated
 from .verified import change_app, execute_command, repair_provider
 
 
@@ -23,10 +25,8 @@ def select_provider(kind: str, endpoint: str | None = None) -> RepairProvider:
     return repair_provider(kind, endpoint)
 
 
-@app.command(
-    "init", help="Generate a fixed verification case from reviewed checks and observed inputs."
-)
-@change_app.command("init", help="Generate a verification case without manual hashes.")
+@app.command("init", help=t("호환 명령. change init으로 고정 검증 기준을 생성합니다."))
+@change_app.command("init", help=t("검토한 검사와 관측 자료로 고정 검증 기준을 생성합니다."))
 def initialize(
     request: str = typer.Option("Verify current changes", "--request"),
     repo: Path = typer.Option(Path("."), "--repo"),
@@ -39,6 +39,9 @@ def initialize(
     dry_run: bool = typer.Option(False, "--dry-run"),
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
+    if command_name() == "init":
+        warn_deprecated("init", "change init")
+
     async def execute() -> Record:
         if (discover and approve_draft) or (preview is not None and not discover):
             raise ValueError("invalid_init_selection")
@@ -56,17 +59,17 @@ def initialize(
     execute_command(as_json, lambda: asyncio.run(execute()))
 
 
-@change_app.command("reindex", help="Rebuild the disposable catalog from validated canonical JSON.")
+@change_app.command("reindex", help=t("검증한 정본 JSON으로 재생성 가능한 조회 목록을 구성합니다."))
 def reindex(
     repo: Path = typer.Option(Path("."), "--repo"), as_json: bool = typer.Option(False, "--json")
 ) -> None:
     execute_command(as_json, lambda: VerifiedIndexCatalog(VerifiedChangeStore(repo)).reindex_all())
 
 
-@app.command("up", help="Snapshot, verify, optionally repair, then export and preview or apply.")
+@app.command("up", help=t("변경을 보관·검사하고, 선택한 수정·내보내기·반영을 수행합니다."))
 def one_command(
     request: str | None = typer.Argument(None),
-    case_id: str | None = typer.Option(None, "--case"),
+    case_id: str | None = typer.Option(None, "--case-id", "--case"),
     repo: Path = typer.Option(Path("."), "--repo"),
     git_base: str = typer.Option("HEAD", "--git-base"),
     repair: bool = typer.Option(False, "--repair"),
@@ -83,6 +86,8 @@ def one_command(
     confirm_local_storage: bool = typer.Option(False, "--confirm-local-storage"),
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
+    warn_deprecated("--case", "--case-id")
+
     async def execute() -> Record:
         from ddk.adapters.verified_provider import select_price
         from ddk.services.verified_up import up

@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2.0.0] — 2026-10-18
 
+### Changed — command and host integration
+
+- `change init` is the canonical preparation command; top-level `init`, `preflight`,
+  `rollback` and old `--case` spellings report deprecation. Case definitions use
+  `--case-file`; case IDs use `--case-id`. **Breaking:** global `-o` / `--output`
+  was removed; use each command's output option.
+- Settings resolve explicit options, environment, repository `.env`, `ddk.toml`
+  `[settings]`, then defaults. `config list --json` reports masked values and origins.
+- Generated bilingual command references and guide-structure checks reflect the actual CLI.
+  MCP has fourteen canonical `ddk_` names plus two compatibility aliases.
+- The local Claude plugin packages three generated skill adapters, a Stop gate and MCP.
+  The native loader confirms `/ddk:verify` without sending a user prompt to a model.
+- Removed four unused runtime modules and five types used only by the removed design-package
+  model, plus their dedicated tests. Active runtime and security tests remain in place.
+  The source import-reference check now includes literal dynamic imports.
+- Public-copy proof refusals include stable identity/requirements reason codes.
+- Expired Pygments CVE-2026-4539 audit ignore removed. MCP minimum/lock advanced to
+  the fixed 1.30.0 release after the unfiltered audit reported CVE-2026-59951.
+
 ### Changed — public response contract
 
 - **Breaking:** all JSON-capable CLI commands and MCP tools use the `ddk/2` response envelope.

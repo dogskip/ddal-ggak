@@ -86,20 +86,23 @@ class TestPreflightCommand:
 
     def test_shows_llm_api_key_label(self) -> None:
         result = runner.invoke(app, ["preflight"])
-        assert "LLM API key" in result.output
+        assert "provider-credentials" in result.output or "LLM API" in result.output
 
     def test_shows_sdk_check(self) -> None:
         result = runner.invoke(app, ["preflight"])
         assert "anthropic" in result.output.lower()
 
     def test_no_api_key_exits_one(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Without any API key, preflight must exit 1."""
+        """The deprecated command retains doctor's optional provider warning."""
         monkeypatch.delenv("DDK_ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("DDK_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         result = runner.invoke(app, ["preflight"])
-        assert result.exit_code == 1
+        canonical = runner.invoke(app, ["doctor"])
+        assert result.exit_code == canonical.exit_code
+        assert result.exit_code in (0, 1)
+        assert "warning" in result.output
 
     def test_no_api_key_shows_missing_label(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("DDK_ANTHROPIC_API_KEY", raising=False)

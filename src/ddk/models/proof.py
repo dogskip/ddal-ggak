@@ -76,6 +76,7 @@ class ClaimGateResult(DDKBaseModel):
     allowed: bool
     satisfied: list[str] = Field(default_factory=list)
     unmet: list[str] = Field(default_factory=list)
+    reason_codes: list[str] = Field(default_factory=list)
     evidence: list[EvidenceRef] = Field(default_factory=_empty_evidence_refs)
 
 

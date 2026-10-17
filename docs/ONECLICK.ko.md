@@ -44,7 +44,7 @@ ddk up "제목 변경과 기존 이동 보존" --trusted-local --json
 자동 준비는 실제 호스트 환경을 이 보장 수준으로 기록하며 `isolated`로 높이지 않습니다.
 별도로 준비한 기존 격리 case는 계속 사용할 수 있습니다. 소스·기준·실행 정의·실제 Chromium
 SHA-256·폰트·의존성 고정 파일·설치 이미지·OS·Python을 자동 기록합니다.
-`ddk init --request "..."`와 `ddk change init`은 검사를 실행하지 않고 같은 case를 생성합니다.
+`ddk change init --request "..."`와 `ddk change init`은 검사를 실행하지 않고 같은 case를 생성합니다.
 
 `--from-design design-package/`는 `manifest.json`의 요구와 선택적인 `verification.json`을 가져옵니다.
 검사에 대응한 `check_ids`는 보존합니다. 대응이 없는 요구는 검토 대상으로 기록하며 통과시키지 않습니다.
@@ -56,10 +56,10 @@ SHA-256·폰트·의존성 고정 파일·설치 이미지·OS·Python을 자동
 ## 인수 기준 초안과 승인
 
 ```bash
-ddk init --discover --json
-ddk init --discover --url 'python3 -m http.server {port} --bind 127.0.0.1' --confirm-execution --json
+ddk change init --discover --json
+ddk change init --discover --url 'python3 -m http.server {port} --bind 127.0.0.1' --confirm-execution --json
 # 초안을 검토하고 목표 검사·보존 검사·허용 경로·실행 명령을 정의합니다.
-ddk init --approve-draft --json
+ddk change init --approve-draft --json
 ddk up "제목 변경과 기존 이동 보존" --trusted-local --json
 ```
 
@@ -81,8 +81,8 @@ ddk up "제목 변경과 기존 이동 보존" --trusted-local --json
 ## 수정과 반영
 
 ```bash
-ddk up --case CASE_UUID --repair --confirm-provider --trusted-local --json
-ddk up --case CASE_UUID --apply --trusted-local \
+ddk up --case-id CASE_UUID --repair --confirm-provider --trusted-local --json
+ddk up --case-id CASE_UUID --apply --trusted-local \
   --confirm-local-storage --confirm-quiescence --json
 ```
 

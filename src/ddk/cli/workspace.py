@@ -12,11 +12,11 @@ from ddk.models.verified_change import Record
 from ddk.workspace.manager import WorkspaceManager
 
 from .app import app
-from .common import console, err_console, get_config
+from .common import console, err_console
 from .contract import CommandFailureError
 
 
-@app.command()
+@app.command(help=t("설치된 버전을 출력합니다."))
 def version() -> None:
     """Print the installed ddalggak version."""
     try:
@@ -28,46 +28,19 @@ def version() -> None:
     console.print(f"ddk {ver}")
 
 
-@app.command(help=t("환경 점검 — API 키, Python 버전, 의존성 확인."))
-def preflight() -> None:
-    """Check the API key, the Python version and the dependencies."""
-    cfg = get_config()
-    checks: list[tuple[str, bool, str]] = []
+@app.command(help=t("호환 명령 — doctor로 준비 상태를 점검합니다."))
+def preflight(
+    repo: Path = typer.Option(Path("."), "--repo"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    from .contract import warn_deprecated
 
-    import sys as _sys  # noqa: PLC0415
-
-    py_ok = _sys.version_info >= (3, 12)
-    checks.append(("Python >= 3.12", py_ok, f"Python {_sys.version.split()[0]}"))
-
-    provider_ok = cfg.llm_provider == "anthropic"
-    provider_detail = "anthropic" if provider_ok else f"unsupported: {cfg.llm_provider}"
-    checks.append(("LLM provider", provider_ok, provider_detail))
-
-    api_ok = provider_ok and bool(cfg.anthropic_api_key)
-    checks.append(("LLM API key", api_ok, "set" if api_ok else "missing"))
-
-    sandbox_ok = cfg.sandbox_mode == "tempdir"
-    sandbox_detail = "tempdir" if sandbox_ok else f"unsupported: {cfg.sandbox_mode}"
-    checks.append(("Sandbox mode", sandbox_ok, sandbox_detail))
-
-    try:
-        import anthropic as _  # noqa: F401, PLC0415
-
-        checks.append(("anthropic SDK", True, "installed"))
-    except ImportError:
-        checks.append(("anthropic SDK", False, "not installed — run: uv add anthropic"))
-
-    for label, ok, detail in checks:
-        icon = "✅" if ok else "❌"
-        console.print(f"  {icon} {label}: {detail}")
-
-    all_ok = all(ok for _, ok, _ in checks)
-    if not all_ok:
-        raise typer.Exit(1)
-    console.print("\n[green]All checks passed.[/green]")
+    warn_deprecated("preflight", "doctor")
+    doctor(repo=repo, dry_run=dry_run, as_json=as_json, install_browser=False)
 
 
-@app.command(help=t("환경 점검 — Python, uv, API 키, Node.js, git, 헤드리스 Chromium 확인."))
+@app.command(help=t("환경 점검 — Python, API 키, Node.js, git, 헤드리스 Chromium 확인."))
 def doctor(
     dry_run: bool = typer.Option(False, "--dry-run"),
     as_json: bool = typer.Option(False, "--json"),
@@ -102,7 +75,13 @@ def doctor(
     result = asyncio.run(readiness(repo))
     emit_result(result, False)
     table = Table("Check", "Status", "Action")
-    names = {"python": "Python", "chromium": "Headless Chromium", "settings": t("설정 값")}
+    names = {
+        "python": "Python",
+        "legacy-sdk": "anthropic SDK",
+        "chromium": "Headless Chromium",
+        "settings": t("설정 값"),
+        "provider-credentials": "provider-credentials (" + t("LLM API 키") + ")",
+    }
     icons = {"ready": "✅", "warning": "⚠️", "blocked": "❌"}
     for row in result["checks"]:
         table.add_row(

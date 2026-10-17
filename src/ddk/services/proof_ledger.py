@@ -64,6 +64,14 @@ class ClaimGate:
         return ClaimGateResult(
             claim_type="identity",
             allowed=identity_exists and prd_exists,
+            reason_codes=[
+                code
+                for present, code in [
+                    (identity_exists, "missing_identity_document"),
+                    (prd_exists, "missing_requirements_document"),
+                ]
+                if not present
+            ],
             satisfied=satisfied,
             unmet=unmet,
             evidence=[

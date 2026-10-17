@@ -83,7 +83,6 @@ def run(
     ),
 ) -> None:
     """Run the whole delivery loop for one case."""
-    cfg = get_config()
     overrides: dict[str, Any] = {}
     if install:
         overrides["install_dependencies"] = True
@@ -93,8 +92,7 @@ def run(
         overrides["ssim_threshold"] = ssim_threshold
     if max_mismatch is not None:
         overrides["max_mismatch_ratio"] = max_mismatch
-    if overrides:
-        cfg = cfg.model_copy(update=overrides)
+    cfg = get_config(repo, overrides)
     repo_path = repo.resolve()
 
     # Fail fast on bad preconditions BEFORE mutating the filesystem: validate the
@@ -371,6 +369,9 @@ def rollback(
     ),
 ) -> None:
     """Reject whole-repository resets and point to owned application recovery."""
+    from .contract import warn_deprecated
+
+    warn_deprecated("rollback", "change recover")
     err_console.print(
         t("❌ Git 전체 초기화 복구는 제공하지 않습니다. 관리된 반영 기록으로 복구하세요.")
     )

@@ -1,0 +1,14 @@
+{
+  "name": "ddk-local",
+  "owner": {
+    "name": "dogskip"
+  },
+  "plugins": [
+    {
+      "name": "ddk",
+      "source": "./",
+      "description": "Evidence-based verification and bounded evidence inspection."
+    }
+  ],
+  "description": "Local evidence verification skills and MCP tools."
+}

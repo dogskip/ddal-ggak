@@ -46,7 +46,7 @@ Automatic bootstrap currently records the observed host environment at this assu
 that evidence to isolated assurance. Existing explicitly prepared isolated cases remain supported.
 The compiler records source, criteria, execution plan, actual Chromium SHA-256, fonts, lockfiles,
 manifests, existing Docker image digests, OS and Python. No manual digest assembly is required.
-`ddk init --request "..."` and `ddk change init` create the same case without executing checks.
+`ddk change init --request "..."` and `ddk change init` create the same case without executing checks.
 `--from-design design-package/` imports `manifest.json` requirements and an optional `verification.json`
 with the same checks/configuration structure. Unmapped design requirements require review and block
 acceptance; explicitly mapped `check_ids` are preserved.
@@ -61,10 +61,10 @@ linked requirement with `allow_delete=true` and an allowed path. Permissions rem
 ## Discover and approve acceptance drafts
 
 ```bash
-ddk init --discover --json
-ddk init --discover --url 'python3 -m http.server {port} --bind 127.0.0.1' --confirm-execution --json
+ddk change init --discover --json
+ddk change init --discover --url 'python3 -m http.server {port} --bind 127.0.0.1' --confirm-execution --json
 # Review .ddk/verify.draft.toml; add request-specific target, preserve, scope and preview definitions.
-ddk init --approve-draft --json
+ddk change init --approve-draft --json
 ddk up "Change heading and preserve navigation" --trusted-local --json
 ```
 
@@ -88,8 +88,8 @@ precedence and hashes in criteria/bootstrap.json; changing or shadowing them reo
 ## Repair and application
 
 ```bash
-ddk up --case CASE_UUID --git-base HEAD --repair --confirm-provider --trusted-local --json
-ddk up --case CASE_UUID --git-base HEAD --apply --trusted-local \
+ddk up --case-id CASE_UUID --git-base HEAD --repair --confirm-provider --trusted-local --json
+ddk up --case-id CASE_UUID --git-base HEAD --apply --trusted-local \
   --confirm-local-storage --confirm-quiescence --json
 ```
 

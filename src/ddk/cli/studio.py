@@ -14,7 +14,7 @@ from ddk.i18n import t
 from ddk.models.config import DdalggakConfig
 
 from .app import design_app
-from .common import console, get_config, require_api_key, state
+from .common import console, get_config, require_api_key
 
 
 @design_app.command(
@@ -31,7 +31,7 @@ def design_new(
 ) -> None:
     """Interview the user about an idea, then write the design documents."""
     cfg = get_config()
-    out_dir = output if output != Path(".") else state.output_dir
+    out_dir = output
 
     require_api_key(cfg)
 

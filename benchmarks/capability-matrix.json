@@ -23,7 +23,7 @@
       "classification": "elevate",
       "evidence": [
         {"kind": "code", "path": "src/ddk/design/interviewer.py", "description": "interview-driven elicitation"},
-        {"kind": "code", "path": "src/ddk/models/design_requirement.py", "description": "requirement model"},
+        {"kind": "code", "path": "src/ddk/services/case_bootstrapper.py", "description": "approved acceptance-case compilation"},
         {"kind": "test", "path": "tests/unit/test_design.py", "description": "design studio tests"}
       ]
     },
@@ -61,7 +61,7 @@
       "classification": "elevate",
       "evidence": [
         {"kind": "code", "path": "src/ddk/services/scorecard_calculator.py", "description": "quality scorecard"},
-        {"kind": "code", "path": "src/ddk/models/design_quality.py", "description": "design quality model"},
+        {"kind": "code", "path": "src/ddk/models/scorecard.py", "description": "deterministic runtime and visual scorecard"},
         {"kind": "test", "path": "tests/unit/services/test_scorecard_calculator.py", "description": "scorecard tests"}
       ]
     },
@@ -125,7 +125,7 @@
       "classification": "elevate",
       "evidence": [
         {"kind": "code", "path": "src/ddk/services/rollback_controller.py", "description": "checkpoint + rollback"},
-        {"kind": "code", "path": "src/ddk/models/llm.py", "description": "LLMCallRecord reproducibility metadata"},
+        {"kind": "code", "path": "src/ddk/services/verified_change_store.py", "description": "canonical request and run metadata"},
         {"kind": "test", "path": "tests/unit/phase4/test_rollback_controller.py", "description": "rollback tests"}
       ]
     },

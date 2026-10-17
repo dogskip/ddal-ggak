@@ -83,15 +83,15 @@ Use `ddk change <command> --help` for complete options.
 
 | Command | Main inputs | Behavior |
 | --- | --- | --- |
-| `verify` | `--case` or `--case-id`, `--baseline`, `--candidate`, optional `--run-id` and mappings | Check fixed criteria; `--case` also imports the definition |
-| `status` | `--run-id` | Validate and inspect saved state; never restart work or create a repository |
-| `export` | `--run-id`, new ZIP `--destination` | Export review JSON and permitted evidence without overwriting an existing archive |
-| `apply` | Case/run IDs, run/change hashes, `--confirm-local-storage`, `--confirm-quiescence` | Managed apply of a ready result; default required assurance is isolated |
-| `recover` | `--apply-id`, local-storage, same-host and quiescence confirmations | Recover interrupted work after its owner ends; compare current contents and preserve external changes |
+| `ddk change verify` | `--case-file` or `--case-id`, `--baseline`, `--candidate`, optional `--run-id` and mappings | Check fixed criteria; `--case-file` also imports the definition |
+| `ddk change status` | `--run-id` | Validate and inspect saved state; never restart work or create a repository |
+| `ddk change export` | `--run-id`, new ZIP `--destination` | Export review JSON and permitted evidence without overwriting an existing archive |
+| `ddk change apply` | Case/run IDs, run/change hashes, `--confirm-local-storage`, `--confirm-quiescence` | Managed apply of a ready result; default required assurance is isolated |
+| `ddk change recover` | `--apply-id`, local-storage, same-host and quiescence confirmations | Recover interrupted work after its owner ends; compare current contents and preserve external changes |
 
 `--repo` identifies record storage and the apply target. `--json` writes JSON only to stdout, with
-diagnostics on stderr. Exit codes: ready 0; blocked/manual-review 1; invalid input/unavailable 2;
-cancellation 130. An omitted run ID gets a UUID. The same ID and request reads saved state; different
+diagnostics on stderr. Exit codes follow the generated [registry](EXIT-CODES.md): ready 0; blocked 1; usage 2;
+configuration 3; unavailable execution 4; integrity failure 5; cancellation 130. An omitted run ID gets a UUID. The same ID and request reads saved state; different
 inputs with the same ID conflict.
 
 Default exports exclude sensitive originals, model responses, screenshots and logs.
@@ -158,17 +158,20 @@ not replay of uncertain provider calls. Automatic reconciliation of unknown char
 
 ## MCP and current limits
 
-`ddk serve` exposes eight verified-change tools alongside existing design/preflight/version tools.
+`ddk serve` exposes fourteen canonical `ddk_` tools and the two legacy aliases `design_new` and
+`preflight`. The canonical names are `ddk_design_new` and `ddk_preflight`.
 `ddk_verify` remains isolated-only. New repair, apply and probe tools require both server-owner and
 per-request grants, with an additional owner grant for trusted-local execution. See the
 [authorization contract](ONECLICK.md#catalog-and-mcp). Status preserves the stored assurance.
 
 Required-check failure is a normal blocked result. Invalid input and unavailable execution are tool
-errors; persisted run IDs remain inspectable. Testing covers SDK 1.28.1 and negotiated revision
+errors; persisted run IDs remain inspectable. Testing covers SDK 1.30.0 and negotiated revision
 2025-11-25, not every client or later revision. Tool annotations do not replace authorization; see the
 [MCP tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools).
 Oversized, excessively nested, duplicate-key or invalid UTF-8 requests terminate stdio without
 manufacturing successful replies or deleting saved runs.
+
+## Current limits
 
 Guided case compilation, native report formats and CLI/MCP repair are implemented. Live paid-model
 quality, representative real-project portability and independent first-use evidence remain open.

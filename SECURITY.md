@@ -4,7 +4,7 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+| 2.0.x   | :white_check_mark: |
 | < 1.0   | :x:                |
 
 ## Reporting a Vulnerability
@@ -45,7 +45,7 @@ prevent credential leakage into that context (`services/context_pack_builder.py`
 
 1. **Secret-file exclusion** — files matching `security/secret_paths.py`
    (`.env`, `*.pem`, `*.key`, `id_rsa`, `.aws/`, `.ssh/`, `.docker/config.json`, …)
-   are never read into a prompt. Safe templates (`.env.example`) are allowed.
+   are never read into a prompt. This also excludes `.env.example`; template status does not bypass the filename rule.
 2. **Inline redaction** — content that *is* included is passed through
    `redact_string`, scrubbing API keys, bearer/JWT tokens, and private-key blocks
    before the prompt leaves the machine.
@@ -122,3 +122,22 @@ or replace secret scanning. If a credential was committed, revoke it and assess 
 - `pip-audit` runs in CI on every push to detect known CVEs.
 - Dependency versions are pinned in `uv.lock` for reproducible builds.
 - Only well-maintained, actively-supported dependencies are used.
+
+### Expired dependency exception
+
+CI previously ignored CVE-2026-4539 (Pygments). The original exception rationale was
+not recorded, so it is not treated as an accepted security decision. The
+[GitHub advisory GHSA-5239-wwwm-4pmq](https://github.com/advisories/GHSA-5239-wwwm-4pmq)
+affects versions below 2.20.0; 2.20.0 is the first fixed version. `uv.lock` already
+pins 2.20.0, so the ignore was removed on 2026-10-18. The exception expires at the
+fixed version and must not be reintroduced for a dependency downgrade. CI audits
+the frozen dependencies without this exception.
+
+### MCP SDK minimum version
+
+The unfiltered audit on 2026-10-18 identified CVE-2026-59951 in MCP 1.28.1.
+The [upstream advisory](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-84m7-p3x7-pcfv)
+concerns stateful Streamable HTTP sessions; stdio-only servers are excluded from
+that affected configuration. DDK exposes stdio. Its dependency floor and lock were
+nevertheless advanced to the fixed 1.x release, 1.30.0, rather than adding another
+ignore. This does not claim a vulnerability in DDK's stdio transport.

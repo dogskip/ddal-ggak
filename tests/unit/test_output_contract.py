@@ -109,16 +109,17 @@ async def test_all_mcp_tools_use_the_same_contract_before_and_after_validation(m
             data = {"gate_status": "passed"}
         elif name == "ddk_replay":
             data = {"evidence_integrity": True}
-        elif name == "preflight":
+        elif name in {"preflight", "ddk_preflight"}:
             data = {"all_ok": True}
-        elif name == "design_new":
+        elif name in {"design_new", "ddk_design_new"}:
             data = {"success": True}
         text = "test-version" if name == "ddk_version" else json.dumps(data)
         return [TextContent(type="text", text=text)]
 
     monkeypatch.setattr(FastMCP, "call_tool", native_result)
     tools = await mcp.list_tools()
-    assert len(tools) == 14
+    assert len(tools) == 16
+    assert sum(tool.name.startswith("ddk_") for tool in tools) == 14
     for tool in tools:
         args = sample(tool.inputSchema, tool.inputSchema)
         result = await mcp.call_tool(tool.name, args)

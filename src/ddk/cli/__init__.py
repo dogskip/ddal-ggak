@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 # Each module registers its commands on the shared application when it is imported.
+from . import configuration as configuration
 from . import delivery as delivery
 from . import demo as demo
 from . import evidence as evidence

@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "feat/harness-*"]
+  workflow_dispatch:
   pull_request:
     branches: ["main"]
 
@@ -101,4 +102,4 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --extra dev
       - name: Audit dependencies for known CVEs
-        run: uv run pip-audit --ignore-vuln CVE-2026-4539
+        run: uv run pip-audit

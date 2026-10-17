@@ -55,6 +55,7 @@ class Session:
     command: str
     as_json: bool
     payload: Record | None = None
+    arguments: tuple[str, ...] = ()
 
 
 _SESSION: ContextVar[Session | None] = ContextVar("ddk_cli_response", default=None)
@@ -63,6 +64,16 @@ _SESSION: ContextVar[Session | None] = ContextVar("ddk_cli_response", default=No
 def command_name() -> str:
     session = _SESSION.get()
     return session.command if session else "ddk"
+
+
+def warn_deprecated(old: str, new: str) -> None:
+    session = _SESSION.get()
+    if old.startswith("--") and (
+        session is None
+        or not any(arg == old or arg.startswith(old + "=") for arg in session.arguments)
+    ):
+        return
+    sys.stderr.write(t("호환 이름 {old} 대신 {new}를 사용하세요.", old=old, new=new) + "\n")
 
 
 def capture(payload: Record) -> bool:
@@ -212,7 +223,9 @@ class ContractGroup(TyperGroup):
         **extra: Any,
     ) -> Any:
         arguments = list(sys.argv[1:] if args is None else args)
-        session = Session(self._command_label(arguments), "--json" in arguments)
+        session = Session(
+            self._command_label(arguments), "--json" in arguments, arguments=tuple(arguments)
+        )
         token = _SESSION.set(session)
         output = io.StringIO()
         failure: CommandFailureError | None = None

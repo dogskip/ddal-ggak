@@ -28,7 +28,14 @@ The pre-change ordinary test suite passed 2,496 tests (72 deselected) on macOS A
 
 | Stage | Commit | Gate evidence | Remaining risk | Approval needed |
 | --- | --- | --- | --- | --- |
-| P0-5 | `chore(release)` stage commit | G5: wheel/sdist asset/privacy checks passed; clean environment printed `ddk 2.0.0` with both version interfaces; 25 focused tests passed. G0: all six commands passed; 2,588 passed / 72 deselected | Release is prepared locally; distribution checks are not runtime acceptance | Tag, push and PyPI publication |
+| P1-1 | P1 stage commit | 35 command routes / 25 JSON routes; old-name warnings and separate case-path/ID options; all-command English/Korean help checks | Preflight now follows doctor's optional-provider warning; unsupported legacy runtime settings still block | None |
+| P1-2 | P1 stage commit | Six precedence/origin/privacy checks and existing settings diagnostics passed | Listed application settings only; provider charging still needs explicit grants | None |
+| P1-3 | P1 stage commit | Import-reference check: 167 modules / 0 unreferenced; nine removed modules / 466 source lines (four requested plus five newly unreachable model dependencies) | Literal dynamic imports are covered; arbitrary computed imports require review | None |
+| P1-4 | P1 stage commit | Generated commands, exits, support tables and Claude adapters current; five guide pairs have matching structures and command sets | Parity is structural, not a semantic translation audit | None |
+| P1-5 | P1 stage commit | Fourteen canonical MCP tools plus two aliases; 54 contract/server/real-stdio tests passed with MCP 1.30.0 | SDK/client coverage is bounded to tested revisions | None |
+| P1-6 | P1 stage commit | Claude 2.1.302 strict validator: 0 errors / 0 warnings; native control initialization lists `/ddk:verify`; three skills, one Stop hook and MCP | Discovery does not prove model obedience; no paid prompt was sent | None |
+| P1-7 | P1 stage commit | No known dependency vulnerabilities after removing the obsolete ignore and upgrading MCP; public-copy CLI reports two stable identity-refusal codes | Local unpublished DDK distribution itself is skipped by pip-audit | None |
+| P0-5 | `54758af` | G5: wheel/sdist asset/privacy checks passed; clean environment printed `ddk 2.0.0` with both version interfaces; 25 focused tests passed. G0: all six commands passed; 2,588 passed / 72 deselected | Release is prepared locally; distribution checks are not runtime acceptance | Tag, push and PyPI publication |
 | P0-4 | `ef66c46` | G0 passed on macOS ARM64 / Python 3.12.12 and Linux aarch64 container / Python 3.12.3: 2,564 passed, 72 deselected on each. G4: actionlint 1.7.12 passed; 37 focused tests passed; same-byte/reused-identity counterexample failed before the fix | One open reference per permitted source file; exhaustion blocks capture. Separate Linux host and Python 3.13 runtime evidence remain open | Remote CI run after an approved push |
 | P0-3 | `8dde8c2` | G3: 23 CLI routes with success/usage-error coverage; 14 MCP tool contracts; real stdio checks. G0: all six commands passed; pytest 2,560 passed / 72 deselected | Public response boundary is breaking; canonical bytes retained | None |
 | P0-2 | `17ae99a` | G2: three skills; all five CLI examples match the command tree; 29 focused tests passed including a recorded-response CLI dry plan. G0: all six commands passed; pytest 2,521 passed / 72 deselected | Recorded replies do not establish agent obedience or paid-model effectiveness | None |
@@ -116,3 +123,46 @@ They require user approval. The existing `release.yml` uses Trusted Publishing a
 agreement. The owner must first verify the PyPI publisher and GitHub `pypi` environment, review
 artifacts and confirm the exact HEAD's remote CI results. No tag or package publication is part
 of this local execution.
+
+## P1 implementation boundaries
+
+Work continues on `feat/harness-p1` after all five P0 stage commits passed G0.
+The protected paths remain excluded. The source reference check found the four requested
+unused modules; removing `design_package` made its five model-only dependencies unreachable.
+Those five types and only their dedicated serialization tests were also removed. No active
+security or runtime acceptance test was weakened. Public capability references now point to
+current acceptance compilation, runtime scorecard and canonical record storage.
+
+The configuration order is explicit option > environment > repository `.env` > `ddk.toml`
+`[settings]` > default. Source aliases are normalized before merging; a plain API-key environment
+variable therefore beats a prefixed key in a lower-priority file. Inspection masks credentials.
+
+The five public guide pairs have section, fenced-example and actual-command parity checks.
+Command/exit/support references and Claude adapters have deterministic regeneration checks.
+The native Claude 2.1.302 loader prioritizes a source skill's `name` over a manifest command-map
+key. A canonical source file therefore produced `/ddk:ddk-verify` in the first loader probe.
+The three generated plugin adapters only shorten that name and retain the canonical bodies
+and references. Native initialization now exposes `/ddk:design`, `/ddk:evidence`, `/ddk:verify`.
+The probe sent one initialize control request and **zero user messages**. It establishes native
+command discovery, not model compliance or paid-model effectiveness. Native strict manifest
+validation and component inventory also passed. Other host runtime discovery is unverified.
+
+Official sources: [plugin manifest](https://code.claude.com/docs/en/plugins-reference),
+[marketplace](https://code.claude.com/docs/en/plugin-marketplaces),
+[SDK initialize protocol](https://github.com/anthropics/claude-agent-sdk-python/blob/main/src/claude_agent_sdk/_internal/query.py).
+
+An audit without exceptions found MCP 1.28.1 / CVE-2026-59951. The
+[upstream advisory](https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-84m7-p3x7-pcfv)
+excludes stdio-only servers. The minimum and lock were still advanced to fixed MCP 1.30.0;
+DDK's transport is not represented as affected. Pygments was already fixed at 2.20.0,
+so its obsolete ignore was removed. Remote Actions settings and execution remain unverified.
+Feature-branch push filters and manual dispatch are prepared locally, without publishing.
+
+P1 acceptance: `/tmp/ddk-harness-work/p1-final-g0.json` records all six G0 exits as 0;
+2,540 ordinary tests passed, 72 were deselected. The focused run passed 414 tests.
+The first full attempt failed nine stale-name/diagnostic assertions and exposed missing
+unsupported-runtime checks plus an incomplete translated authority warning. The final change
+restores explicit host-permission/no-OS-isolation disclosure and checks unsupported providers,
+SDK availability and sandbox modes in doctor. Invalid settings are still checked before run I/O;
+the tests use that canonical diagnostic path. Optional provider credentials warn because pure
+verification does not require a model. No execution grant is inferred from that warning.

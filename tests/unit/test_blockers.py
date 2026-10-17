@@ -15,7 +15,6 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import typer
 
 from ddk.adapters.llm.base import LLMResponse
 from ddk.adapters.local_git import LocalGitAdapter
@@ -395,13 +394,13 @@ class TestB8LoggingActivation:
 
     def test_cli_callback_initializes_logging(self):
         """Verify the CLI callback calls configure_logging."""
-        import contextlib
+        from typer.testing import CliRunner
 
-        from ddk.cli import main as cli_callback
+        from ddk.cli import app
 
         with patch("ddk.logging.setup.configure_logging") as mock_log:
-            with contextlib.suppress(SystemExit, typer.Exit):
-                cli_callback(log_level="INFO", output=Path("."))
+            result = CliRunner().invoke(app, ["--log-level", "INFO", "version"])
+            assert result.exit_code == 0, result.output
             mock_log.assert_called_once()
 
 

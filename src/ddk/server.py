@@ -19,6 +19,7 @@ from mcp.types import Tool as MCPTool
 from pydantic import Field
 
 from ddk.cli.contract import envelope, operation_exit, response
+from ddk.i18n import t
 from ddk.models.verified_change import ContractError, Record, canonical_json, object_record
 from ddk.security.mcp_stdio import BoundedStdin
 from ddk.services.verified_repair import RepairProvider
@@ -99,9 +100,9 @@ class _BoundedFastMCP(FastMCP):
                 else:
                     record = object_record(json.loads(texts[0]))
             exit_code = operation_exit(name, record)
-            if name == "preflight":
+            if name in {"preflight", "ddk_preflight"}:
                 exit_code = 0 if record.get("all_ok") is True else 1
-            if name == "design_new" and record.get("success") is not True:
+            if name in {"design_new", "ddk_design_new"} and record.get("success") is not True:
                 answer = envelope(name, record, status="error", code="api_key_required")
             else:
                 answer = response(name, record, exit_code)
@@ -212,6 +213,7 @@ def ddk_status(run_id: _Identifier, repository: _PathValue = ".") -> str:
         raise _service_error(error) from None
 
 
+@mcp.tool(name="ddk_design_new", structured_output=False)
 @mcp.tool(structured_output=False)
 async def design_new(
     idea: str,
@@ -241,7 +243,9 @@ async def design_new(
         return json.dumps(
             {
                 "success": False,
-                "error": "ANTHROPIC_API_KEY 미설정. 방법: export DDK_ANTHROPIC_API_KEY=sk-ant-...",
+                "error": t(
+                    "ANTHROPIC_API_KEY 미설정. 방법: export DDK_ANTHROPIC_API_KEY=sk-ant-..."
+                ),
             }
         )
 
@@ -286,6 +290,7 @@ async def design_new(
     )
 
 
+@mcp.tool(name="ddk_preflight", structured_output=False)
 @mcp.tool(structured_output=False)
 def preflight() -> str:
     """DDK 환경 점검 — API 키, Python 버전, 의존성 확인.

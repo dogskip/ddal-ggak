@@ -172,7 +172,9 @@ async def test_actual_cli_stdio_lists_existing_tools_and_reports_errors(tmp_path
     async with connected(tmp_path, monkeypatch) as (session, _):
         tools = {tool.name: tool for tool in (await session.list_tools()).tools}
         assert set(tools) == {
+            "ddk_design_new",
             "design_new",
+            "ddk_preflight",
             "preflight",
             "ddk_version",
             "ddk_verify",

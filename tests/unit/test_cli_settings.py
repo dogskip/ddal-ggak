@@ -20,7 +20,7 @@ def _api_key(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_out_of_range_setting_is_named_with_its_value(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DDK_SSIM_THRESHOLD", "5")
 
-    result = runner.invoke(app, ["preflight"])
+    result = runner.invoke(app, ["run", "absent.png"])
 
     assert result.exit_code == 3
     assert "DDK_SSIM_THRESHOLD" in result.output
@@ -30,7 +30,7 @@ def test_out_of_range_setting_is_named_with_its_value(monkeypatch: pytest.Monkey
 def test_non_numeric_setting_is_named(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DDK_COST_CAP_USD", "lots")
 
-    result = runner.invoke(app, ["preflight"])
+    result = runner.invoke(app, ["run", "absent.png"])
 
     assert result.exit_code == 3
     assert "DDK_COST_CAP_USD" in result.output

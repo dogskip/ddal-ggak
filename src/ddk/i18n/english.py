@@ -32,8 +32,6 @@ ENGLISH: dict[str, str] = {
         "Design Studio — turn an idea into design documents"
     ),
     "로그 수준": "Log level",
-    "출력 폴더 (design new 에서 사용)": "Output folder (used by design new)",
-    # --- settings and shared errors
     "❌ 설정 오류 — 환경 변수나 .env 값을 확인하세요:": (
         "❌ Invalid settings — check your environment variables or .env:"
     ),
@@ -52,8 +50,8 @@ ENGLISH: dict[str, str] = {
         "❌ No cases found. Run `ddk run` first."
     ),
     "❌ case 폴더를 찾을 수 없습니다: {path}": "❌ Case folder not found: {path}",
-    "❌ 아직 지원하지 않는 LLM provider: {name}": "❌ LLM provider not supported yet: {name}",
-    "❌ 아직 지원하지 않는 sandbox mode: {name}": "❌ Sandbox mode not supported yet: {name}",
+    "❌ 아직 지원하지 않는 LLM provider: {name}": ("❌ LLM provider not supported yet: {name}"),
+    "❌ 아직 지원하지 않는 sandbox mode: {name}": ("❌ Sandbox mode not supported yet: {name}"),
     # --- run
     "디자인 이미지와 프롬프트로 전체 절차를 실행합니다.": (
         "Run the whole loop on a design image: generate, build, compare in a browser, "
@@ -97,11 +95,13 @@ ENGLISH: dict[str, str] = {
         "Write the generated files of a verified case into the repository."
     ),
     "적용할 case ID (기본: 가장 최근)": "Case ID to apply (default: latest)",
-    "❌ case 결과를 읽을 수 없습니다: {error}": "❌ Cannot read the case result: {error}",
+    "❌ case 결과를 읽을 수 없습니다: {error}": ("❌ Cannot read the case result: {error}"),
     "❌ 판정이 ready가 아니라서 적용하지 않습니다 (현재: {decision}).": (
         "❌ Not applied: the verdict is not ready (now: {decision})."
     ),
-    "[green]✅ {count}개 파일을 적용했습니다[/green]": "[green]✅ Applied {count} file(s)[/green]",
+    "[green]✅ {count}개 파일을 적용했습니다[/green]": (
+        "[green]✅ Applied {count} file(s)[/green]"
+    ),
     "❌ 쓸 수 없는 경로가 있어 아무것도 적용하지 않았습니다.": (
         "❌ Nothing applied: some paths cannot be written."
     ),
@@ -181,12 +181,14 @@ ENGLISH: dict[str, str] = {
         "Check which clauses of the listed standards map to an artifact (a coverage check, "
         "not a certification)."
     ),
-    "benchmarks/compliance-matrix.json 생성": "Write benchmarks/compliance-matrix.json",
+    "benchmarks/compliance-matrix.json 생성": ("Write benchmarks/compliance-matrix.json"),
     "gap이 있으면 비정상 종료(코드 1)": "Exit with code 1 when there is a gap",
     "[red]❌ 표준 목록 로드 실패:[/red] {error}": (
         "[red]❌ Could not load the standards catalog:[/red] {error}"
     ),
-    "[green]✅ 대응표 작성:[/green] {path}": "[green]✅ Compliance matrix written:[/green] {path}",
+    "[green]✅ 대응표 작성:[/green] {path}": (
+        "[green]✅ Compliance matrix written:[/green] {path}"
+    ),
     "\n[dim]coverage = clauses fully mapped / total · 인증이 아니라 조항 대응 범위입니다.[/dim]": (
         "\n[dim]coverage = clauses fully mapped / total · this is clause coverage, "
         "not a certification.[/dim]"
@@ -211,20 +213,14 @@ ENGLISH: dict[str, str] = {
     "[bold]Step 2/2:[/bold] 설계 문서 생성 (10개)\n": (
         "[bold]Step 2/2:[/bold] Writing the design documents (10)\n"
     ),
-    "\n[bold green]✅ 완료![/bold green]": "\n[bold green]✅ Done![/bold green]",
+    "\n[bold green]✅ 완료![/bold green]": (" [bold green]✅ Done![/bold green]"),
     " ⚠️ {count}개 실패": " ⚠️ {count} failed",
     "   문서: {count}개 생성{warn}": "   Documents: {count} written{warn}",
     "   비용: ${cost:.4f} USD": "   Cost: ${cost:.4f} USD",
     "   위치: [cyan]{path}[/cyan]": "   Location: [cyan]{path}[/cyan]",
-    "\n[yellow]실패한 문서:[/yellow] {names}": "\n[yellow]Failed documents:[/yellow] {names}",
-    "  자세한 내용: design-package/ERRORS.md": "  Details: design-package/ERRORS.md",
+    "\n[yellow]실패한 문서:[/yellow] {names}": (" [yellow]Failed documents:[/yellow] {names}"),
+    "  자세한 내용: design-package/ERRORS.md": ("  Details: design-package/ERRORS.md"),
     # --- preflight, doctor, init, serve, install
-    "환경 점검 — API 키, Python 버전, 의존성 확인.": (
-        "Environment check — API key, Python version, dependencies."
-    ),
-    "환경 점검 — Python, uv, API 키, Node.js, git, 헤드리스 Chromium 확인.": (
-        "Environment check — Python, uv, API key, Node.js, git and headless Chromium."
-    ),
     "먼저 헤드리스 Chromium 을 내려받습니다 (Playwright 사용, 한 번만)": (
         "Download the headless Chromium first (through Playwright, one time)"
     ),
@@ -236,7 +232,7 @@ ENGLISH: dict[str, str] = {
         "Create the .ddk/ work folder (an existing one is left alone)."
     ),
     "프로젝트 루트 경로": "Project root",
-    "[green]✅ .ddk/ 초기화 완료:[/green] {path}": "[green]✅ .ddk/ ready:[/green] {path}",
+    "[green]✅ .ddk/ 초기화 완료:[/green] {path}": ("[green]✅ .ddk/ ready:[/green] {path}"),
     "MCP 서버를 stdio 방식으로 시작합니다 (Claude Code, Cursor 등이 호출).": (
         "Start the MCP server on stdio (called by Claude Code, Cursor and similar tools)."
     ),
@@ -364,11 +360,139 @@ ENGLISH.update(
         "작업 완료 또는 검증 통과": "Operation completed or verification ready",
         "인수 기준 미달 또는 사례 없음": "Acceptance not met or required case absent",
         "명령 사용법 오류": "CLI parsing or usage error",
-        "입력·설정 무효 또는 승인 없음": "Invalid input, configuration or missing approval",
+        "입력·설정 무효 또는 승인 없음": ("Invalid input, configuration or missing approval"),
         "실행 환경 사용 불가": "Execution environment unavailable",
-        "증거 재검사 또는 현재 소스 일치 실패": "Evidence replay or current-source gate failed",
+        "증거 재검사 또는 현재 소스 일치 실패": ("Evidence replay or current-source gate failed"),
         "사용자 실행 중단": "Interrupted by the caller",
     }
 )
 
 ENGLISH["설치 버전을 출력합니다."] = "Print the installed version."
+
+ENGLISH.update(
+    {
+        "설정 값과 적용 출처를 확인합니다.": ("Inspect configuration values and their sources."),
+        "비밀 값을 숨기고 설정과 출처를 조회합니다.": (
+            "List configuration and sources with secrets masked."
+        ),
+    }
+)
+
+ENGLISH.update(
+    {
+        "저장·편집 조건을 확인한 뒤 ready 실행의 변경을 반영합니다.": (
+            "Apply an explicit ready run after confirming storage and editing conditions."
+        ),
+        "사용자 권한으로 실행하며 OS 격리를 제공하지 않습니다. 명시적 승인이 필요합니다.": (
+            "Use host permissions; no OS isolation. Requires explicit approval."
+        ),
+        "민감한 증거 포함을 승인합니다. 공유 전에 확인하세요.": (
+            "Approve including sensitive evidence. Review before sharing."
+        ),
+        "승인 범위의 가린 소스 전송과 제공자 비용을 승인합니다.": (
+            "Approve redacted scoped source transfer to the selected provider and any charges."
+        ),
+        "기준 소스 폴더.": "Baseline source directory.",
+        "변경 후보 폴더. 기본값은 현재 Git 작업 폴더입니다.": (
+            "Candidate source directory; defaults to Git worktree."
+        ),
+        "헤드리스 PNG·DOM·ARIA와 브라우저 오류 증거를 수집합니다.": (
+            "Capture headless PNG, DOM, ARIA and browser error evidence."
+        ),
+        "기준 UUID.": "Case UUID.",
+        "변경 목록 SHA256.": "Changes SHA256.",
+        "지정한 기준·변경 폴더를 고정 기준으로 검사합니다.": (
+            "Check a fixed case against explicit baseline and candidate directories."
+        ),
+        "현재 Git 소스가 검증한 증거와 일치하는지 확인합니다.": (
+            "Check whether the current Git source still matches verified evidence."
+        ),
+        "전체 실행 기록 SHA256.": "Complete run SHA256.",
+        "완료된 원본 실행 UUID.": "Completed source run UUID.",
+        "로컬 저장소가 내구성 있는 파일 교체를 지원함을 확인합니다.": (
+            "Confirm local storage supports durable file replacement."
+        ),
+        "다른 편집과 동기화가 중지됐음을 확인합니다.": (
+            "Confirm other writers and synchronization are stopped."
+        ),
+        "저장된 반영을 수행한 장비임을 확인합니다.": (
+            "Confirm this is the host that owns the saved application."
+        ),
+        "원본 실행의 변경 후보 폴더.": "Exact source-run candidate directory.",
+        "프로젝트 명령의 사용자 권한 실행을 승인합니다. OS 격리는 제공하지 않습니다.": (
+            "Explicitly approve project commands with host permissions and no OS isolation."
+        ),
+        "저장한 증거를 내보냅니다. 민감한 자료는 명시적으로 선택해야 합니다.": (
+            "Export saved evidence; sensitive artifacts require explicit selection."
+        ),
+        "호환 명령. change init으로 고정 검증 기준을 생성합니다.": (
+            "Generate a fixed verification case from reviewed checks and observed inputs."
+        ),
+        "검토한 검사와 관측 자료로 고정 검증 기준을 생성합니다.": (
+            "Generate a verification case without manual hashes."
+        ),
+        "변경하지 않을 Git 기준 참조.": "Immutable Git baseline ref.",
+        "가져올 고정 기준 JSON 파일.": "Import this case definition file.",
+        "--case-file의 입력 자료 폴더.": "Input directory for --case-file.",
+        "변경 경로와 요구사항 ID를 연결한 JSON 객체.": (
+            "JSON object mapping changed paths to requirement IDs."
+        ),
+        "프로젝트 경로와 고정 입력 경로를 연결한 JSON 객체.": (
+            "JSON object mapping project paths to fixed input paths."
+        ),
+        "새 증거 묶음 파일.": "New evidence archive file.",
+        "표준 출력에 JSON 결과 하나를 출력합니다.": "Output one JSON result to stdout.",
+        "날짜가 있는 기본 단가를 교체합니다.": "Override the dated built-in price.",
+        "증거 ID로 제한된 진단 자료를 조회합니다.": (
+            "Read a bounded redacted result diagnostic by artifact ID."
+        ),
+        "재실행하지 않고 저장된 실행을 조회합니다.": ("Read a saved run without restarting it."),
+        "ready 실행 UUID.": "Ready run UUID.",
+        "검증한 정본 JSON으로 재생성 가능한 조회 목록을 구성합니다.": (
+            "Rebuild the disposable catalog from validated canonical JSON."
+        ),
+        "명시적으로 확인한 뒤 중단된 소유 변경을 복구합니다.": (
+            "Recover an owned interrupted application after explicit confirmations."
+        ),
+        "고정 요청 예산 안에서 지정한 변경 후보를 수정합니다.": (
+            "Repair an explicit saved candidate under one fixed request budget."
+        ),
+        "소유 변경이 저장된 저장소.": "Repository containing the owned application.",
+        "검증 기록이 저장된 저장소.": "Repository containing verified records.",
+        "변경을 반영할 저장소.": "Repository receiving the changes.",
+        "필요한 실행 방식: isolated 또는 trusted-local.": (
+            "Required assurance: isolated or trusted-local."
+        ),
+        "저장된 반영 UUID.": "Saved apply UUID.",
+        "저장된 실행 UUID.": "Saved run UUID.",
+        "변경을 보관·검사하고, 선택한 수정·내보내기·반영을 수행합니다.": (
+            "Snapshot, verify, optionally repair, then export and preview or apply."
+        ),
+        "고정 반영 UUID. 기본값은 새 UUID v4입니다.": ("Stable apply UUID; defaults to UUID v4."),
+        "고정 수정 요청 UUID.": "Stable repair request UUID.",
+        "고정 요청 UUID. 기본값은 새 UUID v4입니다.": ("Stable request UUID; defaults to UUID v4."),
+        "변경하지 않은 승인 기준 폴더.": "Unchanged approved baseline directory.",
+        "이미 등록한 기준 ID.": "Use an already imported case ID.",
+        "Git의 제한된 푸시 전 입력으로 커밋을 검증합니다.": (
+            "Validate commit tips from Git's bounded pre-push input."
+        ),
+        "재실행 없이 봉인된 증거를 오프라인으로 재검사합니다.": (
+            "Validate sealed evidence offline without repeating execution."
+        ),
+        "기존 변경 검사·증거 조회·내보내기·반영·복구.": (
+            "Verify existing changes, inspect evidence, export, apply, or recover."
+        ),
+        "호환 이름 {old} 대신 {new}를 사용하세요.": ("Deprecated name {old}; use {new} instead."),
+        "호환 명령 — doctor로 준비 상태를 점검합니다.": (
+            "Deprecated alias: inspect readiness with doctor."
+        ),
+        "환경 점검 — Python, API 키, Node.js, git, 헤드리스 Chromium 확인.": (
+            "Check Python, API keys, Node.js, git and headless Chromium."
+        ),
+        "설치된 버전을 출력합니다.": "Print the installed version.",
+        "ANTHROPIC_API_KEY 미설정. 방법: export DDK_ANTHROPIC_API_KEY=sk-ant-...": (
+            "ANTHROPIC_API_KEY is not set. Set DDK_ANTHROPIC_API_KEY before design generation."
+        ),
+        "LLM API 키": "LLM API key",
+    }
+)

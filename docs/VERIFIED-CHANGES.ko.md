@@ -62,13 +62,13 @@
 
 | 명령 | 주요 입력 | 동작 |
 |---|---|---|
-| `ddk change verify` | `--case` 또는 `--case-id`, `--baseline`, `--candidate`, `--run-id`, 필요 시 두 대응 파일 | 고정 기준과 후보 검사. `--case`는 정의 가져오기도 수행 |
+| `ddk change verify` | `--case-file` 또는 `--case-id`, `--baseline`, `--candidate`, `--run-id`, 필요 시 두 대응 파일 | 고정 기준과 후보 검사. `--case-file`는 정의 가져오기도 수행 |
 | `ddk change status` | `--run-id` | 완료·대기 기록과 자료 검증 후 조회. 작업을 재시작하거나 저장소를 생성하지 않음 |
 | `ddk change export` | `--run-id`, 새 ZIP 파일인 `--destination` | 검토용 JSON과 허용된 자료 내보내기. 기존 파일을 덮어쓰지 않음 |
 | `ddk change apply` | case/run ID, run·변경 SHA, `--confirm-local-storage`, `--confirm-quiescence` | ready 결과만 관리된 반영. 기본 요구 보장은 isolated |
 | `ddk change recover` | `--apply-id`, 로컬·동일 호스트·다른 작업 중지 확인 | 소유자가 종료한 반영을 현재 상태와 대조해 복구. 외부 변경은 보존 |
 
-각 명령의 `--repo`는 기록과 원본 반영 대상 저장소다. `--json`은 stdout에 JSON 결과만 제공하며 진행·진단은 stderr에 출력한다. 기본 종료 값은 ready=0, blocked/manual-review=1, 입력·실행 불가=2, 취소=130이다. `--run-id`를 생략하면 UUID를 생성한다. 동일 요청의 같은 ID는 저장된 상태 조회이며, 다른 입력에 같은 ID를 사용하면 충돌이다.
+각 명령의 `--repo`는 기록과 원본 반영 대상 저장소다. `--json`은 stdout에 JSON 결과만 제공하며 진행·진단은 stderr에 출력한다. 종료 값은 [정본 표](EXIT-CODES.ko.md)에 따라 ready=0, 판정 미달=1, 사용법 오류=2, 설정 무효=3, 실행 불가=4, 무결성 실패=5, 취소=130이다. `--run-id`를 생략하면 UUID를 생성한다. 동일 요청의 같은 ID는 저장된 상태 조회이며, 다른 입력에 같은 ID를 사용하면 충돌이다.
 
 개인 환경 실행은 `verify --trusted-local`로 별도 선택해야 한다. case도 trusted-local을 요구해야 하며 isolated case의 요구 수준을 낮출 수 없다. 원본·후보·명령·상한을 검토한 사용자의 선택이며, 저장된 case 자체가 실행 권한은 아니다.
 
@@ -85,6 +85,13 @@
 주요 입력은 `--source-run-id`, `--baseline`, `--candidate`, `--provider`, `--input-token-limit`,
 `--output-token-limit`, `--confirm-provider`, `--run-id`입니다. 기록 위치는 `--repo`로 지정하며
 보호 파일 대응이 있으면 `--project-inputs`를 함께 사용합니다.
+
+```bash
+ddk change repair --source-run-id SOURCE_RUN_UUID \
+  --baseline ./baseline --candidate ./candidate --repo ./repository \
+  --price ./verified-price.json --input-token-limit 32768 --output-token-limit 8192 \
+  --confirm-provider --run-id REPAIR_RUN_UUID --json
+```
 
 `--confirm-provider`는 승인 경로의 비밀 정보를 제외한 내용과 실패 검사 발췌를 선택한 제공자에
 전송하고 비용 발생에 동의하는 선택입니다. 기본 Anthropic은 `ANTHROPIC_API_KEY` 또는
@@ -125,12 +132,15 @@ UTF-8 자료 크기이며 응답의 추론·부가 자료도 포함합니다. HT
 
 ## MCP
 
+정본 도구 14개는 `ddk_` 접두를 사용합니다. `ddk_design_new`와 `ddk_preflight`를 사용하며
+이전 `design_new`, `preflight`는 호환 이름으로 제공합니다.
+
 `ddk serve`는 검증용 도구 여덟 개와 기존 설계·준비·버전 도구를 제공합니다.
 `ddk_verify`는 격리 실행을 유지합니다. 추가 수정·반영·화면 관측은 서버 소유자 권한과
 각 요청의 승인 및 필요한 호스트 실행 권한이 있어야 합니다. 세부 권한과 기본 거부 조건은
 [통합 명령 안내](ONECLICK.ko.md#sqlite와-mcp)에 있습니다. `ddk_status`는 저장된 보장을 그대로 표시합니다.
 
-필수 검사 실패는 정상 도구 결과의 blocked다. 잘못된 입력과 실행 불가는 도구 오류이며, 보존된 실행 ID는 상태 도구로 조회할 수 있다. 첫 구현은 잠긴 SDK 1.28.1 및 실제 협상한 규약 판의 시험 범위만 주장한다. 도구 설명·표시는 승인이나 보안을 대신하지 않는다. [공식 MCP 도구 규약](https://modelcontextprotocol.io/specification/2025-11-25/server/tools).
+필수 검사 실패는 정상 도구 결과의 blocked다. 잘못된 입력과 실행 불가는 도구 오류이며, 보존된 실행 ID는 상태 도구로 조회할 수 있다. 첫 구현은 잠긴 SDK 1.30.0 및 실제 협상한 규약 판의 시험 범위만 주장한다. 도구 설명·표시는 승인이나 보안을 대신하지 않는다. [공식 MCP 도구 규약](https://modelcontextprotocol.io/specification/2025-11-25/server/tools).
 
 원문 크기·깊이·중복 키·UTF-8 규칙에 맞지 않는 stdio 요청은 연결을 종료한다. 임의 요청 ID로 성공 응답을 만들지 않으며, 이미 보존한 실행 결과를 삭제하지 않는다.
 

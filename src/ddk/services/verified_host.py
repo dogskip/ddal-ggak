@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 from importlib.metadata import version
+from importlib.util import find_spec
 from pathlib import Path
 
 from playwright.async_api import async_playwright
@@ -258,13 +259,27 @@ async def readiness(repository: Path) -> Record:
         keys["configured_anthropic_key"] = bool(config.anthropic_api_key)
         keys["configured_openai_key"] = bool(config.openai_api_key)
         checks.append({"name": "settings", "status": "ready", "observed": "valid", "action": None})
-    except ValidationError:
+        for name, supported in [
+            ("legacy-provider", config.llm_provider == "anthropic"),
+            ("legacy-sdk", find_spec("anthropic") is not None),
+            ("legacy-sandbox", config.sandbox_mode == "tempdir"),
+        ]:
+            checks.append(
+                {
+                    "name": name,
+                    "status": "ready" if supported else "blocked",
+                    "observed": "supported" if supported else "unsupported",
+                    "action": None if supported else "Review unsupported legacy runtime settings.",
+                }
+            )
+
+    except (ValidationError, ValueError, OSError):
         checks.append(
             {
                 "name": "settings",
                 "status": "blocked",
                 "observed": "invalid",
-                "action": "Review .env and environment; ddk preflight reports invalid fields.",
+                "action": "Review repository .env, ddk.toml and environment values.",
             }
         )
     checks.append(
@@ -272,7 +287,9 @@ async def readiness(repository: Path) -> Record:
             "name": "provider-credentials",
             "status": "ready" if any(keys.values()) else "warning",
             "observed": keys,
-            "action": None if any(keys.values()) else "export DDK_ANTHROPIC_API_KEY=<approved-key>",
+            "action": None
+            if any(keys.values())
+            else "LLM API key missing; verification without repair does not require one.",
         }
     )
     return {

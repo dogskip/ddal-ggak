@@ -40,8 +40,8 @@ Chromium 중 하나가 필요합니다. 브라우저가 없으면 `ddk demo` 가
 ## 현재 저장소의 변경 검증
 
 `ddk up "제목 변경과 기존 이동 보존" --dry-run --json`으로 계획을 확인합니다.
-`ddk init --discover --json`으로 미승인 초안을 생성합니다. 독립적인 목표·보존 검사를 검토하고
-`ddk init --approve-draft --json`으로 승인하면 `ddk up ... --trusted-local`이 Git 변경과 실제 환경을
+`ddk change init --discover --json`으로 미승인 초안을 생성합니다. 독립적인 목표·보존 검사를 검토하고
+`ddk change init --approve-draft --json`으로 승인하면 `ddk up ... --trusted-local`이 Git 변경과 실제 환경을
 고정하고 화면을 표시하지 않는 Chromium에서 검사한 뒤 검토 자료를 생성합니다.
 `--repair --confirm-provider`는 예산 내 수정, `--apply`와 저장·작업 중지 확인은 관리된 반영을 요청합니다.
 인수 기준이 없으면 실행 전에 중단합니다.
@@ -140,13 +140,19 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk init`, `ddk up`, `ddk probe` | 해시 없는 준비, Git 변경 검사·수정, 실제 화면 자료 수집 |
 | `ddk change init/reindex/verify/repair/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
 | `ddk doctor` | Python·Git·Docker·Chromium·글꼴·제공자 점검. `--json` 구조화 출력, `--dry-run` 설치 제외 |
+| `ddk workspace-init` | 기존 `.ddk/` 작업 폴더 생성 |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
 | `ddk install --all` | 감지한 도구에 정본 스킬 설치; 공식 사양이 있는 MCP 설정 등록 |
 | `ddk proof`, `ddk audit` | 디스크의 증거로 기능 주장과 표준 적용 범위 점검 |
 
 `run`, `status`, `certify`, `apply` 는 `--json` 을 지원합니다. 모든 옵션은 `ddk <명령> --help` 에 있습니다.
 
+모든 옵션은 [생성한 명령 참조](docs/COMMANDS.ko.md)에 있습니다.
+
 ## 설정
+
+설정 우선순위는 옵션 > 환경변수 > 저장소 `.env` > `ddk.toml`의 `[settings]` > 기본값입니다.
+`ddk config list --repo . --json`은 비밀 값을 숨기고 값과 출처를 제공합니다.
 
 환경 변수나 작업 폴더의 `.env` 파일로 지정합니다.
 

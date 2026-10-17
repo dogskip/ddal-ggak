@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 import pytest
 
 from ddk.models.evidence import EvidencePack
-from ddk.models.llm import LLMCallRecord
 from ddk.models.release import BlockerItem, ReleaseDecision
 from ddk.models.scorecard import Scorecard
 
@@ -107,62 +106,6 @@ class TestReleaseDecision:
         assert rd.decision == "ready"
         assert rd.blockers == []
         assert rd.approved_at is not None
-
-
-class TestLLMCallRecord:
-    def test_llm_call_record_roundtrip(self) -> None:
-        now = datetime.now(UTC)
-        record = LLMCallRecord(
-            call_id="call-001",
-            case_id="case-001",
-            node="generation",
-            provider="anthropic",
-            model="claude-3-5-sonnet-20241022",
-            temperature=0.0,
-            seed=42,
-            input_tokens=1000,
-            output_tokens=500,
-            cost_usd=0.015,
-            schema_version="1.0",
-            context_pack_hash="sha256:abc123",
-            request_timestamp=now,
-            response_timestamp=now,
-            duration_ms=2500,
-            success=True,
-            error_message=None,
-        )
-        data = record.model_dump()
-        restored = LLMCallRecord.model_validate(data)
-        assert restored == record
-        assert restored.provider == "anthropic"
-        assert restored.seed == 42
-        assert restored.context_pack_hash == "sha256:abc123"
-
-    def test_llm_call_record_has_reproducibility_fields(self) -> None:
-        """CERT-04: Verify all reproducibility fields exist."""
-        required_fields = {
-            "provider",
-            "model",
-            "temperature",
-            "seed",
-            "schema_version",
-            "context_pack_hash",
-        }
-        model_fields = set(LLMCallRecord.model_fields.keys())
-        missing = required_fields - model_fields
-        assert not missing, f"Missing CERT-04 reproducibility fields: {missing}"
-
-    def test_llm_call_record_json_roundtrip(self) -> None:
-        record = LLMCallRecord(
-            call_id="c1",
-            case_id="case-001",
-            node="gen",
-            provider="openai",
-            model="gpt-4",
-        )
-        json_str = record.model_dump_json()
-        restored = LLMCallRecord.model_validate_json(json_str)
-        assert restored == record
 
 
 class TestEvidencePack:

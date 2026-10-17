@@ -40,8 +40,8 @@ attempt passes (SSIM 1.00).
 ## Verify changes already in your repository
 
 `ddk up "Change heading and preserve navigation" --dry-run --json` shows the plan.
-`ddk init --discover --json` suggests an unapproved draft. Review its independent target and preservation
-checks, then publish them with `ddk init --approve-draft --json`. `ddk up ... --trusted-local` captures Git
+`ddk change init --discover --json` suggests an unapproved draft. Review its independent target and preservation
+checks, then publish them with `ddk change init --approve-draft --json`. `ddk up ... --trusted-local` captures Git
 changes, freezes the actual environment, checks them in headless Chromium and exports review evidence.
 Add `--repair --confirm-provider` for bounded repair or `--apply` with the storage/quiescence
 confirmations for managed application. Missing acceptance checks block before execution.
@@ -149,7 +149,12 @@ Know the limits before trusting a green result:
 
 `run`, `status`, `certify` and `apply` take `--json`. Run `ddk <command> --help` for every option.
 
+The generated [command reference](docs/COMMANDS.md) lists every option.
+
 ## Settings
+
+Flags > environment > repository `.env` > `ddk.toml` `[settings]` > defaults.
+`ddk config list --repo . --json` reports each value and source with secrets masked.
 
 Set them in the environment or a `.env` file in the working directory.
 

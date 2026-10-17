@@ -275,3 +275,12 @@ class TestRealRepoMatrix:
         assert report.mapped == report.total_families - 2
         assert report.proved == 0
         assert _claim(report, "superiority").allowed is False
+
+
+def test_public_copy_identity_refusal_has_stable_reason_codes(tmp_path):
+    _write_matrix(tmp_path, [])
+    identity = _claim(ProofLedger(tmp_path).verify(), "identity")
+    assert identity.allowed is False
+    assert identity.reason_codes == ["missing_identity_document", "missing_requirements_document"]
+    _identity_docs(tmp_path)
+    assert _claim(ProofLedger(tmp_path).verify(), "identity").reason_codes == []

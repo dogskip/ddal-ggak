@@ -9,16 +9,18 @@ from uuid import uuid4
 import typer
 
 from ddk.adapters.verified_probe import register_reference
+from ddk.i18n import t
 from ddk.models.verified_change import Record, decode_json
 from ddk.security.file_access import read_regular
 from ddk.services.probe_capture import capture_preview_probe
 from ddk.services.verified_change_store import VerifiedChangeStore
 
 from .app import app
+from .contract import warn_deprecated
 from .verified import execute_command
 
 
-@app.command("probe", help="Capture headless PNG, DOM, ARIA and browser error evidence.")
+@app.command("probe", help=t("헤드리스 PNG·DOM·ARIA와 브라우저 오류 증거를 수집합니다."))
 def probe(
     url: str = typer.Option(..., "--url"),
     viewport: str = typer.Option("1280x800", "--viewport"),
@@ -27,11 +29,13 @@ def probe(
     repo: Path = typer.Option(Path("."), "--repo"),
     reference: Path | None = typer.Option(None, "--reference"),
     update_reference: str | None = typer.Option(None, "--update-reference", "--update-baseline"),
-    case_id: str | None = typer.Option(None, "--case"),
+    case_id: str | None = typer.Option(None, "--case-id", "--case"),
     check_id: str | None = typer.Option(None, "--check"),
     confirm_execution: bool = typer.Option(False, "--confirm-execution"),
     as_json: bool = typer.Option(False, "--json"),
 ) -> None:
+    warn_deprecated("--case", "--case-id")
+
     async def execute() -> Record:
         values = viewport.lower().split("x")
         if len(values) != 2 or not all(v.isdecimal() for v in values):

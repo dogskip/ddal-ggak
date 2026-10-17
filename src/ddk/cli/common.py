@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from rich.console import Console
 
 from ddk.i18n import t
-from ddk.models.config import DdalggakConfig
+from ddk.models.config import DdalggakConfig, observe_settings
 from ddk.workspace.manager import WorkspaceManager
 
 from .contract import CommandFailureError, capture
@@ -26,9 +26,9 @@ _SECRET_NAME_PARTS = ("KEY", "SECRET", "TOKEN", "PASSWORD")
 class State:
     """Global options and the settings read once at start-up."""
 
+    flag_overrides: dict[str, Any] = {}
     config: DdalggakConfig | None = None
-    config_error: ValidationError | None = None
-    output_dir: Path = Path(".")
+    config_error: ValueError | OSError | None = None
 
 
 state = State()
@@ -39,24 +39,31 @@ def is_interactive() -> bool:
     return sys.stdin.isatty() and sys.stdout.isatty()
 
 
-def load_settings() -> None:
+def load_settings(repo: Path | None = None, overrides: dict[str, Any] | None = None) -> None:
     """Read the settings from the environment; a malformed one is kept for ``get_config``."""
     state.config_error = None
     try:
-        state.config = DdalggakConfig()
-    except ValidationError as exc:
+        state.config = observe_settings(
+            repo or Path.cwd(), {**state.flag_overrides, **(overrides or {})}
+        )[0]
+    except (ValueError, OSError) as exc:
         state.config = None
         state.config_error = exc
 
 
-def get_config() -> DdalggakConfig:
+def get_config(repo: Path | None = None, overrides: dict[str, Any] | None = None) -> DdalggakConfig:
     """The settings, or a message naming each malformed variable and exit code 3."""
+    if repo is not None or overrides is not None:
+        load_settings(repo, overrides)
     if state.config_error is not None:
         err_console.print(t("❌ 설정 오류 — 환경 변수나 .env 값을 확인하세요:"))
-        for problem in state.config_error.errors():
+        errors = (
+            state.config_error.errors() if isinstance(state.config_error, ValidationError) else []
+        )
+        for problem in errors:
             name = _variable_name(problem["loc"])
             shown = ""
-            if not _is_secret(name):
+            if not is_secret_setting(name):
                 shown = t(" (입력값: {value})", value=repr(problem.get("input")))
             err_console.print(f"   {name}: {problem['msg']}{shown}", markup=False, highlight=False)
         raise CommandFailureError("configuration", "invalid_settings")
@@ -69,8 +76,8 @@ def _variable_name(loc: tuple[int | str, ...]) -> str:
     return field if field.isupper() else f"DDK_{field.upper()}"
 
 
-def _is_secret(name: str) -> bool:
-    return any(part in name for part in _SECRET_NAME_PARTS)
+def is_secret_setting(name: str) -> bool:
+    return any(part in name.upper() for part in _SECRET_NAME_PARTS)
 
 
 def require_api_key(cfg: DdalggakConfig) -> None:

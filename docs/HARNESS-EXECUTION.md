@@ -28,7 +28,8 @@ The pre-change ordinary test suite passed 2,496 tests (72 deselected) on macOS A
 
 | Stage | Commit | Gate evidence | Remaining risk | Approval needed |
 | --- | --- | --- | --- | --- |
-| P0-4 | `fix(ci)` stage commit | G0 passed on macOS ARM64 / Python 3.12.12 and Linux aarch64 container / Python 3.12.3: 2,564 passed, 72 deselected on each. G4: actionlint 1.7.12 passed; 37 focused tests passed; same-byte/reused-identity counterexample failed before the fix | One open reference per permitted source file; exhaustion blocks capture. Separate Linux host and Python 3.13 runtime evidence remain open | Remote CI run after an approved push |
+| P0-5 | `chore(release)` stage commit | G5: wheel/sdist asset/privacy checks passed; clean environment printed `ddk 2.0.0` with both version interfaces; 25 focused tests passed. G0: all six commands passed; 2,588 passed / 72 deselected | Release is prepared locally; distribution checks are not runtime acceptance | Tag, push and PyPI publication |
+| P0-4 | `ef66c46` | G0 passed on macOS ARM64 / Python 3.12.12 and Linux aarch64 container / Python 3.12.3: 2,564 passed, 72 deselected on each. G4: actionlint 1.7.12 passed; 37 focused tests passed; same-byte/reused-identity counterexample failed before the fix | One open reference per permitted source file; exhaustion blocks capture. Separate Linux host and Python 3.13 runtime evidence remain open | Remote CI run after an approved push |
 | P0-3 | `8dde8c2` | G3: 23 CLI routes with success/usage-error coverage; 14 MCP tool contracts; real stdio checks. G0: all six commands passed; pytest 2,560 passed / 72 deselected | Public response boundary is breaking; canonical bytes retained | None |
 | P0-2 | `17ae99a` | G2: three skills; all five CLI examples match the command tree; 29 focused tests passed including a recorded-response CLI dry plan. G0: all six commands passed; pytest 2,521 passed / 72 deselected | Recorded replies do not establish agent obedience or paid-model effectiveness | None |
 | P0-1 | `4b76756` | G1: 33 focused installation/hook tests passed; Agent Skills rules checked in tests; generated README tables current. G0: all six commands passed; Ruff 406 files, mypy 175 source files, Pyright 0 errors; pytest 2,518 passed / 72 deselected | Interactive host loading remains unverified | None for local implementation |
@@ -91,3 +92,27 @@ No GitHub settings were changed. Before calling remote CI healthy, inspect Actio
 workflow enablement, event/branch filters, fork/token permissions and required branch checks.
 After an approved push, the exact HEAD must have a run with all four OS/Python combinations
 successful. Local Linux container results are not that remote result.
+
+## Prepared 2.0.0 release
+
+The package version, installed metadata and eager `ddk --version` interface are 2.0.0;
+`ddk version` remains available. The changelog groups the breaking response and installation
+changes under 2026-10-18. This is a local release preparation, not a published release.
+
+Builds use a public source export so protected directories are not traversed or copied.
+The wheel/source checks include all three skills and their references. A public skill named
+`ddk-evidence` must not be confused with a private `evidence/` directory: archive checks match
+path components. All 22 root/nested private-path counterexamples stay rejected.
+The clean virtual environment installation uses the frozen runtime dependency constraints.
+
+The following release actions are prepared for review and have **not** been executed:
+
+```bash
+git tag v2.0.0
+git push origin v2.0.0
+```
+
+They require user approval. The existing `release.yml` uses Trusted Publishing after tag/version
+agreement. The owner must first verify the PyPI publisher and GitHub `pypi` environment, review
+artifacts and confirm the exact HEAD's remote CI results. No tag or package publication is part
+of this local execution.

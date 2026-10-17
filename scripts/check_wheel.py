@@ -26,6 +26,7 @@ REQUIRED = (
     "ddk/assets/verified-change/LICENSE-moby",
 )
 FORBIDDEN_PARTS = (
+    "ddal-ggak-clean/",
     "node_modules/",
     "__pycache__/",
     ".ddk/",
@@ -52,7 +53,11 @@ def problems(wheel: Path) -> list[str]:
         required = REQUIRED
     found = [f"missing from the distribution: {path}" for path in required if path not in names]
     for part in FORBIDDEN_PARTS:
-        found.extend(f"must not be in the distribution: {name}" for name in names if part in name)
+        found.extend(
+            f"must not be in the distribution: {name}"
+            for name in names
+            if name.startswith(part) or "/" + part in name
+        )
     return found
 
 

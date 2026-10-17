@@ -25,8 +25,20 @@ design_app = typer.Typer(help=t("Design Studio — 아이디어에서 설계 문
 app.add_typer(design_app, name="design")
 
 
+def _show_version(value: bool) -> bool:
+    if value:
+        from .workspace import version
+
+        version()
+        raise typer.Exit(0)
+    return value
+
+
 @app.callback()
 def main(
+    version: bool = typer.Option(
+        False, "--version", callback=_show_version, is_eager=True, help=t("설치 버전을 출력합니다.")
+    ),
     log_level: str = typer.Option("INFO", envvar="DDK_LOG_LEVEL", help=t("로그 수준")),
     output: Path = typer.Option(
         Path("."), "-o", "--output", help=t("출력 폴더 (design new 에서 사용)")

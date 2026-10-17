@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddalggak"
-version = "1.0.0"
-description = "Turn a design image into code that is built, rendered in a real browser, compared with the design and auto-fixed, then certified with evidence."
+version = "2.0.0"
+description = "Evidence-based verification for AI-assisted repository changes, with sealed records, offline replay and image-to-code tools."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
@@ -65,6 +65,7 @@ packages = ["src/ddk"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
+    "/ddal-ggak-clean",
     "/evidence",
     "/.planning",
     "/docs/design",

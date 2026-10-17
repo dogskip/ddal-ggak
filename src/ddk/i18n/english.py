@@ -370,3 +370,5 @@ ENGLISH.update(
         "사용자 실행 중단": "Interrupted by the caller",
     }
 )
+
+ENGLISH["설치 버전을 출력합니다."] = "Print the installed version."

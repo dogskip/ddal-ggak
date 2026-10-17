@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [Unreleased]
+## [2.0.0] — 2026-10-18
 
 ### Changed — public response contract
 
@@ -41,6 +41,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   App access to observer criteria and results remains prohibited.
 
 ### Added
+
+- Eager global `ddk --version`; the existing `ddk version` command remains available.
+  Distribution metadata and the package version are 2.0.0.
 
 - Three canonical agent skills: reviewed-plan verification, bounded evidence inspection and Design Studio.
   Host execution, provider transfer and application retain explicit, separate approval boundaries.

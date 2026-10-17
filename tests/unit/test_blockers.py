@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import textwrap
+import tomllib
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -379,10 +380,9 @@ class TestB7VersionAlignment:
     def test_version_matches_pyproject(self):
         import ddk
 
-        # pyproject.toml declares version = "1.0.0"
-        assert ddk.__version__ == "1.0.0", (
-            f"__version__ ({ddk.__version__}) must match pyproject.toml (1.0.0)"
-        )
+        project = Path(__file__).resolve().parents[2] / "pyproject.toml"
+        declared = tomllib.loads(project.read_text())["project"]["version"]
+        assert ddk.__version__ == declared
 
 
 # ──────────────────────────────────────────────

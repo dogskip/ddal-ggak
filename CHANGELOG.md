@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Three canonical agent skills: reviewed-plan verification, bounded evidence inspection and Design Studio.
+  Host execution, provider transfer and application retain explicit, separate approval boundaries.
+  CLI examples are checked against the actual command tree; a recorded-response dry-run test uses no paid model.
+
 - Python, JavaScript and browser repository reproduction fixtures with valid-change, missed-target
   and preservation-regression variants, host and Linux-container execution, installed-wheel checks,
   and a receipt summarizer that rejects incomplete matrices and skipped checks.

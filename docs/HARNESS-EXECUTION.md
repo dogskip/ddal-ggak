@@ -28,7 +28,8 @@ The pre-change ordinary test suite passed 2,496 tests (72 deselected) on macOS A
 
 | Stage | Commit | Gate evidence | Remaining risk | Approval needed |
 | --- | --- | --- | --- | --- |
-| P0-1 | `fix(installer)!` stage commit | G1: 33 focused installation/hook tests passed; Agent Skills rules checked in tests; generated README tables current. G0: all six commands passed; Ruff 406 files, mypy 175 source files, Pyright 0 errors; pytest 2,518 passed / 72 deselected | Interactive host loading remains unverified | None for local implementation |
+| P0-2 | `feat(skills)` stage commit | G2: three skills; all five CLI examples match the command tree; 29 focused tests passed including a recorded-response CLI dry plan. G0: all six commands passed; pytest 2,521 passed / 72 deselected | Recorded replies do not establish agent obedience or paid-model effectiveness | None |
+| P0-1 | `4b76756` | G1: 33 focused installation/hook tests passed; Agent Skills rules checked in tests; generated README tables current. G0: all six commands passed; Ruff 406 files, mypy 175 source files, Pyright 0 errors; pytest 2,518 passed / 72 deselected | Interactive host loading remains unverified | None for local implementation |
 
 ## Host decisions and official sources
 

@@ -8,6 +8,7 @@ import typer
 
 from ddk.adapters.browser_install import install_chromium
 from ddk.i18n import t
+from ddk.models.verified_change import Record
 from ddk.workspace.manager import WorkspaceManager
 
 from .app import app
@@ -191,7 +192,7 @@ def install(
         else:
             console.print(t("[yellow]설치할 도구를 지정하세요. 예: ddk install --all[/yellow]"))
         raise typer.Exit(1)
-    plans: list[dict[str, object]] = []
+    plans: list[Record] = []
     failures: list[dict[str, str]] = []
     for name in selected:
         try:
@@ -215,6 +216,9 @@ def install(
     else:
         for name in selected:
             console.print(name)
+        for plan in plans:
+            for action in plan["actions"]:
+                console.print(str(action), markup=False)
         for failure in failures:
             err_console.print(str(failure))
     if failures:

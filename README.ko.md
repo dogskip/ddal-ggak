@@ -235,6 +235,8 @@ uv run python scripts/make_readme_assets.py        # 위의 그림 다시 생성
 
 [MIT](LICENSE)
 
+정본 스킬은 변경 검사용 `ddk-verify`, 제한된 증거 조회와 현재 소스 확인용 `ddk-evidence`, 설계 문서 생성용 `ddk-design`입니다. 호출 이름은 도구별 파일 규격을 따릅니다.
+
 <!-- ddk-hosts:start -->
 | 도구 | 프로젝트 파일 | 전역 파일 | MCP 설정 |
 | --- | --- | --- | --- |

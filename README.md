@@ -241,6 +241,8 @@ plans and raw evidence remain local and are excluded from Git and source distrib
 
 [MIT](LICENSE)
 
+Canonical skills: `ddk-verify` reviews authority and verifies changes, `ddk-evidence` reads bounded evidence and checks current source, and `ddk-design` generates design documents. Invocation names depend on the host format.
+
 <!-- ddk-hosts:start -->
 | Host | Project file | Global file | MCP settings |
 | --- | --- | --- | --- |

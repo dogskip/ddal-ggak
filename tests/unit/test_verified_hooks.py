@@ -14,7 +14,7 @@ from tests.unit.test_case_bootstrapper import setup_repo
 def test_existing_invalid_claude_settings_are_never_replaced(tmp_path):
     folder = tmp_path / ".claude"
     folder.mkdir()
-    path = folder / "settings.json"
+    path = tmp_path / ".mcp.json"
     path.write_bytes(b"{broken json")
     with pytest.raises(ValueError):
         installer.install_claude(tmp_path)
@@ -26,7 +26,7 @@ def test_settings_symlink_is_rejected_without_touching_external_bytes(tmp_path):
     folder.mkdir()
     outside = tmp_path / "outside.json"
     outside.write_text('{"keep":true}')
-    (folder / "settings.json").symlink_to(outside)
+    (tmp_path / ".mcp.json").symlink_to(outside)
     with pytest.raises((ValueError, OSError)):
         installer.install_claude(tmp_path)
     assert outside.read_text() == '{"keep":true}'
@@ -96,4 +96,4 @@ def test_installed_public_commands_match_git_modes_and_private_settings_stay_pri
         capture_git_source(tmp_path, "HEAD").tree_sha256
         == capture_git_worktree(tmp_path).tree_sha256
     )
-    assert (tmp_path / ".claude/settings.json").stat().st_mode & 0o777 == 0o600
+    assert (tmp_path / ".mcp.json").stat().st_mode & 0o777 == 0o600

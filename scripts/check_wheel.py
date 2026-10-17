@@ -16,7 +16,7 @@ REQUIRED = (
     "ddk/assets/demo/vite-app/package-lock.json",
     "ddk/assets/demo/vite-app/index.html",
     "ddk/assets/demo/vite-app/src/App.tsx",
-    "ddk/assets/commands/claude/design.md",
+    "ddk/assets/skills/ddk-design/SKILL.md",
     "ddk/assets/verified-change/contract.schema.json",
     "ddk/assets/verified-change/chromium-seccomp.json",
     "ddk/assets/verified-change/LICENSE-moby",

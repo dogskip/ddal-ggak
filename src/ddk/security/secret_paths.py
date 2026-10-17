@@ -16,6 +16,9 @@ from __future__ import annotations
 _SECRET_FILENAMES: frozenset[str] = frozenset(
     {
         ".env",
+        ".mcp.json",
+        "opencode.json",
+        "opencode.jsonc",
         ".npmrc",
         ".netrc",
         ".pgpass",
@@ -74,6 +77,11 @@ def is_secret_path(rel_path: str) -> bool:
     if not norm:
         return False
     parts = [part.lower() for part in norm.split("/")]
+    if any(
+        parts[i : i + 2] in ([".cursor", "mcp.json"], [".vscode", "mcp.json"])
+        for i in range(len(parts) - 1)
+    ):
+        return True
     return any(
         part in _SECRET_DIR_PARTS
         or part in _SECRET_FILENAMES

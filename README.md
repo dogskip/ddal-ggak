@@ -144,7 +144,7 @@ Know the limits before trusting a green result:
 | `ddk doctor --dry-run` | Read-only readiness check with actual browser/font hashes and installed image digests; `--json` gives structured output |
 | `ddk workspace-init` | Create the legacy `.ddk/` workspace; formerly `ddk init PATH` |
 | `ddk design new "<idea>"` | Design Studio: turn an idea into design documents |
-| `ddk install --all` | Register `/ddk:design` and the MCP server with Claude Code, Cursor, Codex, Gemini CLI and others |
+| `ddk install --all` | Install canonical DDK skills for detected hosts; register MCP where documented |
 | `ddk proof`, `ddk audit` | Check capability claims and standards coverage against the evidence on disk |
 
 `run`, `status`, `certify` and `apply` take `--json`. Run `ddk <command> --help` for every option.
@@ -196,7 +196,11 @@ managed apply/recovery. This is a separate path from the image-generation loop a
 
 ## Agents and MCP
 
-`ddk install --all` adds `/ddk:design` and registers `ddk serve` with supported AI coding tools.
+`ddk install --all` installs only detected hosts. Preview with `--dry-run --json`.
+`ddk uninstall --host NAME` restores unchanged installed files using `.ddk/install-manifest.json`;
+modified files remain as conflicts. Global Claude MCP registration is an explicit owner action.
+Global Copilot/Cursor rule installation is unsupported; use project scope or AGENTS.md.
+The table records documented formats; interactive host loading remains unverified.
 The server provides eleven verified-change tools plus design/preflight/version tools.
 Verification stays isolated-only; repair, apply and probe require explicit server-owner and per-call
 grants, with an additional grant for host execution. See the [one-command guide](docs/ONECLICK.md). Recovery remains CLI-only.
@@ -236,3 +240,15 @@ plans and raw evidence remain local and are excluded from Git and source distrib
 ## License
 
 [MIT](LICENSE)
+
+<!-- ddk-hosts:start -->
+| Host | Project file | Global file | MCP settings |
+| --- | --- | --- | --- |
+| [claude](https://code.claude.com/docs/en/skills) | `.claude/skills/{name}/SKILL.md` | `.claude/skills/{name}/SKILL.md` | `.mcp.json` |
+| [gemini](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/custom-commands.md) | `.gemini/commands/ddk/{short}.toml` | `.gemini/commands/ddk/{short}.toml` | — |
+| [opencode](https://opencode.ai/docs/commands/) | `.opencode/commands/{name}.md` | `.config/opencode/commands/{name}.md` | `opencode.json` |
+| [codex](https://developers.openai.com/codex/skills) | `.agents/skills/{name}/SKILL.md` | `.agents/skills/{name}/SKILL.md` | `.codex/config.toml` |
+| [copilot](https://code.visualstudio.com/docs/copilot/customization/prompt-files) | `.github/prompts/{name}.prompt.md` | unsupported | — |
+| [cursor](https://cursor.com/docs/context/rules) | `.cursor/rules/{name}.mdc` | unsupported | `.cursor/mcp.json` |
+| [kiro](https://kiro.dev/docs/steering/) | `.kiro/steering/{name}.md` | `.kiro/steering/{name}.md` | — |
+<!-- ddk-hosts:end -->

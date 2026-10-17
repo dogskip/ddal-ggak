@@ -141,7 +141,7 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 | `ddk change init/reindex/verify/repair/status/export/apply/recover` | 고정 기준으로 기존 변경 검사, 증거 조회·내보내기·반영·복구 |
 | `ddk doctor` | Python·Git·Docker·Chromium·글꼴·제공자 점검. `--json` 구조화 출력, `--dry-run` 설치 제외 |
 | `ddk design new "<아이디어>"` | Design Studio: 아이디어를 설계 문서로 변환 |
-| `ddk install --all` | Claude Code, Cursor, Codex, Gemini CLI 등에 `/ddk:design` 과 MCP 서버 등록 |
+| `ddk install --all` | 감지한 도구에 정본 스킬 설치; 공식 사양이 있는 MCP 설정 등록 |
 | `ddk proof`, `ddk audit` | 디스크의 증거로 기능 주장과 표준 적용 범위 점검 |
 
 `run`, `status`, `certify`, `apply` 는 `--json` 을 지원합니다. 모든 옵션은 `ddk <명령> --help` 에 있습니다.
@@ -191,7 +191,10 @@ ddk apply                            # 파일 적용. 교체되는 파일은 먼
 
 ## AI 도구와 MCP
 
-`ddk install --all`은 지원하는 AI 코딩 도구에 `/ddk:design`과 `ddk serve`를 등록합니다.
+`ddk install --all`은 감지한 도구만 설치합니다. `--dry-run --json`으로 계획을 확인합니다.
+`ddk uninstall --host NAME`은 설치 기록의 해시가 일치하는 파일만 복원합니다. 수정한 파일은 충돌로 보고합니다.
+Claude 전역 MCP 등록은 사용자가 수행합니다. Copilot·Cursor 전역 규칙은 프로젝트 범위나 AGENTS.md를 사용합니다.
+표는 공식 파일 규격을 나타내며 실제 도구에서의 호출 확인은 별도입니다.
 서버는 검증용 도구 열한 개와 기존 설계·준비·버전 도구를 제공합니다.
 검사 도구는 격리 실행을 유지합니다. 수정·반영·화면 관측은 서버 소유자와 각 요청의 승인이 필요하며
 호스트 실행에는 별도 권한도 필요합니다. [통합 사용 안내](docs/ONECLICK.ko.md)를 참고합니다. 복구는 CLI에서 제공합니다.
@@ -231,3 +234,15 @@ uv run python scripts/make_readme_assets.py        # 위의 그림 다시 생성
 ## 라이선스
 
 [MIT](LICENSE)
+
+<!-- ddk-hosts:start -->
+| 도구 | 프로젝트 파일 | 전역 파일 | MCP 설정 |
+| --- | --- | --- | --- |
+| [claude](https://code.claude.com/docs/en/skills) | `.claude/skills/{name}/SKILL.md` | `.claude/skills/{name}/SKILL.md` | `.mcp.json` |
+| [gemini](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/custom-commands.md) | `.gemini/commands/ddk/{short}.toml` | `.gemini/commands/ddk/{short}.toml` | — |
+| [opencode](https://opencode.ai/docs/commands/) | `.opencode/commands/{name}.md` | `.config/opencode/commands/{name}.md` | `opencode.json` |
+| [codex](https://developers.openai.com/codex/skills) | `.agents/skills/{name}/SKILL.md` | `.agents/skills/{name}/SKILL.md` | `.codex/config.toml` |
+| [copilot](https://code.visualstudio.com/docs/copilot/customization/prompt-files) | `.github/prompts/{name}.prompt.md` | 미지원 | — |
+| [cursor](https://cursor.com/docs/context/rules) | `.cursor/rules/{name}.mdc` | 미지원 | `.cursor/mcp.json` |
+| [kiro](https://kiro.dev/docs/steering/) | `.kiro/steering/{name}.md` | `.kiro/steering/{name}.md` | — |
+<!-- ddk-hosts:end -->

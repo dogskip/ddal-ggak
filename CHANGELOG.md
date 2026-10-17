@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed — host installation
+
+- **Breaking:** host installation now renders canonical Agent Skills into official host paths.
+  Claude MCP uses project `.mcp.json`, Gemini uses TOML, Codex uses `.agents/skills`,
+  OpenCode uses direct `mcp.ddk` configuration, Copilot uses prompt files and Cursor uses MDC.
+  Existing legacy files are never silently deleted. Global Copilot/Cursor rules are unsupported.
+- `install --all` selects detected hosts only. `--dry-run --json` previews the plan;
+  `uninstall --host NAME` restores only hash-matching owned files and reports edited files as conflicts.
+  Credentials in MCP configurations remain excluded from source/model inputs.
+
 ### Fixed
 
 - Isolated native test reports now use the app's private source copy instead of the observer-only

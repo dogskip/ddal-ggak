@@ -136,51 +136,29 @@ def serve() -> None:
     run_server()
 
 
-@app.command(
-    help=t("AI 코딩 도구에 /ddk:design 명령과 MCP 서버를 등록합니다."),
-    epilog=t("예시: ddk install --detect · ddk install --claude · ddk install --all"),
-)
+@app.command(help=t("AI 도구에 DDK 스킬과 MCP 설정을 설치합니다."))
 def install(
-    claude: bool = typer.Option(False, "--claude", help=t("Claude Code에 설치")),
-    gemini: bool = typer.Option(False, "--gemini", help=t("Gemini CLI에 설치")),
-    opencode: bool = typer.Option(False, "--opencode", help=t("OpenCode에 설치")),
-    codex: bool = typer.Option(False, "--codex", help=t("OpenAI Codex CLI에 설치")),
-    copilot: bool = typer.Option(False, "--copilot", help=t("GitHub Copilot에 설치")),
-    cursor: bool = typer.Option(False, "--cursor", help=t("Cursor에 설치")),
-    kiro: bool = typer.Option(False, "--kiro", help=t("Kiro에 설치")),
+    claude: bool = typer.Option(False, "--claude"),
+    gemini: bool = typer.Option(False, "--gemini"),
+    opencode: bool = typer.Option(False, "--opencode"),
+    codex: bool = typer.Option(False, "--codex"),
+    copilot: bool = typer.Option(False, "--copilot"),
+    cursor: bool = typer.Option(False, "--cursor"),
+    kiro: bool = typer.Option(False, "--kiro"),
+    host: str | None = typer.Option(None, "--host"),
     all_tools: bool = typer.Option(False, "--all", "-a", help=t("감지된 모든 도구에 설치")),
-    project: bool = typer.Option(
-        True,
-        "--project/--global",
-        help=t("프로젝트 로컬 설치 (기본) vs 홈 폴더 전역 설치"),
-    ),
-    detect: bool = typer.Option(False, "--detect", help=t("설치 없이 감지된 도구만 출력")),
+    project: bool = typer.Option(True, "--project/--global"),
+    detect: bool = typer.Option(False, "--detect"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    as_json: bool = typer.Option(False, "--json"),
     with_hooks: bool = typer.Option(False, "--with-hooks"),
 ) -> None:
-    """Register the /ddk:design command and the MCP server with AI coding tools."""
-    from ddk.installer import INSTALLERS, detect_tools  # noqa: PLC0415
+    from ddk.installer import HOSTS, detect_tools, install_host, install_plan
 
-    target = None if project else Path.home()
+    from .common import print_json
+    from .contract import envelope
 
-    if detect:
-        found = detect_tools()
-        if found:
-            console.print(t("[bold]감지된 AI 도구:[/bold]"))
-            for tool in found:
-                console.print(f"  ✅ {tool}")
-        else:
-            console.print(t("[yellow]감지된 AI 도구 없음[/yellow]"))
-        return
-
-    if with_hooks:
-        if not project:
-            raise typer.BadParameter("--with-hooks requires a project installation")
-        from ddk.installer import prepare_hooks
-
-        prepare_hooks(Path.cwd())
-
-    # 설치 대상 결정
-    selected: list[str] = []
+    target = Path.cwd() if project else Path.home()
     flags = {
         "claude": claude,
         "gemini": gemini,
@@ -190,48 +168,97 @@ def install(
         "cursor": cursor,
         "kiro": kiro,
     }
-
-    if all_tools:
-        selected = list(INSTALLERS.keys())
-    else:
-        selected = [name for name, flag in flags.items() if flag]
-
-    if not selected:
-        console.print(t("[yellow]설치할 도구를 지정하세요. 예: ddk install --all[/yellow]"))
-        console.print(t("  감지 먼저: ddk install --detect"))
+    selected = (
+        detect_tools() if all_tools or detect else [name for name, flag in flags.items() if flag]
+    )
+    if host:
+        if host not in HOSTS:
+            raise typer.BadParameter("unknown host", param_hint="--host")
+        selected = list(dict.fromkeys([*selected, host]))
+    if with_hooks and not project:
+        raise typer.BadParameter("--with-hooks requires a project installation")
+    if not selected and not detect:
+        if as_json:
+            print_json(
+                envelope(
+                    "install",
+                    {},
+                    status="blocked",
+                    code="host_required",
+                    message="Select a host or detect installed tools.",
+                )
+            )
+        else:
+            console.print(t("[yellow]설치할 도구를 지정하세요. 예: ddk install --all[/yellow]"))
         raise typer.Exit(1)
-
-    console.print(t("[bold cyan]DDK 설치[/bold cyan] → {tools}\n", tools=", ".join(selected)))
-
-    success_count = 0
-    for tool_name in selected:
-        fn = INSTALLERS.get(tool_name)
-        if fn is None:
-            continue
+    plans: list[dict[str, object]] = []
+    failures: list[dict[str, str]] = []
+    for name in selected:
         try:
-            result = fn(target)
-            icon = "✅" if result.success else "❌"
-            console.print(f"  {icon} [bold]{result.tool}[/bold]: {result.message}")
-            for f in result.installed_files:
-                console.print(f"       {f}")
-            if result.success:
-                success_count += 1
-        except Exception as e:  # noqa: BLE001
-            console.print(f"  ❌ [bold]{tool_name}[/bold]: {e}")
+            plan = install_plan(name, target, global_scope=not project)
+            if not dry_run and not detect:
+                if with_hooks:
+                    from ddk.installer import prepare_hooks
 
-    if with_hooks:
+                    prepare_hooks(target)
+                install_host(name, target, global_scope=not project)
+            plans.append(plan)
+        except (OSError, ValueError) as exc:
+            failures.append({"host": name, "code": str(exc)})
+    if with_hooks and not dry_run and not detect and not failures:
         from ddk.installer import install_hooks
 
-        install_hooks(Path.cwd())
+        install_hooks(target)
+    data = {"hosts": plans, "failures": failures, "dry_run": dry_run, "detect": detect}
+    if as_json:
+        print_json(envelope("install", data, status="blocked" if failures else "ok"))
+    else:
+        for name in selected:
+            console.print(name)
+        for failure in failures:
+            err_console.print(str(failure))
+    if failures:
+        raise typer.Exit(3)
 
-    console.print(
-        t(
-            "\n[green]{done}/{total}개 도구 설치 완료[/green]",
-            done=success_count,
-            total=len(selected),
+
+@app.command(help=t("설치 기록과 해시가 일치하는 DDK 파일을 제거합니다."))
+def uninstall(
+    host: str | None = typer.Option(None, "--host"),
+    all_tools: bool = typer.Option(False, "--all"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    as_json: bool = typer.Option(False, "--json"),
+    project: bool = typer.Option(True, "--project/--global"),
+) -> None:
+    from ddk.installer import HOSTS, uninstall_hosts
+
+    from .common import print_json
+    from .contract import envelope
+
+    if (host is None) == (not all_tools) or (host is not None and host not in HOSTS):
+        raise typer.BadParameter("select --host NAME or --all")
+    try:
+        result = uninstall_hosts(
+            list(HOSTS) if all_tools else [host or ""],
+            Path.cwd() if project else Path.home(),
+            dry_run=dry_run,
         )
-    )
-    if success_count > 0:
-        console.print(t("\n[bold]다음 단계:[/bold]"))
-        console.print(t("  1. AI 도구를 재시작하세요"))
-        console.print(t('  2. /ddk:design "쇼핑몰" 명령을 실행하세요'))
+    except (ValueError, OSError) as exc:
+        if as_json:
+            print_json(
+                envelope(
+                    "uninstall",
+                    {},
+                    status="error",
+                    code="invalid_install_manifest",
+                    message=str(exc),
+                )
+            )
+        else:
+            err_console.print(str(exc))
+        raise typer.Exit(3) from exc
+    if as_json:
+        print_json(envelope("uninstall", result, status=str(result["status"])))
+    else:
+        console.print(result)
+    if result["status"] == "blocked":
+        raise typer.Exit(1)

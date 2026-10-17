@@ -243,40 +243,10 @@ ENGLISH: dict[str, str] = {
     "AI 도구에 등록하려면: ddk install --all": (
         "To register it with your AI tools: ddk install --all"
     ),
-    "AI 코딩 도구에 /ddk:design 명령과 MCP 서버를 등록합니다.": (
-        "Register the /ddk:design command and the MCP server with AI coding tools."
-    ),
-    "예시: ddk install --detect · ddk install --claude · ddk install --all": (
-        "Examples: ddk install --detect · ddk install --claude · ddk install --all"
-    ),
-    "Claude Code에 설치": "Install into Claude Code",
-    "Gemini CLI에 설치": "Install into Gemini CLI",
-    "OpenCode에 설치": "Install into OpenCode",
-    "OpenAI Codex CLI에 설치": "Install into OpenAI Codex CLI",
-    "GitHub Copilot에 설치": "Install into GitHub Copilot",
-    "Cursor에 설치": "Install into Cursor",
-    "Kiro에 설치": "Install into Kiro",
     "감지된 모든 도구에 설치": "Install into every detected tool",
-    "프로젝트 로컬 설치 (기본) vs 홈 폴더 전역 설치": (
-        "Install for this project (default) or globally in your home folder"
-    ),
-    "설치 없이 감지된 도구만 출력": "List the detected tools without installing",
-    "[bold]감지된 AI 도구:[/bold]": "[bold]Detected AI tools:[/bold]",
-    "[yellow]감지된 AI 도구 없음[/yellow]": "[yellow]No AI tools detected[/yellow]",
     "[yellow]설치할 도구를 지정하세요. 예: ddk install --all[/yellow]": (
         "[yellow]Say which tools to install into, for example: ddk install --all[/yellow]"
     ),
-    "  감지 먼저: ddk install --detect": "  To see what is detected first: ddk install --detect",
-    "[bold cyan]DDK 설치[/bold cyan] → {tools}\n": (
-        "[bold cyan]Installing DDK[/bold cyan] → {tools}\n"
-    ),
-    "\n[green]{done}/{total}개 도구 설치 완료[/green]": (
-        "\n[green]Installed into {done} of {total} tool(s)[/green]"
-    ),
-    "\n[bold]다음 단계:[/bold]": "\n[bold]Next:[/bold]",
-    "  1. AI 도구를 재시작하세요": "  1. Restart your AI tool",
-    '  2. /ddk:design "쇼핑몰" 명령을 실행하세요': '  2. Run /ddk:design "online store"',
-    # --- evidence report
     "저장된 case의 증거 보고서(HTML 한 장)를 만듭니다.": (
         "Write the evidence report (one HTML page) of a saved case."
     ),
@@ -377,3 +347,14 @@ ENGLISH: dict[str, str] = {
     " (점수 {score:.2f})": " (score {score:.2f})",
     " — 사람 확인 필요: {reason}": " — needs a human: {reason}",
 }
+
+ENGLISH.update(
+    {
+        "AI 도구에 DDK 스킬과 MCP 설정을 설치합니다.": (
+            "Install DDK skills and MCP settings for AI tools."
+        ),
+        "설치 기록과 해시가 일치하는 DDK 파일을 제거합니다.": (
+            "Uninstall only unchanged files owned by the install manifest."
+        ),
+    }
+)

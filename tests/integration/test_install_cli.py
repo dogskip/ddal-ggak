@@ -29,8 +29,8 @@ def test_install_claude_writes_templates_and_settings(tmp_path: Path) -> None:
         result = runner.invoke(app, ["install", "--claude"])
 
     assert result.exit_code == 0, result.stdout
-    assert (tmp_path / ".claude" / "commands" / "ddk" / "design.md").exists()
-    assert (tmp_path / ".claude" / "settings.json").exists()
+    assert (tmp_path / ".claude" / "skills" / "ddk-design" / "SKILL.md").exists()
+    assert (tmp_path / ".mcp.json").exists()
 
 
 def test_serve_cli_delegates_to_server_entrypoint() -> None:

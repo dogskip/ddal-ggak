@@ -91,12 +91,25 @@ def prepare_hooks(repository: Path) -> tuple[Path, Path, Record, tuple[int, ...]
     return path, settings, config, identity
 
 
-def install_hooks(repository: Path) -> list[Path]:
+def git_hook_bytes() -> bytes:
+    return _GIT_HOOK
+
+
+def install_hooks(
+    repository: Path, *, expected_files: dict[Path, tuple[int, ...] | None] | None = None
+) -> list[Path]:
     path, _, _, _ = prepare_hooks(repository)
     ensure_directory(path.parent)
     lock = OwnedLock(path.parent / "ddk-gate.lock", str(uuid4())).acquire()
     try:
         path, settings, config, identity = prepare_hooks(repository)
+        for target, expected in (expected_files or {}).items():
+            try:
+                observed = file_identity(target.lstat())
+            except FileNotFoundError:
+                observed = None
+            if observed != expected:
+                raise ValueError("hook_input_changed")
         if not path.exists():
             atomic_write(path, _GIT_HOOK, mode=0o755, exclusive=True)
         elif path.stat().st_mode & 0o777 != 0o755:
